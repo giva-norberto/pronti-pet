@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Novo Serviço</title>
+  <title>Pronti Pet - Novo Serviço</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -37,7 +37,7 @@
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .form-card h1 {
@@ -105,8 +105,18 @@
       box-shadow: 0 10px 30px rgba(99,102,241,0.35);
     }
 
-    @media (max-width: 900px) { .main-content { margin-left: 0; padding: 22px; } }
-    @media (max-width: 600px) { .form-card { padding: 28px 22px; } }
+    @media (max-width: 900px) {
+      .main-content {
+        margin-left: 0;
+        padding: 22px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .form-card {
+        padding: 28px 22px;
+      }
+    }
   </style>
 </head>
 
@@ -115,13 +125,12 @@
 
   <div class="main-content">
     <div class="form-card">
-      <h1>Novo Serviço</h1>
+      <h1>Novo Serviço Pet</h1>
 
       <form id="form-servico">
-        <!-- Container para campos dinâmicos (Salão ou Pet Shop) -->
         <div id="campos-dinamicos"></div>
 
-        <button type="submit" class="btn-submit">Salvar Serviço</button>
+        <button type="submit" class="btn-submit">Salvar Serviço Pet</button>
       </form>
     </div>
   </div>
