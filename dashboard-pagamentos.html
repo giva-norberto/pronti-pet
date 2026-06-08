@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Aprovação de Pagamentos - Pronti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="style.css"> <!-- Seu CSS principal do Pronti -->
+    <style>
+        body { 
+            display: flex; 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            min-height: 100vh;
+        }
+        #menu-container {
+            width: 250px;
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+        main.content { 
+            flex-grow: 1; 
+            padding: 40px 10px 20px 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background: transparent;
+        }
+        /* Espaço extra entre cabeçalho e cards */
+        .espaco-cards { height: 20px; }
+        .header-pagina {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 0;
+            width: 100%;
+        }
+        .header-pagina h1 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header-botoes {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 26px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.18s;
+        }
+        .btn-assinantes {
+            background-color: #0891b2;
+            color: #fff;
+        }
+        .btn-assinantes:hover { background-color: #0e7490; }
+        .btn-dashboard {
+            background-color: #f59e0b;
+            color: #fff;
+        }
+        .btn-dashboard:hover { background-color: #d97706; }
+        .btn-novo {
+            background-color: #10b981;
+            color: #fff;
+        }
+        .btn-novo:hover { background-color: #059669; }
+        .container { 
+            max-width: 900px; 
+            margin: 20px auto; 
+            background-color: #fff; 
+            padding: 30px 10px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+        }
+        h1 { 
+            color: #1e293b; 
+            margin-bottom: 30px; 
+        }
+        .lista-pagamentos { 
+            display: flex; 
+            flex-direction: column;
+            gap: 12px;
+        }
+        .item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px; 
+            border-radius: 8px;
+            background: #f9fafb;
+            box-shadow: 0 2px 8px rgba(44,54,80,0.07);
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+        .info p { margin: 0; line-height: 1.5; }
+        .info .nome { font-weight: 600; color: #334155; font-size: 1.08em;}
+        /* NOVO ESTILO PARA O ID DO DOCUMENTO */
+        .info .doc-id {
+            font-size: 0.75em;
+            color: #94a3b8;
+            font-family: monospace;
+            margin-top: 2px;
+        }
+        .info .plano { font-size: 0.9em; color: #64748b; margin-top: 5px; }
+        .info .metodo { 
+            font-size: 0.75em; 
+            font-weight: 700; 
+            padding: 3px 8px; 
+            border-radius: 12px; 
+            margin-left: 8px; 
+            text-transform: uppercase; 
+            vertical-align: middle;
+        }
+        .metodo.pix { background-color: #e0fdf4; color: #059669; }
+        .metodo.mercado_pago { background-color: #dbeafe; color: #2563eb; }
+        .acoes button { 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+            font-size: 0.9em;
+        }
+        .btn-aprovar { background-color: #10b981; color: #fff; }
+        .btn-aprovar:hover:not(:disabled) { background-color: #0f9e70; }
+        .btn-aprovar:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #loading-message, #empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        @media (max-width: 992px) {
+            #menu-container { display: none; }
+            main.content { padding: 14px 2px 8px 2px;}
+            .container { padding: 20px 3px; }
+        }
+        @media (max-width: 768px) {
+            main.content { padding: 7px 1px 5px 1px;}
+            .header-pagina h1 { font-size: 1.15rem; }
+            .btn-header { font-size: 0.92rem; padding: 9px 7px; }
+            .container { padding: 10px 0px; }
+            .item { padding: 10px 5px; font-size: 0.99em;}
+        }
+        @media (max-width: 480px) {
+            .header-botoes { gap: 6px; }
+            .btn-header { font-size: 0.86rem; padding: 7px 2px; border-radius: 6px; }
+            .container { padding: 4px 0px; }
+            .item { padding: 7px 2px; font-size: 0.97em;}
+        }
+    </style>
+</head>
+<body>
+    <aside id="menu-container"></aside>
+    <main class="content">
+        <div class="header-pagina">
+            <h1>Pagamentos Pendentes de Aprovação</h1>
+            <div class="header-botoes">
+                <a href="lista-assinantes.html" class="btn-header btn-assinantes"><i class="fa-solid fa-crown"></i> Clientes Assinantes</a>
+                <a href="dashboard-pagamentos.html" class="btn-header btn-dashboard"><i class="fa-solid fa-check-to-slot"></i> Painel de Aprovações</a>
+                <a href="planos.html" class="btn-header btn-novo"><i class="fa-solid fa-plus"></i> Meus Planos</a>
+            </div>
+        </div>
+        <div class="espaco-cards"></div>
+        <div class="container">
+            <div id="lista-pagamentos" class="lista-pagamentos">
+                <p id="loading-message">Carregando pagamentos...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db, auth } from './vitrini-firebase.js'; 
+        import {
+            collection,
+            query,
+            where,
+            onSnapshot,
+            doc,
+            runTransaction,
+            serverTimestamp,
+            Timestamp,
+            getDoc,
+            addDoc
+        } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+        const listaPagamentosDiv = document.getElementById('lista-pagamentos');
+        const loadingMessage = document.getElementById('loading-message');
+        let unsubscribe = null;
+
+        async function carregarMenu() {
+            try {
+                const response = await fetch('menu-lateral.html');
+                if (!response.ok) throw new Error('menu-lateral.html not found');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) menuModule.ativarMenuLateral(['dono']);
+            } catch (error) {
+                console.error("Failed to load sidebar:", error);
+            }
+        }
+        carregarMenu();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const empresaAtivaId = localStorage.getItem("empresaAtivaId");
+                if (empresaAtivaId) {
+                     ouvirPagamentosPendentes(empresaAtivaId);
+                } else {
+                    listaPagamentosDiv.innerHTML = '<p id="empty-message">Nenhuma empresa ativa selecionada.</p>';
+                }
+            } else {
+                if (unsubscribe) unsubscribe();
+                listaPagamentosDiv.innerHTML = '<p id="empty-message">Você precisa estar logado para ver esta página.</p>';
+            }
+        });
+
+        function ouvirPagamentosPendentes(empresaId) {
+            const pagamentosRef = collection(db, 'pagamentosPendentes');
+            const q = query(pagamentosRef, 
+                where('empresaId', '==', empresaId), 
+                where('status', 'in', ['pendente_confirmacao', 'aguardando_pagamento_mp'])
+            );
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                loadingMessage.style.display = 'none';
+                if (snapshot.empty) {
+                    listaPagamentosDiv.innerHTML = '<p id="empty-message">Nenhum pagamento pendente no momento.</p>';
+                    return;
+                }
+                
+                listaPagamentosDiv.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const pagamento = { id: docSnap.id, ...docSnap.data() };
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item';
+                    
+                    const metodoTag = `<span class="metodo ${pagamento.metodo}">${(pagamento.metodo || '').replace('_', ' ')}</span>`;
+                    const dataFormatada = pagamento.dataCriacao?.toDate?.().toLocaleDateString('pt-BR') || 'Data indisponível';
+
+                    itemDiv.innerHTML = `
+                        <div class="info">
+                            <p class="nome">${pagamento.clienteNome}</p>
+                            <p class="doc-id">ID: ${pagamento.id}</p>
+                            <p class="plano">${pagamento.planoNome || ''} - R$ ${Number(pagamento.valor || 0).toFixed(2)} ${metodoTag} - ${dataFormatada}</p>
+                        </div>
+                        <div class="acoes">
+                            <button class="btn-aprovar" data-id="${pagamento.id}">Aprovar</button>
+                        </div>
+                    `;
+                    listaPagamentosDiv.appendChild(itemDiv);
+                });
+            });
+        }
+
+        listaPagamentosDiv.addEventListener('click', async (e) => {
+            if (e.target && e.target.classList.contains('btn-aprovar')) {
+                const pagamentoId = e.target.dataset.id;
+                if (!confirm(`Tem certeza de que deseja aprovar este pagamento?`)) return;
+                
+                e.target.disabled = true;
+                e.target.textContent = 'Aprovando...';
+
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        // --- READS: executar todas as leituras primeiro ---
+                        const pagRef = doc(db, "pagamentosPendentes", pagamentoId);
+                        const pagDoc = await transaction.get(pagRef);
+                        if (!pagDoc.exists()) throw new Error("Documento do pagamento não existe mais.");
+                        const dadosPagamento = pagDoc.data();
+
+                        const clienteRef = doc(db, `empresarios/${dadosPagamento.empresaId}/clientes/${dadosPagamento.clienteId}`);
+                        const clienteSnap = await transaction.get(clienteRef);
+
+                        // Ler o plano DENTRO da transação (leitura antes de qualquer escrita)
+                        const planoRef = doc(db, `empresarios/${dadosPagamento.empresaId}/planosDeAssinatura/${dadosPagamento.planoId}`);
+                        const planoSnap = await transaction.get(planoRef);
+                        const servicosPlano = planoSnap.exists() ? (Array.isArray(planoSnap.data().servicosInclusos) ? planoSnap.data().servicosInclusos : []) : [];
+
+                        // --- WRITES: agora que todas as leituras foram feitas, podemos escrever ---
+                        if (!clienteSnap.exists()) {
+                            transaction.set(clienteRef, {
+                                nome: dadosPagamento.clienteNome,
+                                email: dadosPagamento.clienteEmail || null,
+                                dataCadastro: serverTimestamp(),
+                            });
+                        }
+                        
+                        const dataInicio = new Date();
+                        const dataFim = new Date(dataInicio);
+                        dataFim.setMonth(dataFim.getMonth() + 1);
+
+                        // Prepara serviços para a assinatura: quantidadeRestante baseado no plano (0 = ilimitado)
+                        const servicosParaAssinatura = servicosPlano.map(s => ({
+                            servicoId: s.servicoId,
+                            nomeServico: s.nomeServico || s.nome || '',
+                            quantidadeRestante: (typeof s.quantidade === 'number') ? s.quantidade : 0
+                        }));
+
+                        const novaAssinaturaRef = doc(collection(clienteRef, "assinaturas"));
+                        
+                        // Monta objeto da assinatura incluindo servicosInclusos com quantidadeRestante
+                        const assinaturaObj = {
+                            empresaId: dadosPagamento.empresaId,
+                            planoId: dadosPagamento.planoId,
+                            planoNome: (planoSnap.exists() ? planoSnap.data().nome : dadosPagamento.planoNome) || dadosPagamento.planoNome || null,
+                            status: "ativo",
+                            dataInicio: Timestamp.fromDate(dataInicio),
+                            dataFim: Timestamp.fromDate(dataFim),
+                            pagamentoId: pagamentoId,
+                            dataCriacao: serverTimestamp(),
+                            servicosInclusos: servicosParaAssinatura
+                        };
+
+                        // Grava assinatura e marca pagamento como aprovado em uma única transação
+                        transaction.set(novaAssinaturaRef, assinaturaObj);
+                        transaction.update(pagRef, { status: "aprovado", assinaturaId: novaAssinaturaRef.id, aprovadoEm: serverTimestamp() });
+                    });
+
+                    // Após transação bem-sucedida, cria uma notificação para o dono (fora da transação)
+                    try {
+                        const pagamentoSnap = await getDoc(doc(db, "pagamentosPendentes", pagamentoId));
+                        const dadosPagamento = pagamentoSnap.exists() ? pagamentoSnap.data() : null;
+                        if (dadosPagamento && dadosPagamento.empresaId) {
+                            const empresaSnap = await getDoc(doc(db, `empresarios/${dadosPagamento.empresaId}`));
+                            const donoId = empresaSnap.exists() ? empresaSnap.data().donoId : null;
+                            if (donoId) {
+                                await addDoc(collection(db, "filaDeNotificacoes"), {
+                                    donoId,
+                                    tipo: 'ASSINATURA_ATIVADA',
+                                    titulo: 'Assinatura ativada',
+                                    mensagem: `Assinatura ${dadosPagamento.planoNome || ''} ativada para ${dadosPagamento.clienteNome || ''}.`,
+                                    lido: false,
+                                    dataCriacao: serverTimestamp()
+                                });
+                            }
+                        }
+                    } catch (notifyErr) {
+                        console.warn("Não foi possível criar notificação após aprovação:", notifyErr);
+                    }
+
+                    // opcional: atualizar UI (o onSnapshot cuidará de remover o item)
+                } catch (error) {
+                    console.error("Erro ao aprovar pagamento:", error);
+                    alert('Falha ao aprovar o pagamento: ' + (error.message || error));
+                    e.target.disabled = false;
+                    e.target.textContent = 'Aprovar';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

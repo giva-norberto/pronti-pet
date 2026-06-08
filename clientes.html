@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronti - Meus Clientes</title>
+    <!-- Fontes e Ícones -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        :root {
+            --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            --primary-color: #4f46e5;
+            --card-bg: #fff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 8px 24px rgba(44,54,80,0.12);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-primary);
+            color: var(--text-main);
+            display: flex;
+        }
+        .main-content {
+            margin-left: 270px;
+            padding: 32px;
+            flex-grow: 1;
+            min-height: 100vh;
+            max-width: 960px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .page-header .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(44,54,80,0.08);
+        }
+        .page-header .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        /* CARD PADRÃO PRONTI */
+        .dashboard-cards {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 26px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 28px 21px 18px 21px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 130px;
+            position: relative;
+            border: 2px solid var(--border-color);
+            transition: box-shadow 0.18s, border-color 0.18s;
+        }
+        .card:hover {
+            box-shadow: 0 12px 36px rgba(44,54,80,0.17);
+            border-color: #6366f1;
+        }
+        .card-title {
+            font-size: 1.24rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 2px;
+            letter-spacing: 0.012em;
+        }
+        .card-info {
+            margin-bottom: 6px;
+        }
+        .card-info p {
+            margin: 0 0 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 1em;
+            color: var(--text-secondary);
+        }
+        .card-info i {
+            color: var(--primary-color);
+            font-size: 1.07em;
+        }
+        .card-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 13px;
+        }
+        .btn-edit, .btn-remove {
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 22px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            transition: background 0.18s, color 0.18s;
+        }
+        .btn-edit {
+            background: #4f46e5;
+            color: #fff;
+        }
+        .btn-edit:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+        .btn-remove {
+            background: #ef4444;
+            color: #fff;
+        }
+        .btn-remove:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center;
+            align-items: center; z-index: 9999; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.ativo { display: flex; opacity: 1; }
+        .modal-card {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.25); text-align: center;
+            max-width: 420px; width: 90%;
+        }
+        .modal-botoes { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn { padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; border: 1.5px solid var(--border-color); }
+        .btn-remove { background-color: #ef4444; color: white; border: none; }
+
+        /* RESPONSIVO */
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .page-header { flex-direction: column; align-items: stretch; }
+            .page-header-actions { justify-content: stretch; }
+        }
+        @media (max-width: 650px) {
+            .main-content { padding: 8px; }
+            .dashboard-cards { grid-template-columns: 1fr; gap: 18px; }
+            .card { padding: 15px 7px; min-height: 86px; }
+            .card-title { font-size: 1.08rem; }
+            .card-actions { gap: 7px; }
+            .btn-edit, .btn-remove { font-size: 0.97rem; padding: 8px 10px;}
+        }
+        @media (max-width: 400px) {
+            .card { padding: 7px 2px; min-height: 54px; }
+            .card-title { font-size: 0.93rem; }
+            .btn-edit, .btn-remove { font-size: 0.89rem; padding: 6px 7px;}
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Meus Clientes</h1>
+
+            <div class="page-header-actions">
+                <a href="https://prontiapp.com.br/index.html" class="btn btn-primary">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Voltar
+                </a>
+
+                <a href="clientes-retorno.html" class="btn btn-primary">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Clientes para Retorno
+                </a>
+
+                <a href="novo-cliente.html" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i>
+                    Cadastrar Novo Cliente
+                </a>
+            </div>
+        </div>
+
+        <div id="lista-clientes" class="dashboard-cards">
+            <!-- Os cards dos clientes serão carregados aqui pelo clientes.js -->
+        </div>
+    </main>
+
+    <!-- MODAL DE CONFIRMAÇÃO -->
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="modal-titulo">Confirmar Exclusão</h3>
+            <p id="modal-mensagem">Você tem certeza que deseja excluir este cliente?</p>
+            <div class="modal-botoes" style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                <button id="btn-modal-cancelar" class="btn">Cancelar</button>
+                <button id="btn-modal-confirmar" class="btn btn-remove">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { verificarAcesso } from './userService.js'; 
+        async function carregarMenu(papelUsuario) {
+            try {
+                const response = await fetch('menu-lateral.html');
+                if (!response.ok) throw new Error('menu-lateral.html não encontrado');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) {
+                    await menuModule.ativarMenuLateral(papelUsuario);
+                }
+            } catch (error) {
+                console.error("Falha ao carregar o menu lateral:", error);
+            }
+        }
+        async function inicializarPagina() {
+            try {
+                const sessao = await verificarAcesso();
+                if (!sessao || !sessao.user) {
+                    return;
+                }
+                let papelUsuario = sessao.papeis || [];
+                if (papelUsuario.length === 0) {
+                    if(sessao.isAdmin) papelUsuario.push('admin');
+                    if(sessao.isOwner) papelUsuario.push('dono');
+                    if(papelUsuario.length === 0) papelUsuario.push('funcionario');
+                }
+                await carregarMenu(papelUsuario);
+            } catch (error) {
+                console.error("Erro crítico ao inicializar a página de clientes:", error);
+                document.querySelector('.main-content').innerHTML = '<h1>Ocorreu um erro</h1><p>Não foi possível carregar a página. Tente novamente.</p>';
+            }
+        }
+        inicializarPagina();
+    </script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="clientes.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronti - Minha Agenda</title>
+    <!-- Google Fonts e Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        :root {
+            --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            --primary-color: #4f46e5;
+            --danger-color: #ef4444;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-primary);
+            color: var(--text-main);
+            display: flex;
+        }
+        .main-content {
+            margin-left: 270px;
+            padding: 32px;
+            flex-grow: 1;
+            min-height: 100vh;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .btn-pronti {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-pronti:hover {
+            background-color: #4338ca;
+        }
+        .btn-ausencia {
+            background-color: var(--danger-color) !important;
+            color: white !important;
+            border: none;
+        }
+        .btn-ausencia:hover {
+            background-color: #dc2626 !important;
+        }
+        .filtros-agenda {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background-color: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-outline:hover {
+            background-color: #f8fafc;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .filtro-item { display: flex; flex-direction: column; gap: 4px; }
+        .filtro-item label { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); }
+        .filtro-input, .filtro-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background-color: #f8fafc;
+        }
+        .btn-light {
+            background-color: #f1f5f9;
+            color: var(--text-secondary);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background-color: #334155;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #legenda-container {
+            margin: 16px 0;
+            padding: 10px 16px;
+            font-size: 0.95em;
+            color: #fff;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        #filtros-historico {
+            display: none;
+            background-color: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        #lista-agendamentos {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        #agendamentos-placeholder {
+            color: #fff;
+            font-weight: 500;
+            text-align: center;
+            padding: 40px;
+        }
+        .agendamento-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+        .modal-overlay {
+            position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center;
+            align-items: center; z-index: 9999; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.ativo { display: flex; opacity: 1; }
+        .modal-card {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.25); text-align: center;
+            max-width: 420px; width: 90%;
+        }
+        .modal-botoes { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn { padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; border: 1.5px solid var(--border-color); }
+        .btn-remove { background-color: #ef4444; color: white; border: none; }
+        #agenda-livre-container {
+            margin-top: 16px;
+        }
+        .agenda-livre-prof-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .agenda-livre-prof-titulo {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+        .agenda-livre-horario-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .agenda-livre-horario {
+            padding: 7px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+            font-size: 0.98em;
+            margin-bottom: 6px;
+        }
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .page-header, .filtros-agenda { flex-direction: column; align-items: stretch; }
+            .agenda-livre-horario-lista { gap: 7px; }
+            .agenda-livre-prof-card { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Minha Agenda</h1>
+            <a href="novo-agendamento.html" class="btn btn-pronti" id="btn-novo-agendamento">
+                <i class="fa-solid fa-plus"></i>
+                Novo Agendamento
+            </a>
+        </div>
+        <div class="filtros-agenda" id="filtros-agenda">
+            <button id="btn-agenda-dia" class="btn btn-outline active">
+                <i class="fa-solid fa-calendar-day"></i> Agenda do Dia
+            </button>
+            <button id="btn-agenda-semana" class="btn btn-outline">
+                <i class="fa-solid fa-calendar-week"></i> Agenda da Semana
+            </button>
+            <button id="btn-historico" class="btn btn-outline">
+                <i class="fa-solid fa-clock-rotate-left"></i> Histórico
+            </button>
+            <button id="btn-agenda-livre" class="btn btn-outline">
+                <i class="fa-regular fa-calendar-check"></i> Agenda Livre
+            </button>
+            <div id="filtros-semana-container" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div class="filtro-item">
+                    <label for="data-semana">Data</label>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="date" id="data-semana" class="filtro-input">
+                        <button id="btn-semana-proxima" class="btn btn-light" title="Próxima semana">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="filtro-item" id="filtro-profissional-item">
+                    <label for="filtro-profissional">Profissional</label>
+                    <select id="filtro-profissional" class="filtro-select"></select>
+                </div>
+            </div>
+        </div>
+        <div id="legenda-container" style="display: none;">
+            <small id="legenda-semana">
+                Mostrando agendamentos de <span id="semana-inicio"></span> a <span id="semana-fim"></span>
+            </small>
+        </div>
+        <div id="filtros-historico">
+            <div class="filtro-item">
+                <label for="data-inicial">De:</label>
+                <input type="date" id="data-inicial" class="filtro-input">
+            </div>
+            <div class="filtro-item">
+                <label for="data-final">Até:</label>
+                <input type="date" id="data-final" class="filtro-input">
+            </div>
+            <button id="btn-aplicar-historico" class="btn btn-secondary">
+                <i class="fa-solid fa-filter"></i> Aplicar
+            </button>
+            <button id="btn-mes-atual" class="btn btn-light">
+                <i class="fa-solid fa-calendar"></i> Mês Atual
+            </button>
+        </div>
+        <div id="lista-agendamentos" class="dashboard-cards">
+            <p id="agendamentos-placeholder">A carregar agendamentos...</p>
+        </div>
+        <div id="agenda-livre-container" style="display:none;"></div>
+    </main>
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="modal-titulo">Confirmar Ação</h3>
+            <p id="modal-mensagem">Você tem certeza que deseja continuar?</p>
+            <div class="modal-botoes">
+                <button id="btn-modal-cancelar" class="btn">Cancelar</button>
+                <button id="btn-modal-confirmar" class="btn btn-remove">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        import { verificarAcesso } from './userService.js';
+        import { getProfissionaisDaEmpresa, getHorariosDoProfissional } from './vitrini-profissionais.js';
+        import { buscarAgendamentosDoDia, calcularSlotsDisponiveis, encontrarPrimeiraDataComSlots } from './vitrini-agendamento.js';
+
+        async function carregarMenu(papelUsuario) {
+            try {
+                const response = await fetch('menu-lateral.html');
+                if (!response.ok) throw new Error('menu-lateral.html não encontrado');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) {
+                    await menuModule.ativarMenuLateral(papelUsuario);
+                }
+            } catch (error) {
+                console.error("Falha ao carregar o menu lateral:", error);
+            }
+        }
+
+        async function inicializarPagina() {
+            try {
+                const sessao = await verificarAcesso();
+                if (!sessao || !sessao.user) return;
+                let papelUsuario = sessao.papeis || [];
+                if (papelUsuario.length === 0) {
+                    if(sessao.isAdmin) papelUsuario.push('admin');
+                    if(sessao.isOwner) papelUsuario.push('dono');
+                    if(papelUsuario.length === 0) papelUsuario.push('funcionario');
+                }
+                await carregarMenu(papelUsuario);
+                configurarAbasAgendaLivre(sessao.empresaId);
+            } catch (error) {
+                document.querySelector('.main-content').innerHTML = '<h1>Ocorreu um erro</h1><p>Não foi possível carregar a página. Tente novamente.</p>';
+            }
+        }
+        inicializarPagina();
+
+        function ocultarTodasAbasAgenda() {
+            document.getElementById('lista-agendamentos').style.display = 'none';
+            document.getElementById('filtros-semana-container').style.display = 'none';
+            document.getElementById('filtros-historico').style.display = 'none';
+            document.getElementById('legenda-container').style.display = 'none';
+            document.getElementById('agenda-livre-container').style.display = 'none';
+        }
+        function setActiveAba(btnId) {
+            document.querySelectorAll('.filtros-agenda .btn-outline').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+        function exibirAbaAgendaDia() {
+            ocultarTodasAbasAgenda();
+            setActiveAba('btn-agenda-dia');
+            document.getElementById('lista-agendamentos').style.display = 'flex';
+            document.getElementById('filtros-semana-container').style.display = '';
+            document.getElementById('legenda-container').style.display = '';
+        }
+        function exibirAbaAgendaLivre() {
+            ocultarTodasAbasAgenda();
+            setActiveAba('btn-agenda-livre');
+            document.getElementById('agenda-livre-container').style.display = '';
+            carregarAgendaLivre();
+        }
+        function configurarAbasAgendaLivre(empresaId) {
+            document.getElementById('btn-agenda-dia').addEventListener('click', exibirAbaAgendaDia);
+            document.getElementById('btn-agenda-semana').addEventListener('click', function () {
+                ocultarTodasAbasAgenda();
+                setActiveAba('btn-agenda-semana');
+                document.getElementById('lista-agendamentos').style.display = 'flex';
+                document.getElementById('filtros-semana-container').style.display = '';
+                document.getElementById('legenda-container').style.display = '';
+            });
+            document.getElementById('btn-historico').addEventListener('click', function () {
+                ocultarTodasAbasAgenda();
+                setActiveAba('btn-historico');
+                document.getElementById('filtros-historico').style.display = 'flex'; // <----- CORRIGIDO!
+            });
+            document.getElementById('btn-agenda-livre').addEventListener('click', exibirAbaAgendaLivre);
+            exibirAbaAgendaDia();
+
+            // CORREÇÃO 2: Mês Atual sempre preenche os campos e dispara o filtro
+            document.getElementById('btn-mes-atual').addEventListener('click', function () {
+                var hoje = new Date();
+                var primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                var ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                document.getElementById('data-inicial').value = primeiroDia.toISOString().slice(0,10);
+                document.getElementById('data-final').value = ultimoDia.toISOString().slice(0,10);
+                document.getElementById('btn-aplicar-historico').click();
+            });
+
+            // CORREÇÃO 3: Botão aplicar histórico dispara o evento [requisito de UX]
+            document.getElementById('btn-aplicar-historico').addEventListener('click', function () {
+                // Aqui só dispara evento e espera a função do backend (agenda.js)
+            });
+        }
+
+        async function carregarAgendaLivre() {
+            const container = document.getElementById('agenda-livre-container');
+            container.innerHTML = '<p style="padding:18px;">Carregando horários livres...</p>';
+            let empresaId = null;
+            try {
+                const sessao = await verificarAcesso();
+                empresaId = sessao.empresaId || sessao.clinicaId;
+                if (!empresaId) {
+                    container.innerHTML = '<p style="color:red;">Empresa não encontrada.</p>';
+                    return;
+                }
+                const profissionais = await getProfissionaisDaEmpresa(empresaId);
+                if (!profissionais || profissionais.length === 0) {
+                    container.innerHTML = '<p style="color:red;">Nenhum profissional disponível.</p>';
+                    return;
+                }
+                let html = '';
+                let duracaoSlot = 30;
+                for (const prof of profissionais) {
+                    const horariosTrabalho = await getHorariosDoProfissional(empresaId, prof.id);
+                    if (!horariosTrabalho) continue;
+                    let proxData = await encontrarPrimeiraDataComSlots(
+                        empresaId,
+                        { ...prof, horarios: horariosTrabalho },
+                        duracaoSlot
+                    );
+                    if (!proxData) {
+                        html += `
+                        <div class="agenda-livre-prof-card">
+                            <div class="agenda-livre-prof-titulo">${prof.nome}</div>
+                            <div class="agenda-livre-horario-lista">
+                                <div class="agenda-livre-horario" style="background:#fee2e2;color:#991b1b;">
+                                    Nenhum horário livre nos próximos dias
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                        continue;
+                    }
+                    const agendamentosDoDia = await buscarAgendamentosDoDia(empresaId, proxData);
+                    const agendamentosProfissional = agendamentosDoDia.filter(agd => agd.profissionalId === prof.id);
+                    const slotsDisponiveis = calcularSlotsDisponiveis(
+                        proxData,
+                        agendamentosProfissional,
+                        horariosTrabalho,
+                        duracaoSlot
+                    );
+                    html += `
+                        <div class="agenda-livre-prof-card">
+                            <div class="agenda-livre-prof-titulo">
+                                ${prof.nome} &ndash; <span style="font-size:0.95em;font-weight:normal;">${proxData.split('-').reverse().join('/')}</span>
+                            </div>
+                            <div class="agenda-livre-horario-lista">
+                                ${
+                                    slotsDisponiveis.length > 0 ?
+                                    slotsDisponiveis.map(h => `<div class="agenda-livre-horario">${h}</div>`).join('')
+                                    : '<div class="agenda-livre-horario" style="background:#fee2e2;color:#991b1b;">Nenhum horário livre</div>'
+                                }
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html || '<p style="padding:18px;">Nenhum horário livre encontrado nos próximos 90 dias.</p>';
+            } catch (err) {
+                container.innerHTML = `<p style="padding:12px;color:red;">Erro ao carregar agenda livre: ${err.message||err}</p>`;
+            }
+        }
+    </script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script type="module" src="agenda.js"></script>
+</body>
+</html>

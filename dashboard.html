@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Inteligente - Pronti</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --gradient: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+            --card-bg: #fff;
+            --text-main: #21243d;
+            --text-secondary: #71717a;
+            --border: #e0e7ff;
+            --shadow: 0 6px 32px 0 rgba(99,102,241,0.05), 0 1.5px 6px 0 rgba(99,102,241,0.06);
+        }
+
+        /* Base & fixes gerais */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        body {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: var(--text-main);
+            display: flex;
+            /* evita flicker até carregar os dados */
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s;
+            width: 100%;
+        }
+        body.loaded {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+
+        /* Sidebar */
+        #menu-container {
+            width: 250px;
+            min-width: 250px;
+            flex-shrink: 0;
+            /* garantir que ocupa a altura total */
+            min-height: 100vh;
+        }
+
+        /* Main centered container */
+        .dashboard-main {
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto; /* centraliza horizontalmente */
+            padding: 32px 18px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+            background-color: rgba(255,255,255,0.95);
+            padding: 16px 24px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+        }
+        .dashboard-header h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .date-filter input[type="date"] {
+            padding: 10px 14px;
+            border-radius: 9px;
+            border: 1.5px solid var(--border);
+            font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .main-cards, .side-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 28px 22px 23px 22px;
+            border: 2px solid var(--primary);
+        }
+
+        .card-title {
+            margin: 0 0 13px 0;
+            font-size: 1.13rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-main-value {
+            font-size: 2.45rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            min-height: 44px;
+        }
+
+        .card-sub-value {
+            font-size: 1.03rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .resumo-card { border: 2px solid var(--primary); }
+        .resumo-card .card-title { color: var(--primary); }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 4px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .erro {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 14px;
+            color: #c00;
+            font-weight: 600;
+        }
+
+        /* RESPONSIVIDADE: esconder sidebar e centralizar main em telas pequenas */
+        @media (max-width: 992px) {
+            /* oculta o menu lateral (mesma lógica que você já usou nos outros arquivos) */
+            #menu-container { display: none; width: 0; min-width: 0; }
+            /* garante que o main ocupe toda a largura e fique centralizado */
+            .dashboard-main {
+                padding: 18px 16px;
+                max-width: 980px;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .kpi-row { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Ajustes para telas muito pequenas — deixa o conteúdo visualmente centralizado e legível */
+        @media (max-width: 420px) {
+            .dashboard-main { padding: 12px; }
+            .dashboard-header { padding: 12px; }
+            .dashboard-header h1 { font-size: 1.25rem; }
+            .card { padding: 16px; border-radius: 12px; }
+            .kpi-row { gap: 12px; }
+            .card-main-value { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+
+    <main class="dashboard-main">
+        <div class="dashboard-header">
+            <h1>Painel Inteligente</h1>
+            <div class="dashboard-actions">
+                <div class="date-filter">
+                    <input type="date" id="filtro-data">
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-grid">
+            <div class="main-cards">
+                <div class="kpi-row">
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-dollar-sign"></i> Faturamento (Dia)</div>
+                        <div class="card-main-value" id="faturamento-realizado"><span class="loading-spinner"></span></div>
+                        <div class="card-sub-value">Previsto: <span id="faturamento-previsto">--</span></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-calendar-check"></i> Agendamentos (Dia)</div>
+                        <div class="card-main-value" id="total-agendamentos-dia"><span class="loading-spinner"></span></div>
+                        <div class="card-sub-value"><span id="agendamentos-pendentes">--</span> pendentes</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-chart-line"></i> Faturamento (Mês)</div>
+                        <div class="card-main-value" id="faturamento-mensal"><span class="loading-spinner"></span></div>
+                        <div class="card-sub-value"><span id="agendamentos-mes">--</span> agendamentos</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-chart-simple"></i> Serviços mais vendidos (Mês)</div>
+                    <div id="grafico-container" style="position: relative; min-height: 320px;">
+                        <canvas id="servicos-mais-vendidos"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="side-cards">
+                <div class="card resumo-card">
+                    <div class="card-title"><i class="fa-solid fa-lightbulb"></i> Resumo Inteligente</div>
+                    <div id="resumo-inteligente">
+                        <span class="loading-spinner"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { verificarAcesso } from './userService.js';
+        import { inicializarDashboard } from './dashboard.js';
+
+        async function carregarMenu(papelUsuario ) {
+            try {
+                const response = await fetch('menu-lateral.html');
+                if (!response.ok) throw new Error('menu-lateral.html não encontrado');
+                document.getElementById('menu-container').innerHTML = await response.text();
+
+                try {
+                  const menuModule = await import('./menu-lateral.js');
+                  if (menuModule.ativarMenuLateral) {
+                      await menuModule.ativarMenuLateral(papelUsuario);
+                  }
+                } catch (e) {
+                  console.debug('menu-lateral.js não encontrado ou sem ativarMenuLateral');
+                }
+            } catch (error) {
+                console.error("Falha ao carregar o menu lateral:", error);
+            }
+        }
+
+        async function inicializarPagina() {
+            try {
+                const sessao = await verificarAcesso();
+                if (!sessao || !sessao.user) return;
+
+                let papelUsuario = sessao.papeis || [];
+                if (papelUsuario.length === 0) {
+                    if (sessao.isOwner) papelUsuario.push('dono');
+                    else if (sessao.isAdmin) papelUsuario.push('admin');
+                    else papelUsuario.push('funcionario');
+                }
+                if (!Array.isArray(papelUsuario)) papelUsuario = [papelUsuario];
+
+                await carregarMenu(papelUsuario);
+                await inicializarDashboard(sessao);
+            } catch (error) {
+                console.error("Erro crítico ao inicializar a página do dashboard:", error);
+                document.querySelector('.dashboard-main').innerHTML = '<p class="erro">Ocorreu um erro crítico. Tente recarregar a página.</p>';
+            } finally {
+                document.body.classList.add('loaded');
+            }
+        }
+
+        inicializarPagina();
+    </script>
+</body>
+</html>

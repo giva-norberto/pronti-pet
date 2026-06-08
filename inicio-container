@@ -1,0 +1,149 @@
+/* ================================
+   Estilos exclusivos do DASHBOARD
+   (Home / index.html do Pronti)
+   ================================ */
+
+/* Container centralizado só na home */
+.inicio-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+  background: none; /* não sobrescreve o bg do body */
+  box-sizing: border-box;
+}
+
+/* Card principal bonito */
+.dashboard-card {
+  background: rgba(255,255,255,0.97);
+  border-radius: 28px;
+  box-shadow: 0 8px 40px #b2b2f855;
+  max-width: 510px;
+  width: 100%;
+  padding: 32px 28px 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  box-sizing: border-box;
+}
+
+.dashboard-header h1 {
+  font-size: 2em;
+  font-weight: 800;
+  margin-bottom: 4px;
+  color: #22223b;
+}
+
+.dashboard-header p {
+  font-size: 1.09em;
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+.dashboard-summaries {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.summary-card {
+  background: #f7f8fe;
+  border-radius: 17px;
+  box-shadow: 0 2px 12px #6ea8fa12;
+  padding: 16px 18px;
+  min-width: 90px;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.summary-card i {
+  font-size: 1.6em;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.summary-number {
+  font-size: 1.35em;
+  font-weight: 700;
+  color: #22223b;
+  display: block;
+}
+
+.summary-label {
+  font-size: 0.95em;
+  color: #64748b;
+  display: block;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 11px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 1 1 0;
+  padding: 13px 0;
+  border-radius: 14px;
+  font-size: 1em;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 8px #6366f120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background 0.13s, box-shadow 0.12s, transform 0.12s;
+}
+
+.action-btn.blue { background: #e0f2fe; color: #2563eb; }
+.action-btn.green { background: #d1fae5; color: #059669; }
+.action-btn.yellow { background: #fef3c7; color: #b45309; }
+.action-btn:hover { filter: brightness(1.08); transform: translateY(-2px) scale(1.04); }
+
+.dashboard-news {
+  margin-top: 8px;
+}
+
+.dashboard-news h2 {
+  font-size: 1.08em;
+  font-weight: 700;
+  color: #3730a3;
+  margin-bottom: 7px;
+}
+
+.news-card {
+  background: #f4f8ff;
+  border-radius: 10px;
+  padding: 11px 13px;
+  box-shadow: 0 1px 6px #b2b2f822;
+  font-size: 0.98em;
+  color: #334155;
+}
+
+.news-card strong { font-weight: 700; color: #2563eb; display: block; margin-bottom: 2px; }
+
+/* Responsivo para mobile */
+@media (max-width: 600px) {
+  .inicio-container {
+    padding: 0 2vw;
+  }
+  .dashboard-card {
+    padding: 14px 3vw 12px 3vw;
+    border-radius: 13px;
+    gap: 14px;
+    max-width: 98vw;
+  }
+  .dashboard-header h1 { font-size: 1.14em; }
+  .dashboard-summaries { flex-direction: column; gap: 6px; }
+  .dashboard-actions { flex-direction: column; gap: 7px; }
+  .action-btn { font-size: 0.98em; }
+}

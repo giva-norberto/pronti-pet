@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro/Perfil Funcionário</title>
+    <link rel="stylesheet" href="modal-perfil-profissional.css">
+</head>
+<body>
+    <!-- Modal de Perfil do Profissional (conteúdo completo necessário para o JS funcionar) -->
+    <div id="modal-perfil-profissional" class="modal show">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="perfil-nome-profissional">👤 Perfil do Profissional</h2>
+                <p>Configure seus serviços e horários de atendimento</p>
+            </div>
+            <div class="tabs">
+                <button id="tab-servicos" class="tab-btn active">Serviços</button>
+                <button id="tab-horarios" class="tab-btn">Horários & Intervalos</button>
+                <button id="tab-agenda-especial" class="tab-btn">Agenda Especial</button>
+            </div>
+            <div id="tab-content-servicos" class="tab-content active">
+                <h3>🛠️ Serviços Disponíveis</h3>
+                <p style="color: #7f8c8d; margin-bottom: 15px;">Selecione os serviços que você pode realizar:</p>
+                <div id="servicos-lista" class="servicos-grid">
+                    <!-- Serviços serão carregados aqui -->
+                </div>
+            </div>
+            <div id="tab-content-horarios" class="tab-content">
+                <h3>🕐 Horários de Atendimento</h3>
+                <p style="color: #7f8c8d; margin-bottom: 12px;">Configure seus horários e intervalos de trabalho para cada dia da semana:</p>
+                <div class="form-group">
+                    <label for="intervalo-atendimento">Intervalo de Atendimento (min):</label>
+                    <input 
+                        type="number" 
+                        id="intervalo-atendimento" 
+                        name="intervalo-atendimento"
+                        class="form-control"
+                        min="5" 
+                        max="180" 
+                        step="5" 
+                        value="30"
+                        style="width:100px; margin-bottom:12px;"
+                    >
+                </div>
+                <div id="horarios-lista" class="horarios-grid">
+                    <!-- Horários serão carregados aqui -->
+                </div>
+            </div>
+            <div id="tab-content-agenda-especial" class="tab-content">
+                <h3>📅 Agenda Especial</h3>
+                <p style="color: #7f8c8d; margin-bottom: 10px;">
+                    Libere sua agenda em um mês ou intervalo específico.
+                </p>
+                <div class="agenda-especial-area">
+                    <form id="form-agenda-especial">
+                        <label for="agenda-tipo">Tipo:</label>
+                        <select id="agenda-tipo" class="form-control" style="margin-bottom:10px;">
+                            <option value="mes">Mês</option>
+                            <option value="intervalo">Intervalo de datas</option>
+                        </select>
+                        <div id="agenda-mes-area" style="display:block;">
+                            <label for="agenda-mes">Mês:</label>
+                            <input type="month" id="agenda-mes" class="form-control">
+                        </div>
+                        <div id="agenda-intervalo-area" style="display:none;">
+                            <label for="agenda-inicio">De:</label>
+                            <input type="date" id="agenda-inicio" class="form-control">
+                            <label for="agenda-fim">Até:</label>
+                            <input type="date" id="agenda-fim" class="form-control">
+                        </div>
+                        <button type="button" id="btn-agenda-especial" class="btn btn-success" style="margin-top:12px;">
+                            💾 Liberar Agenda
+                        </button>
+                    </form>
+                    <div id="agenda-especial-lista" style="margin-top:18px;"></div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="btn-cancelar-perfil" class="btn btn-secondary">
+                    ❌ Cancelar
+                </button>
+                <button type="button" id="btn-salvar-perfil" class="btn btn-success">
+                    💾 Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import { abrirModalPerfilProfissional, buscarTodosServicosDaEmpresa, inicializarModalPerfil } from "./modal-perfil-profissional.js";
+      import { firebaseConfig } from "./firebase-config.js";
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Pega empresaId da URL (?empresaId=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const empresaId = urlParams.get('empresaId');
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user || !empresaId) {
+          window.location.href = "login.html";
+          return;
+        }
+        inicializarModalPerfil();
+
+        // Busca dados do próprio funcionário
+        const profRef = doc(db, "empresarios", empresaId, "profissionais", user.uid);
+        const profSnap = await getDoc(profRef);
+        if (!profSnap.exists()) {
+          // Se não existir, pode criar um objeto default ou forçar o preenchimento
+          abrirModalPerfilProfissional(
+            { id: user.uid, nome: user.displayName || "", servicos: [], horarios: {} },
+            await buscarTodosServicosDaEmpresa(db, empresaId),
+            db,
+            empresaId
+          );
+        } else {
+          abrirModalPerfilProfissional(
+            { id: user.uid, ...profSnap.data() },
+            await buscarTodosServicosDaEmpresa(db, empresaId),
+            db,
+            empresaId
+          );
+        }
+      });
+    </script>
+</body>
+</html>

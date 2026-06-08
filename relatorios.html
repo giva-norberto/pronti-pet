@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios - Pronti</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --cor-primaria: #4facfe;
+      --cor-sucesso: #34d399;
+      --cor-cinza: #6b7280;
+      --cor-texto-escuro: #22223b;
+      --cor-fundo-app: #f6f7fb;
+      --cor-azul-pronti: #4f46e5; /* azul padrão Pronti */
+    }
+
+    /* GLOBAL: evita estouros e garante comportamento previsível */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', Arial, sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100% );
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .main-relatorios {
+      max-width: 1100px;
+      width: 100%; /* Garante que ocupe a largura disponível */
+      margin: 28px auto 0 auto;
+      padding: 0;
+      min-height: 90vh;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 28px #4f46e525;
+      overflow: visible; /* permitir que elementos quebrem sem cortar */
+    }
+
+    /* TOP ACTIONS: botão voltar + abas */
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(90deg,#6366f1,#38bdf8 70%);
+      padding: 18px 18px 10px 18px;
+      border-radius: 18px 18px 0 0;
+      color: #fff;
+      gap: 12px;
+      flex-wrap: wrap; /* permite quebra em múltiplas linhas no mobile */
+    }
+
+    .btn-voltar {
+      background: #fff;
+      color: #6366f1;
+      border: none;
+      padding: 6px 16px 6px 10px;
+      border-radius: 8px;
+      font-size: 0.96em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #4f46e51c;
+      transition: background 0.17s, color 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 32px;
+      min-width: 64px;
+      white-space: nowrap;
+      flex: 0 0 auto; /* não deixa o botão crescer e empurrar as abas */
+    }
+    .btn-voltar:hover { background: #38bdf8; color: #fff; }
+    .btn-voltar .btn-text { display: inline; }
+
+    /* ABAS: roláveis e com encolhimento seguro */
+    .abas-container {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      border-bottom: 1.5px solid #e0e7ff;
+      background: transparent;
+      scrollbar-width: none;
+      align-items: flex-end;
+      flex: 1 1 auto;  /* permite ocupar espaço restante e encolher corretamente */
+      min-width: 0;    /* crítico para evitar overflow causado por flex children */
+      margin-left: 12px;
+    }
+    .abas-container::-webkit-scrollbar { display: none; }
+
+    .aba {
+      padding: 6px 14px;
+      font-size: 0.97em;
+      font-weight: 600;
+      border: none;
+      background: none;
+      color: #fff;
+      margin: 0;
+      border-radius: 7px 7px 0 0;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      min-width: 60px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      opacity: 0.87;
+      outline: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .aba:not(.active):hover {
+      background: #f1f4fa;
+      color: var(--cor-primaria);
+      opacity: 1;
+    }
+    .aba.active, .aba:focus {
+      background: #fff;
+      color: var(--cor-primaria);
+      font-weight: 800;
+      box-shadow: 0 -1px 9px #4f46e51a;
+      opacity: 1;
+      border-bottom: 2.5px solid var(--cor-primaria);
+    }
+
+    /* FILTROS */
+    .filtros-relatorios {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #f7fafd;
+      padding: 8px 14px;
+      border-radius: 0 0 13px 13px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+      border-bottom: 1.3px solid #e0e7ff;
+    }
+    .filtros-relatorios label {
+      font-weight: 600;
+      color: var(--cor-primaria);
+      margin-right: 3px;
+      font-size: 0.96em;
+    }
+    .filtros-relatorios input,
+    .filtros-relatorios select {
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1.1px solid #b3bcf7;
+      font-size: 0.95em;
+      outline: none;
+      min-width: 85px;
+      background: #fff;
+      color: #3730a3;
+      font-weight: 500;
+      transition: border 0.14s;
+    }
+    .filtros-relatorios input:focus,
+    .filtros-relatorios select:focus {
+      border: 1.3px solid var(--cor-primaria);
+      outline: none;
+    }
+    .filtros-relatorios button {
+      background: var(--cor-primaria);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.95em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 1px 4px #38bdf812;
+      transition: background 0.18s;
+      min-height: 30px;
+    }
+    .filtros-relatorios button:hover { background: #38bdf8; }
+
+    .conteudo-abas {
+      margin-top: 0;
+      padding-bottom: 32px;
+      background: #f7f8fa;
+      border-radius: 0 0 18px 18px;
+    }
+    .aba-conteudo {
+      display: none;
+      animation: fadeIn .22s;
+      background: #fff;
+      border-radius: 14px;
+      margin: 24px 10px 0 10px;
+      padding: 22px 8px 18px 8px;
+      min-height: 240px;
+      box-shadow: 0 2px 10px #4f46e510;
+      border: 1.3px solid #e0e7ff;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .aba-conteudo.active { display: block; }
+
+    /* TABELA */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 5px;
+      background: transparent;
+      font-size: 0.98em;
+    }
+    th, td {
+      text-align: left;
+      padding: 7px 6px;
+      font-size: 0.98em;
+      border: none;
+      background: #f3f4fc;
+    }
+    th {
+      background: #e0e7ff;
+      color: var(--cor-primaria);
+      font-weight: 700;
+      font-size: 1em;
+      border-radius: 7px 7px 0 0;
+      border-bottom: 2px solid #c7d2fe;
+    }
+    tr { border-radius: 5px; box-shadow: 0 1.2px 4px #4f46e508; }
+    tr:nth-child(even) td { background: #f7f8fa; }
+
+    @keyframes fadeIn { from { opacity: 0;} to { opacity: 1;} }
+
+    /* ADAPTAÇÕES MOBILE: mesma lógica que pediu (menus empilhados e resultado abaixo) */
+    @media (max-width: 900px) {
+      .main-relatorios { margin: 10px 8px 0 8px; padding: 0; border-radius: 8px; }
+      .top-actions, .filtros-relatorios { padding: 10px 8px; }
+      .top-actions { gap: 8px; }
+      .btn-voltar { padding: 6px 10px; font-size: 0.92em; }
+      .btn-voltar .btn-text { display: inline; }
+      .abas-container { margin-left: 8px; }
+      .aba { font-size: 0.92em; padding: 4px 8px; min-width: 44px; }
+      .filtros-relatorios { padding: 6px 8px; gap: 6px; }
+      .filtros-relatorios input, .filtros-relatorios select { min-width: 60px; padding: 5px 6px; font-size: 0.92em; }
+      .aba-conteudo { margin: 12px 6px; padding: 12px; border-radius: 8px; }
+    }
+
+    @media (max-width: 420px) {
+      .main-relatorios { margin: 8px; padding: 6px; min-height: calc(100vh - 12px); }
+      .top-actions { padding: 8px; gap: 6px; }
+      .btn-voltar { padding: 6px; }
+      .btn-voltar .btn-text { display: none; } /* esconde "Voltar" mantendo o ícone */
+      .abas-container { margin-left: 0; width: 100%; padding-bottom: 6px; }
+
+      /* fallback: transformar tabela em "cards" para visualização em telas muito estreitas */
+      .aba-conteudo table, .aba-conteudo thead, .aba-conteudo tbody,
+      .aba-conteudo th, .aba-conteudo td, .aba-conteudo tr {
+        display: block;
+      }
+      .aba-conteudo thead { display: none; }
+      .aba-conteudo tr { margin: 6px 0; padding: 8px; border-radius: 6px; border: 1px solid #eef6ff; background: #fff; }
+      .aba-conteudo td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px;
+        border: none;
+        border-bottom: 1px dashed #f0f3fb;
+        font-size: 0.9em;
+      }
+      .aba-conteudo td:last-child { border-bottom: none; }
+      .aba-conteudo td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #64748b;
+        margin-right: 6px;
+        flex: 0 0 42%;
+        font-size: 0.85em;
+      }
+    }
+
+    /* Proteções adicionais: garantir que imagens/tabelas não estouram */
+    img, iframe, table { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div id="page-content">
+    <main class="main-relatorios">
+      <div class="top-actions">
+        <button id="btn-voltar" class="btn-voltar">
+          <i class="fa fa-arrow-left" aria-hidden="true"></i>
+          <span class="btn-text">Voltar</span>
+        </button>
+
+        <nav class="abas-container" role="tablist" aria-label="Abas de relatórios">
+          <button class="aba active" data-aba="servicos"><i class="fa-solid fa-gears" aria-hidden="true"></i> Serviços</button>
+          <button class="aba" data-aba="profissionais"><i class="fa-solid fa-user-tie" aria-hidden="true"></i> Profissionais</button>
+          <button class="aba" data-aba="faturamento"><i class="fa-solid fa-coins" aria-hidden="true"></i> Faturamento</button>
+          <button class="aba" data-aba="clientes"><i class="fa-solid fa-user-group" aria-hidden="true"></i> Clientes</button>
+          <button class="aba" data-aba="agenda"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Agenda</button>
+          <button class="aba" data-aba="comissao"><i class="fa-solid fa-percent" aria-hidden="true"></i> Comissão</button>
+        </nav>
+      </div>
+
+      <header class="filtros-relatorios" role="region" aria-label="Filtros de relatórios">
+        <label for="filtro-data-inicio">Data Início:</label>
+        <input type="date" id="filtro-data-inicio">
+
+        <label for="filtro-data-fim">Data Fim:</label>
+        <input type="date" id="filtro-data-fim">
+
+        <label for="filtro-profissional">Profissional:</label>
+        <select id="filtro-profissional">
+          <option value="todos">Todos</option>
+        </select>
+
+        <button id="btn-aplicar-filtro"><i class="fa-solid fa-filter" aria-hidden="true"></i> Aplicar</button>
+      </header>
+
+      <section class="conteudo-abas" id="conteudo-abas">
+        <div class="aba-conteudo active" id="servicos" role="tabpanel"></div>
+        <div class="aba-conteudo" id="profissionais" role="tabpanel"></div>
+        <div class="aba-conteudo" id="faturamento" role="tabpanel"></div>
+        <div class="aba-conteudo" id="clientes" role="tabpanel"></div>
+        <div class="aba-conteudo" id="agenda" role="tabpanel"></div>
+        <div class="aba-conteudo" id="comissao" role="tabpanel"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { verificarAcesso } from './userService.js';
+    import { db } from './firebase-config.js';
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    async function inicializarPagina() {
+      try {
+        const sessao = await verificarAcesso();
+        if (!sessao || !sessao.user) return;
+
+        let papelUsuario = sessao.papeis || [];
+        if (papelUsuario.length === 0) {
+          if (sessao.isAdmin) papelUsuario.push('admin');
+          if (sessao.isOwner) papelUsuario.push('dono');
+          if (papelUsuario.length === 0) papelUsuario.push('funcionario');
+        }
+
+        const permissoesRef = doc(db, "configuracoesGlobais", "permissoes");
+        const permissoesSnap = await getDoc(permissoesRef);
+        const regras = permissoesSnap.exists() ? permissoesSnap.data() : {};
+
+        const podeVer = papelUsuario.some(papel => regras.relatorios && regras.relatorios[papel] === true);
+        if (!podeVer) {
+          document.getElementById('page-content').innerHTML = `
+            <div style="background: #fff; padding: 40px; border-radius: 12px; text-align: center; margin-top: 50px;">
+              <h1>Acesso Negado</h1>
+              <p>Você não tem permissão para acessar esta página.</p>
+              <button onclick="window.history.back()" style="margin-top: 20px; padding: 10px 20px; cursor: pointer;">Voltar</button>
+            </div>
+          `;
+          return;
+        }
+      } catch (error) {
+        console.error("Erro crítico ao inicializar a página de relatórios:", error);
+        document.getElementById('page-content').innerHTML = '<h1>Ocorreu um erro</h1><p>Não foi possível carregar a página. Tente novamente.</p>';
+      }
+    }
+
+    inicializarPagina();
+  </script>
+
+  <script src="relatorios.js" type="module"></script>
+
+  <script type="module">
+    import { verificarAcesso } from './userService.js';
+    import { db } from './firebase-config.js';
+    import {
+      collection, query, where, getDocs, doc, getDoc, orderBy, Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    const OK_STATUS = ['concluido','concluídos','concluidos','finalizado','finalizado','completed','done'];
+
+    function fmtBRL(v) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v || 0));
+    }
+
+    if (typeof window.safeVerificarAcesso === 'undefined') {
+      window.safeVerificarAcesso = async function(maxRetries = 6, baseDelayMs = 120) {
+        let attempt = 0;
+        while (attempt < maxRetries) {
+          try { return await verificarAcesso(); }
+          catch (err) {
+            const msg = (err && err.message) ? err.message.toString().toLowerCase() : '';
+            if (msg.includes('race condition') || msg.includes('race condition detectada')) {
+              attempt++;
+              const delay = baseDelayMs * attempt;
+              console.warn(`[comissao] verificarAcesso: retry ${attempt}/${maxRetries} em ${delay}ms`);
+              await new Promise(r => setTimeout(r, delay));
+              continue;
+            }
+            throw err;
+          }
+        }
+        throw new Error('safeVerificarAcesso: esgotadas tentativas por race condition.');
+      };
+    }
+    const safeVerificarAcesso = window.safeVerificarAcesso;
+
+    async function fetchConcludedAppointments(empresaId, fromDate, toDate) {
+      let fromTs = null, toTs = null;
+      try {
+        if (fromDate) fromTs = Timestamp.fromDate(new Date(fromDate + 'T00:00:00'));
+        if (toDate) {
+          const d = new Date(toDate + 'T23:59:59');
+          toTs = Timestamp.fromDate(d);
+        }
+      } catch (e) {
+        console.warn('[comissao] erro parse datas', e);
+      }
+
+      const candidates = ['agendamentos', 'agenda', 'bookings', 'appointments'];
+      for (const col of candidates) {
+        try {
+          const colRef = collection(db, col);
+          const filters = [ where('empresaId', '==', empresaId) ];
+          if (fromTs) filters.push(where('data', '>=', fromTs));
+          if (toTs) filters.push(where('data', '<=', toTs));
+          let q;
+          try {
+            q = query(colRef, ...filters, orderBy('data', 'desc'));
+          } catch (errQ) {
+            q = query(colRef, ...filters);
+          }
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const results = [];
+            snap.docs.forEach(d => {
+              const data = d.data();
+              const status = (data.status || data.estado || '').toString().toLowerCase();
+              const concluded = (status && OK_STATUS.includes(status)) || (typeof data.concluido !== 'undefined' && Boolean(data.concluido));
+              if (concluded) {
+                results.push({
+                  id: d.id,
+                  raw: data,
+                  preco: Number(data.preco || data.valor || data.price || data.fee || 0),
+                  profissionalId: data.profissionalId || data.profissional || data.employeeId || data.professionalId || null,
+                  serviceId: data.serviceId || data.servicoId || data.servico || data.service || null
+                });
+              }
+            });
+            return results;
+          }
+        } catch (err) {
+          console.warn('[comissao] fetch try', col, 'erro', err);
+        }
+      }
+      return [];
+    }
+
+    async function getProfessional(empresaId, profissionalId) {
+      if (!profissionalId) return null;
+      try {
+        const ref = doc(db, 'empresarios', empresaId, 'profissionais', profissionalId);
+        const snap = await getDoc(ref);
+        return snap && snap.exists() ? snap.data() : null;
+      } catch (err) {
+        console.warn('[comissao] getProfessional erro', err);
+        return null;
+      }
+    }
+
+    function calcCommissionForAppointment(preco, profData, serviceId) {
+      let commissionPct = 0;
+      if (profData) {
+        if (profData.comissaoPorServico && serviceId && typeof profData.comissaoPorServico[serviceId] !== 'undefined') {
+          commissionPct = Number(profData.comissaoPorServico[serviceId]) || 0;
+        } else if (typeof profData.comissaoPadrao === 'number') {
+          commissionPct = Number(profData.comissaoPadrao) || 0;
+        }
+      }
+      const employeeAmount = Number((preco * (commissionPct / 100)).toFixed(2));
+      const ownerAmount = Number((preco - employeeAmount).toFixed(2));
+      return { commissionPct, employeeAmount, ownerAmount };
+    }
+
+    function renderComissaoTable(aggregates, container) {
+      container.innerHTML = '';
+      if (!aggregates || aggregates.length === 0) {
+        container.innerHTML = '<div style="padding:18px;color:#6b7280">Nenhum dado para exibir no período selecionado.</div>';
+        return;
+      }
+
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      ['Profissional', 'Valor faturado', 'Comissão % (média ponderada)', 'Valor funcionário', 'Valor líquido (dono)'].forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        th.style.padding = '10px 8px';
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      let totalFaturado = 0, totalFuncionario = 0, totalLiquido = 0;
+
+      aggregates.forEach(row => {
+        totalFaturado += row.totalFaturado;
+        totalFuncionario += row.totalFuncionario;
+        totalLiquido += row.totalLiquido;
+
+        const tr = document.createElement('tr');
+        const cell = (txt) => {
+          const td = document.createElement('td');
+          td.textContent = txt;
+          td.style.padding = '8px';
+          return td;
+        };
+
+        tr.appendChild(cell(row.profissionalNome || '(sem nome)'));
+        tr.appendChild(cell(fmtBRL(row.totalFaturado)));
+        tr.appendChild(cell((row.avgCommissionPct || 0).toFixed(2) + ' %'));
+        tr.appendChild(cell(fmtBRL(row.totalFuncionario)));
+        tr.appendChild(cell(fmtBRL(row.totalLiquido)));
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+
+      const tfoot = document.createElement('tfoot');
+      const fr = document.createElement('tr');
+      fr.style.fontWeight = '700';
+      fr.style.background = '#f3f4fc';
+      const emptyTd = () => { const td = document.createElement('td'); td.style.padding = '8px'; return td; };
+      fr.appendChild(emptyTd());
+      const tdTotalFaturado = document.createElement('td'); tdTotalFaturado.textContent = fmtBRL(totalFaturado); tdTotalFaturado.style.padding='8px';
+      fr.appendChild(tdTotalFaturado);
+      fr.appendChild((() => { const td=document.createElement('td'); td.textContent='TOTAIS:'; td.style.padding='8px'; return td; })());
+      const tdTotalFuncionario = document.createElement('td'); tdTotalFuncionario.textContent = fmtBRL(totalFuncionario); tdTotalFuncionario.style.padding='8px';
+      fr.appendChild(tdTotalFuncionario);
+      const tdTotalLiquido = document.createElement('td'); tdTotalLiquido.textContent = fmtBRL(totalLiquido); tdTotalLiquido.style.padding='8px';
+      fr.appendChild(tdTotalLiquido);
+      tfoot.appendChild(fr);
+      table.appendChild(tfoot);
+
+      container.appendChild(table);
+    }
+
+    async function populateComissaoTab() {
+      try {
+        const sess = await safeVerificarAcesso();
+        if (!sess || !sess.empresaId) {
+          console.error('[comissao] sessão inválida');
+          return;
+        }
+        const empresaId = sess.empresaId;
+        const from = document.getElementById('filtro-data-inicio').value;
+        const to = document.getElementById('filtro-data-fim').value;
+        const profFilter = document.getElementById('filtro-profissional').value;
+
+        const container = document.getElementById('comissao');
+        container.innerHTML = '<div style="padding:16px;color:#6b7280">Carregando relatório de comissões...</div>';
+
+        const appts = await fetchConcludedAppointments(empresaId, from, to);
+
+        const map = new Map();
+        for (const a of appts) {
+          const pid = a.profissionalId || '(sem)';
+          if (profFilter && profFilter !== 'todos' && pid !== profFilter) continue;
+          const profData = await getProfessional(empresaId, pid);
+          const serviceId = a.serviceId;
+          const preco = Number(a.preco || 0);
+          const { commissionPct, employeeAmount, ownerAmount } = calcCommissionForAppointment(preco, profData, serviceId);
+
+          const cur = map.get(pid) || { totalFaturado:0, totalFuncionario:0, totalLiquido:0, profissionalNome: (profData && (profData.nome || profData.name)) || pid, commissionWeightSum:0 };
+          cur.totalFaturado += preco;
+          cur.totalFuncionario += employeeAmount;
+          cur.totalLiquido += ownerAmount;
+          cur.commissionWeightSum += employeeAmount;
+          map.set(pid, cur);
+        }
+
+        const aggregates = Array.from(map.entries()).map(([pid, v]) => {
+          const avgCommissionPct = v.totalFaturado > 0 ? (v.commissionWeightSum / v.totalFaturado) * 100 : 0;
+          return {
+            profissionalId: pid,
+            profissionalNome: v.profissionalNome,
+            totalFaturado: Number(v.totalFaturado.toFixed(2)),
+            totalFuncionario: Number(v.totalFuncionario.toFixed(2)),
+            totalLiquido: Number(v.totalLiquido.toFixed(2)),
+            avgCommissionPct: Number(avgCommissionPct.toFixed(2))
+          };
+        }).sort((a,b) => b.totalFaturado - a.totalFaturado);
+
+        renderComissaoTable(aggregates, container);
+      } catch (err) {
+        console.error('[comissao] erro populateComissaoTab', err);
+        const container = document.getElementById('comissao');
+        if (container) container.innerHTML = '<div style="padding:18px;color:#a00">Erro ao gerar relatório de comissões. Veja console.</div>';
+      }
+    }
+
+    window.populateComissaoTab = populateComissaoTab;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.aba').forEach(btn => {
+        if (btn.dataset.aba === 'comissao') {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.aba').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('active'));
+            const el = document.getElementById('comissao');
+            if (el) el.classList.add('active');
+            populateComissaoTab();
+          });
+        }
+      });
+
+      const btnAplicar = document.getElementById('btn-aplicar-filtro');
+      if (btnAplicar) {
+        btnAplicar.addEventListener('click', () => {
+          const active = document.querySelector('.aba.active');
+          if (active && active.dataset.aba === 'comissao') {
+            populateComissaoTab();
+          }
+        });
+      }
+    });
+  </script>
+
+  <script>
+    const btnVoltar = document.getElementById("btn-voltar");
+    if (btnVoltar) {
+      btnVoltar.addEventListener("click", () => {
+        window.history.back();
+      });
+    }
+
+    if (window.history.state === null || window.history.state.page !== "relatorios") {
+      window.history.pushState({ "page": "relatorios" }, "");
+    }
+    window.addEventListener('popstate', function() {
+      window.location.replace('index.html');
+    });
+  </script>
+</body>
+</html>

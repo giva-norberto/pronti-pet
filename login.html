@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Pronti IA</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <style>
+    :root {
+      --cor-fundo: linear-gradient(135deg, #1879d7 0%, #155799 100%);
+      --cor-primaria: #1879d7;
+      --cor-primaria-escuro: #155799;
+      --cor-branco: #fff;
+      --cor-texto-leve: #64748b;
+      --sombra-elevada: 0 8px 32px rgba(24, 121, 215, 0.18), 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;                                      
+      min-height: 100vh;
+      background: var(--cor-fundo);
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    } 
+
+    .login-card {
+      background-color: var(--cor-branco);
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: var(--sombra-elevada);
+      text-align: center;
+    }
+
+    .login-logo {
+      display: block;
+      margin: 0 auto 18px auto;
+      max-width: 120px;
+      height: auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(24,121,215,0.10);
+      padding: 6px 10px;
+    }
+
+    .login-card p {
+      color: var(--cor-texto-leve);
+      margin-bottom: 30px;
+    }
+
+    .login-subtitulo {
+      color: var(--cor-texto-leve);
+      margin-bottom: 24px;
+      line-height: 1.5;
+      font-size: 0.96em;
+    }
+
+    .info-teste {
+      background: #f0f7ff;
+      border: 1px solid #d7eaff;
+      border-radius: 12px;
+      padding: 16px 14px;
+      margin: 0 0 24px 0;
+      text-align: left;
+    }
+
+    .info-teste h3 {
+      margin: 0 0 10px 0;
+      color: var(--cor-primaria-escuro);
+      font-size: 1.05em;
+      text-align: center;
+    }
+
+    .info-teste p {
+      margin: 0;
+      color: #334155;
+      font-size: 0.93em;
+      line-height: 1.6;
+    }
+
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      font-weight: 600;
+      color: #333;
+      background-color: var(--cor-branco);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-google:hover {
+      background-color: #f8f8f8;
+      box-shadow: 0 2px 4px rgba(24,121,215,0.10);
+      border-color: #1879d7;
+    }
+
+    .btn-google img {
+      width: 20px;
+      height: 20px;
+    }
+
+    #login-status {
+      margin-top: 20px;
+      color: #d00;
+      font-size: 0.9em;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--cor-texto-leve);
+      margin: 20px 0;
+      font-size: 0.9em;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #eee;
+    }
+
+    .divider:not(:empty)::before { margin-right: .5em; }
+    .divider:not(:empty)::after { margin-left: .5em; }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1em;
+      background: #f8fbff;
+    }
+
+    .form-group input:focus {
+      border-color: var(--cor-primaria);
+      outline: none;
+      background: #e6f0fa;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      font-weight: 600;
+      color: var(--cor-branco);
+      background: linear-gradient(90deg, #1879d7 80%, #155799 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 16px rgba(24, 121, 215, 0.13);
+    }
+
+    .btn-login:hover {
+      background: linear-gradient(90deg, #155799 80%, #1879d7 100%);
+      opacity: 0.96;
+    }
+
+    .footer-links {
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+
+    .footer-links a {
+      color: var(--cor-primaria);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+      color: var(--cor-primaria-escuro);
+    }
+
+    .cadastro-chamada {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #eef2f7;
+      color: var(--cor-texto-leve);
+    }
+
+    .cadastro-chamada p {
+      margin: 0 0 10px 0;
+      color: var(--cor-texto-leve);
+      font-size: 0.92em;
+    }
+
+    .cadastro-chamada a {
+      display: inline-block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: #eaf4ff;
+      color: var(--cor-primaria-escuro);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .cadastro-chamada a:hover {
+      background: #dceeff;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      .login-card {
+        padding: 24px 8vw;
+      }
+
+      .login-container {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <img 
+        src="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/config%2Flogo-pronti-app.png?alt=media&token=9a9983d1-bee4-4549-b878-8d3060792674"
+        alt="Logo Pronti"
+        class="login-logo"
+      />
+
+      <p class="login-subtitulo">
+      Sistema para salões, estética e atendimento 💙<br>
+        Agenda online, equipe organizada, lembretes automáticos e clientes agendando sozinhos.
+      </p>
+
+      <div class="info-teste">
+        <h3>🚀 Teste grátis por 14 dias</h3>
+        <p>
+          ✅ Sem cartão de crédito<br>
+          ✅ Sem cobrança automática<br>
+          ✅ Configure seu salão em poucos minutos<br>
+          ✅ Cancele quando quiser, sem compromisso
+        </p>
+      </div>
+      
+      <button id="btn-login-google" class="btn-google" type="button">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Ícone do Google">
+        <span>Entrar com Google</span>
+      </button>
+
+      <div class="divider">ou</div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <input type="email" id="login-email" autocomplete="email" placeholder="E-mail" required>
+        </div>
+        <div class="form-group">
+          <input type="password" id="login-senha" autocomplete="current-password" placeholder="Senha" required>
+        </div>
+        <button type="submit" class="btn-login">Entrar</button>
+      </form>
+
+      <div id="login-status"></div>
+      
+      <div class="footer-links">
+        <a href="recuperar-senha.html">Esqueci minha senha</a>
+
+        <div class="cadastro-chamada">
+          <p>Ainda não usa o Pronti?</p>
+          <a href="./cadastro.html">Criar empresa grátis</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="login.js"></script>
+</body>
+</html>

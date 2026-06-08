@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual do Cliente - Pronti</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-2: #6366f1;
+      --bg: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --white: #ffffff;
+      --border: #e2e8f0;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #eef6ff 0%, #f4efff 45%, #eef2ff 100%);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #4f46e5 0%, #6366f1 100%);
+      min-height: 100vh;
+      color: #fff;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding-top: 24px;
+      box-sizing: border-box;
+    }
+
+    .sidebar-brand {
+      display: block;
+      padding: 0 32px 12px 32px;
+      margin-bottom: 8px;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .sidebar-brand img {
+      max-width: 150px;
+      height: auto;
+      min-height: 50px;
+      display: block;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .sidebar hr {
+      margin: 0 32px 16px 32px;
+      border: none;
+      border-top: 1px solid #787cff55;
+    }
+
+    .menu-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.85);
+      margin: 0 24px 14px 24px;
+      font-weight: 800;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 24px 24px 24px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      color: #4f46e5;
+      font-weight: 600;
+      font-size: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(79,70,229,0.07);
+      transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+      padding: 14px 18px;
+      text-decoration: none;
+      border: 2px solid transparent;
+      box-sizing: border-box;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .nav-item span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .nav-item.active,
+    .nav-item:focus {
+      background: #4f46e5;
+      color: #fff;
+      font-weight: 700;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+      outline: none;
+    }
+
+    .nav-item:hover:not(.active) {
+      background: #f0f1ff;
+      color: #3b2fd6;
+      border-color: #d1d5fa;
+    }
+
+    .content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 40px;
+      max-width: 1000px;
+    }
+
+    .manual-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #eff6ff;
+      color: var(--primary);
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 20px; }
+    
+    .text-content {
+      font-size: 16px;
+      color: #334155;
+      white-space: pre-wrap;
+      margin-bottom: 32px;
+    }
+
+    .image-container {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      display: none;
+    }
+
+    .image-container img {
+      width: 100%;
+      display: block;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 850px) {
+      .app { flex-direction: column; }
+
+      .sidebar {
+        width: 100%;
+        min-height: auto;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .content {
+        margin-left: 0;
+        padding: 20px;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <a href="../index.html" class="sidebar-brand">
+        <img src="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/config%2Flogo-pronti-app.png?alt=media&token=9a9983d1-bee4-4549-b878-8d3060792674"
+             alt="Logo Pronti" id="sidebar-logo">
+      </a>
+
+      <hr />
+
+      <div class="menu-title">Tópicos de Ajuda</div>
+
+      <nav class="nav-menu" id="nav-menu">
+        <div class="loading">Carregando tópicos...</div>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div id="manual-view" class="manual-card">
+        <div class="loading">Carregando informações...</div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { db } from "../firebase-config.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    const COLECAO_MANUAL = "manual_global";
+    const viewContainer = document.getElementById("manual-view");
+    const navMenu = document.getElementById("nav-menu");
+
+    const SECOES_MANUAL = [
+      { id: "inicio", nome: "Início", icon: "fa-house" },
+      { id: "login", nome: "Login e acesso", icon: "fa-user-lock" },
+      { id: "empresa", nome: "Empresa", icon: "fa-building" },
+      { id: "dashboard", nome: "Dashboard", icon: "fa-chart-pie" },
+      { id: "agenda", nome: "Agenda", icon: "fa-calendar-days" },
+      { id: "equipe", nome: "Equipe", icon: "fa-users" },
+      { id: "servicos", nome: "Serviços", icon: "fa-scissors" },
+      { id: "promocoes", nome: "Promoções", icon: "fa-tags" },
+      { id: "clientes", nome: "Clientes", icon: "fa-user" },
+      { id: "clientes-retorno", nome: "Retorno", icon: "fa-clock-rotate-left" },
+      { id: "fila-inteligente", nome: "Fila inteligente", icon: "fa-users-line" },
+      { id: "vitrine", nome: "Vitrine", icon: "fa-store" },
+      { id: "pagamentos", nome: "Pagamentos", icon: "fa-credit-card" },
+      { id: "planos", nome: "Planos", icon: "fa-file-invoice-dollar" },
+      { id: "relatorios", nome: "Relatórios", icon: "fa-chart-line" },
+      { id: "permissoes", nome: "Permissões", icon: "fa-sliders" },
+      { id: "notificacoes", nome: "Notificações", icon: "fa-bell" },
+      { id: "duvidas", nome: "Dúvidas frequentes", icon: "fa-circle-question" }
+    ];
+
+    function temConteudoPreenchido(dados) {
+      return (
+        (dados?.titulo && dados.titulo.trim()) ||
+        (dados?.conteudo && dados.conteudo.trim()) ||
+        (dados?.imagem && String(dados.imagem).trim())
+      );
+    }
+
+    async function carregarConteudo(secaoId) {
+      viewContainer.innerHTML = '<div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Buscando no manual...</div>';
+      
+      try {
+        const docRef = doc(db, COLECAO_MANUAL, secaoId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const dados = docSnap.data();
+          
+          let html = `
+            <span class="badge">${dados.nome || 'Manual'}</span>
+            <h1>${dados.titulo || 'Sem título'}</h1>
+            <div class="text-content">${dados.conteudo || 'Esta seção ainda não possui conteúdo explicativo.'}</div>
+          `;
+
+          if (dados.imagem) {
+            html += `
+              <div class="image-container" style="display: block;">
+                <img src="${dados.imagem}" alt="Instrução visual">
+              </div>
+            `;
+          }
+
+          viewContainer.innerHTML = html;
+        } else {
+          viewContainer.innerHTML = `
+            <div class="loading">
+              Esta seção ainda não foi configurada no editor.
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error("Erro ao carregar:", error);
+        viewContainer.innerHTML = '<div class="loading">Erro ao carregar dados do Firebase.</div>';
+      }
+    }
+
+    async function carregarMenuDisponivel() {
+      navMenu.innerHTML = '<div class="loading">Carregando tópicos...</div>';
+
+      try {
+        navMenu.innerHTML = "";
+        let primeiraSecao = null;
+        let primeiroBotao = null;
+
+        for (const secao of SECOES_MANUAL) {
+          const docRef = doc(db, COLECAO_MANUAL, secao.id);
+          const docSnap = await getDoc(docRef);
+
+          if (!docSnap.exists()) continue;
+
+          const dados = docSnap.data();
+
+          if (!temConteudoPreenchido(dados)) continue;
+
+          const botao = document.createElement("button");
+          botao.className = "nav-item";
+          botao.dataset.section = secao.id;
+          botao.innerHTML = `
+            <span><i class="fa-solid ${secao.icon}"></i></span>
+            ${dados.nome || secao.nome}
+          `;
+
+          botao.addEventListener("click", () => {
+            document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+            botao.classList.add("active");
+            carregarConteudo(secao.id);
+          });
+
+          navMenu.appendChild(botao);
+
+          if (!primeiraSecao) {
+            primeiraSecao = secao.id;
+            primeiroBotao = botao;
+          }
+        }
+
+        if (primeiraSecao && primeiroBotao) {
+          primeiroBotao.classList.add("active");
+          carregarConteudo(primeiraSecao);
+        } else {
+          navMenu.innerHTML = "";
+          viewContainer.innerHTML = `
+            <div class="loading">
+              Nenhuma seção do manual foi preenchida ainda.
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error("Erro ao carregar menu:", error);
+        navMenu.innerHTML = "";
+        viewContainer.innerHTML = `
+          <div class="loading">
+            Erro ao carregar tópicos do manual.
+          </div>
+        `;
+      }
+    }
+
+    carregarMenuDisponivel();
+  </script>
+
+</body>
+</html>

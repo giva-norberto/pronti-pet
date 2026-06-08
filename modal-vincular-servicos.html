@@ -1,0 +1,84 @@
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Elementos
+const modalEl = document.getElementById('modal-perfil-profissional');
+const nomeEl = document.getElementById('perfil-profissional-nome');
+const formHorarios = document.getElementById('form-horarios');
+const intervaloInput = document.getElementById('intervalo-atendimento');
+const diasContainer = document.getElementById('dias-container');
+
+let estadoPerfil = {
+  profissional: null,
+  db: null,
+  empresaId: null
+};
+
+export async function openModalPerfil(profissional, db, empresaId) {
+  estadoPerfil.profissional = profissional;
+  estadoPerfil.db = db;
+  estadoPerfil.empresaId = empresaId;
+
+  nomeEl.textContent = `Perfil de ${profissional.nome || ''}`;
+
+  // Preencher intervalo
+  intervaloInput.value = profissional.horarios?.intervalo || 30;
+
+  // Preencher horários dos dias da semana
+  diasContainer.innerHTML = '';
+  const dias = ['segunda','terca','quarta','quinta','sexta','sabado','domingo'];
+  const nomesDias = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+  dias.forEach((d, i) => {
+    const conf = profissional.horarios?.[d] || { ativo: false, inicio: "09:00", fim: "18:00" };
+    diasContainer.innerHTML += `
+      <div class="dia-item">
+        <label>
+          <input type="checkbox" name="dia-${d}" ${conf.ativo ? 'checked' : ''}>
+          ${nomesDias[i]}
+        </label>
+        <input type="time" name="inicio-${d}" value="${conf.inicio}">
+        <span>às</span>
+        <input type="time" name="fim-${d}" value="${conf.fim}">
+      </div>
+    `;
+  });
+
+  modalEl.style.display = 'block';
+}
+
+export function closeModalPerfil() {
+  modalEl.style.display = 'none';
+  diasContainer.innerHTML = '';
+}
+
+window.closeModalPerfil = closeModalPerfil; // para funcionar via onclick do botão
+
+// Vincular serviços (deve abrir outro modal ou área)
+export function openModalVincularServicos() {
+  // Implemente a lógica de abrir modal de serviços
+  alert("Modal de vincular serviços ainda não implementado aqui.");
+}
+window.openModalVincularServicos = openModalVincularServicos;
+
+// Salvar horários ao submeter o formulário
+formHorarios.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const prof = estadoPerfil.profissional;
+  const db = estadoPerfil.db;
+  const empresaId = estadoPerfil.empresaId;
+  if (!prof || !db || !empresaId) return;
+
+  const horarios = { intervalo: parseInt(intervaloInput.value, 10) };
+  const dias = ['segunda','terca','quarta','quinta','sexta','sabado','domingo'];
+  dias.forEach(d => {
+    const ativo = formHorarios.querySelector(`input[name="dia-${d}"]`).checked;
+    const inicio = formHorarios.querySelector(`input[name="inicio-${d}"]`).value;
+    const fim = formHorarios.querySelector(`input[name="fim-${d}"]`).value;
+    horarios[d] = { ativo, inicio, fim };
+  });
+
+  const profRef = doc(db, "empresarios", empresaId, "profissionais", prof.id);
+  await updateDoc(profRef, { horarios });
+
+  alert("Horários salvos!");
+  closeModalPerfil();
+});

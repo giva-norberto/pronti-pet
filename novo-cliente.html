@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronti - Novo Cliente</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        /* Seus estilos originais, mantidos como solicitado */
+        .main-content {
+            margin-left: 270px;
+            padding: 36px 40px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 18px;
+        }
+        .page-header h1 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #f1f5f9;
+            color: #2457e3;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 1rem;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 1px 4px 0 #dbeafe;
+            transition: background 0.19s, color 0.19s, box-shadow 0.15s;
+        }
+        .btn-back:hover {
+            background: #dbeafe;
+            color: #1e40af;
+            box-shadow: 0 2px 8px 0 #bfdbfe;
+            text-decoration: none;
+        }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 5px 28px 0 rgba(29,78,216,0.07);
+            padding: 32px 32px 24px 32px;
+            width: 100%;
+            max-width: 370px;
+            margin-top: 16px;
+            margin-left: 0;
+            margin-right: auto;
+            border: 1px solid #e0e7ef;
+        }
+        .form-group label {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .form-group input {
+            font-size: 1rem;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            transition: border 0.16s;
+        }
+        .form-group input:focus {
+            border: 1.5px solid #2457e3;
+            outline: none;
+            background: #fff;
+        }
+        .btn-submit {
+            width: 100%;
+            margin-top: 10px;
+            background: linear-gradient(90deg, #38bdf8 0%, #2457e3 100%);
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 13px 0;
+            font-size: 1.05rem;
+            box-shadow: 0 1px 8px 0 #c7e8fc;
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .btn-submit:hover, .btn-submit:focus {
+            background: linear-gradient(90deg, #2457e3 0%, #38bdf8 100%);
+            box-shadow: 0 4px 20px 0 #bae6fd;
+        }
+        /* Estilo para o botão de excluir, caso você o adicione no futuro */
+        .btn-delete {
+            width: 100%;
+            margin-top: 12px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-delete:hover {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                margin-left: 0;
+                padding: 24px 10px;
+            }
+            .card {
+                padding: 20px 10px 16px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 id="form-titulo">Novo Cliente</h1> 
+            <a href="clientes.html" class="btn-back">
+                <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                Voltar para Clientes
+            </a>
+        </div>
+        
+        <form id="form-cliente" class="card" autocomplete="off">
+            <div class="form-group">
+                <label for="nome-cliente">Nome Completo:</label>
+                <input type="text" id="nome-cliente" name="nome-cliente" required>
+            </div>
+            <div class="form-group">
+                <label for="telefone-cliente">Telefone:</label>
+                <input type="tel" id="telefone-cliente" name="telefone-cliente" placeholder="(XX) XXXXX-XXXX">
+            </div>
+            <div class="form-group">
+                <label for="email-cliente">Email:</label>
+                <input type="email" id="email-cliente" name="email-cliente">
+            </div>
+
+            <button type="submit" id="btn-salvar" class="btn-submit">Salvar Cliente</button>
+
+            <button type="button" id="btn-excluir" class="btn-delete" style="display: none;">Excluir Cliente</button>
+        </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script type="module" src="novo-cliente.js"></script>
+    <script>
+      // Seu script para carregar o menu lateral (mantido integralmente)
+      document.addEventListener("DOMContentLoaded", function() {
+        fetch('menu-lateral.html')
+          .then(res => res.text())
+          .then(html => {
+            document.getElementById('sidebar-placeholder').innerHTML = html;
+            // Destaca o link de clientes
+            const links = document.querySelectorAll('.sidebar-links a');
+            links.forEach(link => link.classList.remove('active'));
+            const clientesLink = document.querySelector('.sidebar-links a[href="clientes.html"]');
+            if (clientesLink) clientesLink.classList.add('active');
+            if (window.ativarLogout) window.ativarLogout();
+          });
+      });
+    </script>
+</body>
+</html>

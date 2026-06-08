@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Assinatura Expirada - Pronti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pronti-azul: #1879d7;
+            --pronti-azul-escuro: #155799;
+            --pronti-azul-claro: #e6f0fa;
+            --pronti-verde: #10b981;
+            --pronti-cinza: #f5f8fa;
+            --pronti-titulo: #ffffff;
+            --pronti-texto: #e5e7eb;
+            --pronti-contraste: #fff;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--pronti-azul) 0%, var(--pronti-azul-escuro) 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container-assinatura {
+            background: var(--pronti-azul-claro);
+            border-radius: 20px;
+            padding: 42px 36px 36px 36px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(24, 121, 215, 0.18),
+                        0 2px 8px rgba(0,0,0,0.08);
+            max-width: 520px;
+            width: 92vw;
+            border: 2px solid var(--pronti-azul);
+            position: relative;
+        }
+        .container-assinatura h1 {
+            color: var(--pronti-azul);
+            font-size: 2.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 6px rgba(24,121,215,0.07);
+        }
+        .container-assinatura p {
+            color: #34495e;
+            font-size: 1.02rem;
+            line-height: 1.6;
+            margin-bottom: 18px;
+            font-weight: 500;
+        }
+        .info-line {
+            color: #0f172a;
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            text-align: left;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        }
+        .info-line strong { display:inline-block; width:140px; color:#0b355f; }
+        .btn-assinar {
+            display: block;
+            width: 100%;
+            background: linear-gradient(90deg, var(--pronti-azul) 80%, var(--pronti-azul-escuro) 100%);
+            color: var(--pronti-contraste);
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 0;
+            font-size: 1.16rem;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 16px rgba(24, 121, 215, 0.13);
+            transition: background 0.22s, transform 0.13s;
+        }
+        .btn-assinar:hover, .btn-assinar:focus {
+            background: linear-gradient(90deg, #155799 80%, #155799 100%);
+            transform: translateY(-2px) scale(1.01);
+        }
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1.01rem;
+            text-decoration: underline;
+            margin-top: 12px;
+            font-weight: 600;
+            transition: color 0.16s;
+        }
+        .btn-logout:hover, .btn-logout:focus {
+            color: var(--pronti-azul);
+        }
+        #loader {
+            font-size: 1.20rem;
+            color: var(--pronti-contraste);
+            background: rgba(24,121,215,0.9);
+            padding: 40px 48px;
+            border-radius: 18px;
+            box-shadow: 0 6px 24px rgba(24,121,215,0.13),
+                        0 1.5px 6px rgba(0,0,0,0.07);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .muted { color: #475569; font-weight: 600; font-size:0.95rem; }
+        @media (max-width: 600px) {
+            .container-assinatura {
+                padding: 24px 8vw 24px 8vw;
+                max-width: 95vw;
+            }
+            #loader {
+                padding: 28px 8vw;
+            }
+            .info-line strong { display:block; width:auto; margin-bottom:6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-assinatura" id="assinatura-container" style="display:none;">
+        <h1 id="titulo">Seu período de teste terminou!</h1>
+        <p id="mensagem">Para continuar usando o Pronti, escolha um plano de assinatura.</p>
+
+        <div id="detalhes" class="info-line" style="display:none;">
+            <div><strong>Empresa:</strong> <span id="empresaNome">—</span></div>
+            <div><strong>Próx. Pagamento:</strong> <span id="proximoPagamento">—</span></div>
+            <div><strong>Plano atual:</strong> <span id="planoAtual">—</span></div>
+            <div><strong>Tipo:</strong> <span id="tipoStatus">—</span></div>
+        </div>
+
+        <a href="pagamento.html" id="btn-assinar" class="btn-assinar">Ver Planos e Assinar</a>
+        <button id="btn-logout" class="btn-logout">Sair da conta</button>
+    </div>
+    <div id="loader"><p>Verificando sua assinatura...</p></div>
+
+    <script type="module">
+        import { auth, db } from "./firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        const container = document.getElementById('assinatura-container');
+        const loader = document.getElementById('loader');
+        const btnLogout = document.getElementById('btn-logout');
+        const btnAssinar = document.getElementById('btn-assinar');
+
+        const empresaNomeEl = document.getElementById('empresaNome');
+        const proximoPagamentoEl = document.getElementById('proximoPagamento');
+        const planoAtualEl = document.getElementById('planoAtual');
+        const tipoStatusEl = document.getElementById('tipoStatus');
+        const detalhesEl = document.getElementById('detalhes');
+        const tituloEl = document.getElementById('titulo');
+        const mensagemEl = document.getElementById('mensagem');
+
+        // converte possíveis formatos de timestamp (Firestore Timestamp / ISO string / Date) para Date ou null
+        function toDate(value) {
+            if (!value) return null;
+            if (typeof value.toDate === 'function') {
+                try { return value.toDate(); } catch (e) { /* ignore */ }
+            }
+            if (value && typeof value.seconds === 'number') {
+                return new Date(value.seconds * 1000);
+            }
+            if (value instanceof Date) return value;
+            const d = new Date(value);
+            if (!isNaN(d.getTime())) return d;
+            return null;
+        }
+
+        function formatDatePtBR(d) {
+            if (!d) return 'Data indisponível';
+            try {
+                return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            } catch (e) {
+                return d.toLocaleString();
+            }
+        }
+
+        // regra principal de validação: retorna objeto com resultado e dados para exibir
+        // ---- SUBSTITUIÇÃO: função unificada para eliminar conflito com user-service.js
+        async function avaliarStatusEmpresa(empresaId, userId) {
+            const result = {
+                isActive: false,
+                reason: null,
+                empresaNome: null,
+                plano: null,
+                proximoPagamentoDate: null,
+                isFree: false,
+                freeDaysRemaining: 0,
+            };
+
+            // usa o toDate já definido para compatibilidade
+            const toDateSafe = toDate;
+
+            try {
+                const empRef = doc(db, "empresarios", empresaId);
+                const empSnap = await getDoc(empRef);
+                if (!empSnap.exists()) {
+                    result.reason = 'empresa_nao_encontrada';
+                    return result;
+                }
+                const emp = empSnap.data() || {};
+                result.empresaNome = emp.nomeFantasia || emp.nome || null;
+                result.plano = emp.plano || 'free';
+
+                // 1) assinatura paga + validade (prioridade)
+                const assinaturaValidaAte = toDateSafe(emp.assinaturaValidaAte || emp.assinatura_valida_ate || null);
+                if (emp.assinaturaAtiva === true && assinaturaValidaAte) {
+                    const agora = new Date();
+                    if (assinaturaValidaAte.getTime() > agora.getTime()) {
+                        result.isActive = true;
+                        result.reason = 'assinatura_valida';
+                        result.proximoPagamentoDate = assinaturaValidaAte;
+                        return result;
+                    }
+                }
+
+                // 2) próximo pagamento explícito
+                const proximoPag = toDateSafe(emp.proximoPagamento || emp.proximo_pagamento || null);
+                if (proximoPag) {
+                    const agora = new Date();
+                    if (proximoPag.getTime() > agora.getTime()) {
+                        result.isActive = true;
+                        result.reason = 'proximo_pagamento_futuro';
+                        result.proximoPagamentoDate = proximoPag;
+                        return result;
+                    } else {
+                        result.proximoPagamentoDate = proximoPag;
+                    }
+                }
+
+                // 3) tratamento de free/trial unificado (prioridades alinhadas ao user-service)
+                const freeEmDias = Number(emp.freeEmDias ?? emp.free_em_dias ?? 0);
+
+                // tenta company.trialEndDate primeiro (se existir)
+                let trialEnd = toDateSafe(emp.trialEndDate || emp.trial_end || emp.trialEnds || null);
+
+                // se não existe, tenta createdAt + freeEmDias (conta dia inicial e ajusta fim do dia)
+                if (!trialEnd && freeEmDias > 0) {
+                    const createdAt = toDateSafe(emp.createdAt || emp.created_at || null);
+                    if (createdAt) {
+                        const end = new Date(createdAt);
+                        // soma (freeEmDias - 1) para contar o dia inicial como 1 e ajustar para o fim do dia
+                        end.setDate(end.getDate() + (freeEmDias - 1));
+                        end.setHours(23, 59, 59, 999);
+                        trialEnd = end;
+                    }
+                }
+
+                // se ainda não há, tenta fallback user.trialStart + freeEmDias (menos prioritário)
+                if (!trialEnd && freeEmDias > 0) {
+                    try {
+                        const userRef = doc(db, "usuarios", emp.donoId || userId);
+                        const userSnap = await getDoc(userRef);
+                        const userData = userSnap.exists() ? userSnap.data() : {};
+                        const userTrialStart = toDateSafe(userData?.trialStart || userData?.trial_start || null);
+                        if (userTrialStart) {
+                            const endU = new Date(userTrialStart);
+                            endU.setDate(endU.getDate() + (freeEmDias - 1));
+                            endU.setHours(23, 59, 59, 999);
+                            trialEnd = endU;
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao ler usuário para calcular trial (fallback):', e);
+                    }
+                }
+
+                if (trialEnd) {
+                    const hoje = new Date();
+                    hoje.setHours(0,0,0,0);
+                    if (trialEnd.getTime() >= hoje.getTime()) {
+                        result.isActive = true;
+                        result.reason = 'trial_ativo';
+                        result.proximoPagamentoDate = trialEnd;
+                        result.isFree = true;
+                        const diffMs = trialEnd.getTime() - hoje.getTime();
+                        result.freeDaysRemaining = Math.ceil(diffMs / (1000*60*60*24));
+                        return result;
+                    } else {
+                        result.freeDaysRemaining = 0;
+                        // trial no passado -> continua para marcar como expirado
+                    }
+                } else {
+                    // sem trial calculável, se plano explicitamente free, marca como free (expirado)
+                    if (String(emp.plano).toLowerCase() === 'free') {
+                        result.isFree = true;
+                        result.reason = 'plano_free';
+                    }
+                }
+
+                // fallback: se campo status === 'ativo' and assinaturaAtiva true and sem datas
+                if (emp.status === 'ativo' && emp.assinaturaAtiva === true && !result.proximoPagamentoDate) {
+                    result.isActive = true;
+                    result.reason = 'ativo_sem_data';
+                    return result;
+                }
+
+                result.reason = result.reason || 'assinatura_vencida';
+                return result;
+            } catch (err) {
+                console.error('Erro ao avaliar status da empresa:', err);
+                result.reason = 'erro_interno';
+                return result;
+            }
+        }
+        // ---- FIM DA SUBSTITUIÇÃO (função unificada) ----
+
+        // função principal
+        async function checkStatusRapido() {
+            return new Promise((resolve) => {
+                onAuthStateChanged(auth, async (user) => {
+                    if (!user) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    try {
+                        const empresaAtivaId = localStorage.getItem('empresaAtivaId');
+                        if (!empresaAtivaId) {
+                            window.location.href = 'selecionar-empresa.html';
+                            return;
+                        }
+
+                        btnAssinar.href = `pagamento.html?empresaId=${empresaAtivaId}`;
+
+                        const status = await avaliarStatusEmpresa(empresaAtivaId, user.uid);
+
+                        if (status.empresaNome) empresaNomeEl.textContent = status.empresaNome; else empresaNomeEl.textContent = '—';
+                        planoAtualEl.textContent = status.plano || '—';
+                        if (status.proximoPagamentoDate) proximoPagamentoEl.textContent = formatDatePtBR(status.proximoPagamentoDate);
+                        else proximoPagamentoEl.textContent = 'Data indisponível';
+                        tipoStatusEl.textContent = status.isActive ? (status.isFree ? 'Free (trial)' : 'Ativo') : (status.isFree ? 'Free (expirado)' : 'Expirado');
+
+                        if (status.isActive) {
+                            // Evita loop: só redireciona para index se não veio do index
+                            const referrer = document.referrer || "";
+                            const veioDoIndex = referrer.includes('index.html') || referrer === "";
+
+                            if (!veioDoIndex) {
+                                console.log("[DEBUG] Assinatura ativa — redirecionando para index.html");
+                                try {
+                                    sessionStorage.setItem('assinatura_verified_ts', String(Date.now()));
+                                } catch (e) { /* ignore */ }
+                                window.location.replace('index.html');
+                                resolve({ ok: true, status });
+                                return;
+                            }
+
+                            console.log("[DEBUG] Assinatura ativa detectada, mas veio do index — evitando loop.");
+                        }
+
+                        resolve({ ok: false, status });
+                        return;
+                    } catch (e) {
+                        console.error("Erro ao verificar status:", e);
+                        resolve({ ok: false, status: { reason: 'erro_verificacao' } });
+                        return;
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { ok, status } = await checkStatusRapido();
+            if (ok) return; // já redirecionou
+
+            loader.style.display = 'none';
+            container.style.display = 'block';
+            detalhesEl.style.display = 'block';
+
+            if (status?.proximoPagamentoDate && status.isFree !== true) {
+                tituloEl.textContent = 'Assinatura expirada / Renovação necessária';
+                mensagemEl.innerHTML = `Sua assinatura expirou ou precisa ser renovada. Próximo pagamento detectado em <strong>${formatDatePtBR(status.proximoPagamentoDate)}</strong>. Para continuar usando o Pronti, escolha um plano abaixo.`;
+            } else if (status?.isFree === true) {
+                tituloEl.textContent = 'Plano Free / Trial';
+                mensagemEl.innerHTML = `Detectamos que sua conta está em modo <strong>Free</strong>. Restam <strong>${status.freeDaysRemaining ?? 0}</strong> dia(s) de trial (se aplicável). Para funcionalidades completas, faça a assinatura.`;
+            } else {
+                tituloEl.textContent = 'Assinatura expirada';
+                mensagemEl.innerHTML = `Assinatura expirada. Escolha um plano para continuar usando o Pronti.`;
+            }
+        });
+
+        btnLogout.addEventListener('click', async () => {
+            await signOut(auth);
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

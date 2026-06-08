@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Selecionar Empresa - Pronti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        /* === ESTILO PADRÃO PRONTI APLICADO === */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+            color: #e0e7ff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+        .selecao-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: transparent;
+            text-align: center;
+        }
+        .header-selecao h1 {
+            color: #ffffff;
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .header-selecao p {
+            font-size: clamp(1rem, 2.5vw, 1.1rem);
+            margin-bottom: 40px;
+            color: #e0e7ff;
+        }
+        #empresas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+        .empresa-card, .criar-empresa-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #6366f1, #4facfe);
+            text-decoration: none;
+            transition: transform 0.25s, box-shadow 0.25s;
+            height: 180px;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .empresa-card:hover, .criar-empresa-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .empresa-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .empresa-nome {
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 1rem;
+            text-align: center;
+            word-break: break-word;
+        }
+        .criar-empresa-card {
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+        }
+         .criar-empresa-card:hover {
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        .criar-empresa-card .plus-icon {
+            font-size: 2.5rem;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+        .logout-container {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+        }
+        .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin: 40px auto;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .status-expirado {
+            position: absolute;
+            bottom: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #ef4444;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="selecao-container">
+        <div class="header-selecao">
+            <h1 id="titulo-boas-vindas">Bem-vindo(a)!</h1>
+            <p id="subtitulo-selecao">Selecione uma empresa para gerir ou crie uma nova.</p>
+        </div>
+
+        <div id="empresas-grid">
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <div class="logout-container">
+            <button id="btn-logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Sair da conta</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from "./firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { doc, getDoc, collection, getDocs, query, where, documentId } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        // --- Elementos do DOM ---
+        const grid = document.getElementById('empresas-grid');
+        const loader = document.getElementById('loader');
+        const tituloBoasVindas = document.getElementById('titulo-boas-vindas');
+        const subtituloSelecao = document.getElementById('subtitulo-selecao');
+        const btnLogout = document.getElementById('btn-logout');
+
+        // --- Eventos ---
+        btnLogout.addEventListener('click', async () => {
+            localStorage.removeItem('empresaAtivaId');
+            sessionStorage.clear();
+            await signOut(auth);
+            window.location.href = 'login.html';
+        });
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // garante que não haja empresa ativa pré-selecionada ao entrar na tela
+                try {
+                    localStorage.removeItem('empresaAtivaId');
+                    sessionStorage.removeItem('empresaEdicao');
+                    sessionStorage.removeItem('empresaFormData');
+                } catch (e) { /* ignore */ }
+
+                sessionStorage.clear();
+                const primeiroNome = user.displayName ? user.displayName.split(' ')[0] : 'Empreendedor(a)';
+                tituloBoasVindas.textContent = `Olá, ${primeiroNome}!`;
+                carregarEmpresas(user);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- Helpers para datas e parsing robusto ---
+        function tsToDate(value) {
+            if (!value && value !== 0) return null;
+            try {
+                if (typeof value.toDate === 'function') return value.toDate(); // Firestore Timestamp
+                if (value && typeof value.seconds === 'number') return new Date(value.seconds * 1000); // plain object
+                if (value instanceof Date) return value;
+                const parsed = new Date(value);
+                if (!isNaN(parsed.getTime())) return parsed;
+            } catch (e) {
+                // ignore
+            }
+            return null;
+        }
+        function hojeSemHoras() {
+            const d = new Date();
+            d.setHours(0,0,0,0);
+            return d;
+        }
+        function dateOnlyUTCmsFromDate(d) {
+            if (!d) return null;
+            return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        }
+        function dateOnlyUTCmsFromValue(v) {
+            const d = tsToDate(v);
+            return d ? dateOnlyUTCmsFromDate(d) : null;
+        }
+
+        // --- Função de verificação mais robusta (mantendo a lógica de prioridade) ---
+        async function checkUserStatus(userId, empresaData) {
+            try {
+                // Default
+                let isPaid = false;
+                let isTrialActive = false;
+
+                if (!empresaData) return { isPaid, isTrialActive };
+
+                // If empresa status not 'ativo' => not active
+                if (empresaData.status && String(empresaData.status).toLowerCase() !== 'ativo') {
+                    return { isPaid: false, isTrialActive: false };
+                }
+
+                const now = new Date();
+
+                // 1) assinatura / pagamento (prioridade)
+                const assinaturaValidaAte = tsToDate(empresaData.assinaturaValidaAte || empresaData.assinatura_valida_ate || empresaData.paidUntil || empresaData.paid_until);
+                const proximoPagamento = tsToDate(empresaData.proximoPagamento || empresaData.proximo_pagamento || empresaData.nextPayment);
+                const planoPago = (String(empresaData.plano || '').toLowerCase() === 'pago' ||
+                                   String(empresaData.plano || '').toLowerCase() === 'premium' ||
+                                   String(empresaData.planStatus || '').toLowerCase() === 'active' ||
+                                   String(empresaData.plan_status || '').toLowerCase() === 'active');
+                const assinaturaAtivaFlag = empresaData.assinaturaAtiva === true || empresaData.assinatura_ativa === true;
+                const isApprovedManual = empresaData.aprovado === true || empresaData.approved === true;
+
+                if (planoPago || assinaturaAtivaFlag || isApprovedManual) {
+                    if (assinaturaValidaAte) {
+                        if (assinaturaValidaAte.getTime() > now.getTime()) {
+                            return { isPaid: true, isTrialActive: false };
+                        } else {
+                            // assinatura vencida -> não paga
+                            return { isPaid: false, isTrialActive: false };
+                        }
+                    }
+                    // sem data explícita, considerar pago (compatibilidade)
+                    return { isPaid: true, isTrialActive: false };
+                }
+
+                // 2) próximo pagamento futuro -> considerar ativo
+                if (proximoPagamento && proximoPagamento.getTime() > now.getTime()) {
+                    return { isPaid: true, isTrialActive: false };
+                }
+
+                // 3) TRIAL via trialEndDate (date-only) -> prioridade para trial detection
+                const trialRaw = empresaData.trialEndDate || empresaData.trial_end || empresaData.trialEnds || empresaData.trial_ends;
+                const trialEndMs = dateOnlyUTCmsFromValue(trialRaw);
+                const hojeUTCms = dateOnlyUTCmsFromDate(hojeSemHoras());
+
+                if (trialEndMs !== null) {
+                    if (trialEndMs >= hojeUTCms) {
+                        return { isPaid: false, isTrialActive: true };
+                    } else {
+                        return { isPaid: false, isTrialActive: false };
+                    }
+                }
+
+                // 4) fallback: freeEmDias + createdAt (se houver)
+                const freeEmDias = Number(empresaData.freeEmDias ?? empresaData.free_em_dias ?? 0);
+                if (freeEmDias > 0) {
+                    const createdAt = tsToDate(empresaData.createdAt || empresaData.created_at || empresaData.created);
+                    if (createdAt) {
+                        const end = new Date(createdAt);
+                        end.setDate(end.getDate() + (freeEmDias - 1));
+                        end.setHours(23,59,59,999);
+                        const endUTC = dateOnlyUTCmsFromDate(end);
+                        if (endUTC !== null && endUTC >= hojeUTCms) {
+                            return { isPaid: false, isTrialActive: true };
+                        } else {
+                            return { isPaid: false, isTrialActive: false };
+                        }
+                    }
+                }
+
+                // 5) fallback to user-level checks (preserve previous behavior)
+                if (userId) {
+                    try {
+                        const userRef = doc(db, "usuarios", userId);
+                        const userSnap = await getDoc(userRef);
+                        if (userSnap.exists()) {
+                            const userData = userSnap.data();
+                            // if user is premium -> treat as active
+                            if (userData.isPremium === true) {
+                                return { isPaid: true, isTrialActive: true };
+                            }
+                            // user trialStart fallback (less priority)
+                            if (freeEmDias > 0) {
+                                const userTrialStart = tsToDate(userData.trialStart || userData.trial_start);
+                                if (userTrialStart) {
+                                    const endU = new Date(userTrialStart);
+                                    endU.setDate(endU.getDate() + (freeEmDias - 1));
+                                    endU.setHours(23,59,59,999);
+                                    const endUTC = dateOnlyUTCmsFromDate(endU);
+                                    if (endUTC !== null && endUTC >= hojeUTCms) {
+                                        return { isPaid: false, isTrialActive: true };
+                                    } else {
+                                        return { isPaid: false, isTrialActive: false };
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Erro ao buscar usuário para fallback de trial:", e);
+                    }
+                }
+
+                // default: expirado
+                return { isPaid: false, isTrialActive: false };
+            } catch (error) {
+                console.error("Erro em checkUserStatus:", error);
+                return { isPaid: false, isTrialActive: false };
+            }
+        }
+
+        async function getEmpresasDoUsuario(user) {
+            const empresasUnicas = new Map();
+            try {
+                const qDono = query(collection(db, "empresarios"), where("donoId", "==", user.uid));
+                const snapshotDono = await getDocs(qDono);
+                snapshotDono.forEach(doc => empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() }));
+            } catch (e) { console.warn("Não foi possível buscar empresas por 'donoId'", e); }
+            try {
+                const mapaRef = doc(db, "mapaUsuarios", user.uid);
+                const mapaSnap = await getDoc(mapaRef);
+                if (mapaSnap.exists() && Array.isArray(mapaSnap.data().empresas)) {
+                    const idsDeEmpresas = mapaSnap.data().empresas.filter(id => !empresasUnicas.has(id));
+                     for (let i = 0; i < idsDeEmpresas.length; i += 30) {
+                        const chunk = idsDeEmpresas.slice(i, i + 30);
+                        if (chunk.length > 0) {
+                            const q = query(collection(db, "empresarios"), where(documentId(), "in", chunk));
+                            const snap = await getDocs(q);
+                            snap.forEach(doc => empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() }));
+                        }
+                    }
+                }
+            } catch (e) { console.warn("Não foi possível buscar empresas por 'mapaUsuarios'", e); }
+            return Array.from(empresasUnicas.values());
+        }
+
+        // --- Funções Principais ---
+        async function carregarEmpresas(user) {
+            try {
+                const empresas = await getEmpresasDoUsuario(user);
+
+                if (empresas.length === 0) {
+                    renderizarPrimeiroAcesso();
+                    return;
+                }
+                
+                const empresasComStatus = await Promise.all(
+                    empresas.map(async (empresa) => {
+                        const status = await checkUserStatus(empresa.donoId, empresa);
+                        return { ...empresa, statusAssinatura: status };
+                    })
+                );
+
+                // SUA LÓGICA DE "UMA EMPRESA ENTRAR DIRETO" ESTÁ AQUI, PRESERVADA E FUNCIONANDO
+                if (empresasComStatus.length === 1) {
+                    const empresaUnica = empresasComStatus[0];
+                    localStorage.setItem('empresaAtivaId', empresaUnica.id);
+                    const isActive = (empresaUnica.statusAssinatura?.isPaid === true) || (empresaUnica.statusAssinatura?.isTrialActive === true);
+                    if (isActive) {
+                        window.location.href = 'index.html';
+                    } else {
+                        window.location.href = 'assinatura.html';
+                    }
+                    return; 
+                }
+                
+                renderizarOpcoes(empresasComStatus);
+
+            } catch (error) {
+                console.error("Erro ao carregar empresas: ", error);
+                grid.innerHTML = `<p style="color: #ffb8b8;">Ocorreu um erro ao buscar suas empresas.</p>`;
+            } finally {
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        function renderizarOpcoes(empresas) {
+            grid.innerHTML = '';
+            subtituloSelecao.textContent = 'Selecione uma de suas empresas para continuar.';
+            empresas.forEach(empresa => grid.appendChild(criarEmpresaCard(empresa)));
+            grid.appendChild(criarNovoCard());
+        }
+
+        function renderizarPrimeiroAcesso() {
+            grid.innerHTML = '';
+            subtituloSelecao.textContent = 'Você ainda não possui empresas cadastradas.';
+            grid.appendChild(criarNovoCard());
+            grid.style.gridTemplateColumns = '1fr';
+            grid.style.maxWidth = '200px';
+            grid.style.margin = '0 auto';
+        }
+
+        function criarEmpresaCard(empresa) {
+            const card = document.createElement('a');
+            card.className = 'empresa-card';
+            card.href = '#';
+
+            const status = empresa.statusAssinatura || { isPaid: false, isTrialActive: false };
+            const isActive = (status.isPaid === true) || (status.isTrialActive === true);
+
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.setItem('empresaAtivaId', empresa.id);
+                if (isActive) {
+                    window.location.href = 'index.html';
+                } else {
+                    window.location.href = 'assinatura.html';
+                }
+            });
+            
+            const nomeFantasia = empresa.nomeFantasia || "Empresa Sem Nome";
+            const inicial = nomeFantasia.charAt(0).toUpperCase();
+            const logoSrc = empresa.logoUrl || `https://placehold.co/100x100/ffffff/4f46e5?text=${encodeURIComponent(inicial)}&font=poppins`;
+            
+            const statusHtml = !isActive ? '<span class="status-expirado">Expirado</span>' : '';
+            
+            card.innerHTML = `
+                <div class="empresa-logo" style="background-image: url('${logoSrc}')">
+                   ${!empresa.logoUrl ? inicial : ''}
+                </div>
+                <span class="empresa-nome">${nomeFantasia}</span>
+                ${statusHtml}
+            `;
+            return card;
+        }
+
+        function criarNovoCard() {
+            const card = document.createElement('a');
+            card.className = 'criar-empresa-card';
+            card.href = '#';
+            card.innerHTML = `<div class="plus-icon"><i class="fas fa-plus"></i></div><span class="empresa-nome">Criar Nova Empresa</span>`;
+
+            // limpar dados locais que podem fazer o perfil abrir em modo edição e forçar modo "novo"
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                try {
+                    // remover qualquer referência a empresa ativa/edição/formulário anterior
+                    localStorage.removeItem('empresaAtivaId');
+                    localStorage.removeItem('empresaAtivaNome');
+                    localStorage.removeItem('empresaFormDraft');
+                    sessionStorage.removeItem('empresaEdicao');
+                    sessionStorage.removeItem('empresaFormData');
+
+                    // sinaliza explicitamente que o perfil deve abrir em modo "criar"
+                    // (perfil.html deve respeitar esse flag — se não, mantemos também o query param)
+                    localStorage.setItem('empresaModo', 'criar');
+                    localStorage.setItem('empresaCreateTimestamp', String(Date.now()));
+
+                } catch (err) {
+                    console.warn('Não foi possível limpar dados locais antes de criar nova empresa:', err);
+                }
+                // navega para perfil em modo criação (query param adicional por segurança)
+                window.location.href = 'perfil.html?new=1';
+            });
+
+            return card;
+        }
+    </script>
+</body>
+</html>

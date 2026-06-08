@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Aprovação Manual de Pagamentos - Pronti ADM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Seus estilos originais, sem alterações */
+        body { display: flex; font-family: 'Poppins', sans-serif; margin: 0; background: #f4f5f7; min-height: 100vh; }
+        #menu-container { width: 250px; min-width: 250px; flex-shrink: 0; }
+        main.content { flex-grow: 1; padding: 40px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header-pagina { margin-bottom: 30px; }
+        .header-pagina h1 { color: #1e293b; font-size: 2rem; font-weight: 700; margin: 0 0 10px 0; }
+        .header-pagina p { color: #64748b; margin: 0; font-size: 1.1rem; }
+        .lista-pagamentos { display: flex; flex-direction: column; gap: 12px; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 8px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
+        .info p { margin: 0; line-height: 1.5; }
+        .info .nome { font-weight: 600; color: #334155; font-size: 1.08em; }
+        .info .doc-id { font-size: 0.75em; color: #94a3b8; font-family: monospace; margin-top: 2px; }
+        .info .plano { font-size: 0.9em; color: #64748b; margin-top: 5px; }
+        .info .metodo { font-size: 0.75em; font-weight: 700; padding: 3px 8px; border-radius: 12px; margin-left: 8px; text-transform: uppercase; vertical-align: middle; }
+        .metodo.pix, .metodo.aguardando_liberacao { background-color: #fef9c3; color: #a16207; }
+        .metodo.mercado_pago, .metodo.pendente_confirmacao { background-color: #dbeafe; color: #2563eb; }
+        .acoes button { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
+        .btn-aprovar { background-color: #10b981; color: #fff; }
+        .btn-aprovar:hover:not(:disabled) { background-color: #0f9e70; }
+        .btn-aprovar:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #loading-message, #empty-message { text-align: center; padding: 40px; color: #64748b; background: #fff; border-radius: 8px; }
+
+        /* ================================== */
+        /* NOVO: Estilos para Celular (Responsivo) */
+        /* ================================== */
+        @media (max-width: 768px) {
+            /* Seu 'style.css' (que não vejo) deve cuidar de esconder/recolher o menu */
+            /* Esta regra ajusta o conteúdo principal */
+            main.content {
+                padding: 20px 15px; /* Reduz o padding da página */
+            }
+
+            .header-pagina h1 {
+                font-size: 1.6rem; /* Reduz o título principal */
+            }
+            .header-pagina p {
+                font-size: 1rem;
+            }
+
+            .item {
+                flex-direction: column; /* Empilha as informações e o botão */
+                align-items: stretch; /* Estica os itens para largura total */
+                gap: 20px; /* Aumenta o espaço entre a info e o botão */
+            }
+
+            .info .doc-id {
+                 /* Quebra de linha para IDs longos */
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            .acoes {
+                width: 100%; /* Faz a div do botão ocupar 100% */
+            }
+            
+            .acoes button {
+                width: 100%; /* Faz o botão "Aprovar" ocupar 100% */
+                padding: 12px 16px; /* Botão maior e mais fácil de tocar */
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside id="menu-container"></aside>
+    <main class="content">
+        <div class="container">
+            <div class="header-pagina">
+                <h1>Aprovação Manual de Pagamentos</h1>
+                <p>Libere o acesso para pagamentos de Pix ou Mercado Pago que precisam de intervenção.</p>
+            </div>
+            <div id="lista-pagamentos" class="lista-pagamentos">
+                <p id="loading-message">Carregando pagamentos pendentes...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db, auth } from './firebase-config.js';
+        import {
+            collection,
+            query,
+            where,
+            onSnapshot,
+            doc,
+            runTransaction,
+            deleteField,
+            Timestamp,
+            updateDoc,
+            getDocs,
+            getDoc,
+        } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+        const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+        const listaPagamentosDiv = document.getElementById('lista-pagamentos');
+        const loadingMessage = document.getElementById('loading-message');
+
+        let unsubscribePagamentos = null;
+        let unsubscribeEmpresasPendente = null;
+        let unsubscribeEmpresasPlano = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.uid === ADMIN_UID) {
+                ouvirTodasAsPendencias();
+            } else {
+                if (unsubscribePagamentos) unsubscribePagamentos();
+                if (unsubscribeEmpresasPendente) unsubscribeEmpresasPendente();
+                if (unsubscribeEmpresasPlano) unsubscribeEmpresasPlano();
+                listaPagamentosDiv.innerHTML = '<p id="empty-message">Acesso restrito a administradores.</p>';
+            }
+        });
+
+        function ouvirTodasAsPendencias() {
+            let pendenciasDaColecao = [];
+            let pendenciasDoCampo = [];
+            let pendenciasDoPlano = [];
+
+            // Fonte 1: pagamentosPendentes (documentos)
+            const pagamentosRef = collection(db, 'pagamentosPendentes');
+            const qPagamentos = query(pagamentosRef, where('status', 'in', ['pendente_confirmacao', 'aguardando_pagamento_mp', 'aguardando_liberacao']));
+
+            unsubscribePagamentos = onSnapshot(qPagamentos, async (snapshot) => {
+                try {
+                    const docsPromises = snapshot.docs.map(async d => {
+                        const data = d.data() || {};
+                        const id = d.id;
+                        const empresaId = data.empresaId || null;
+
+                        const dataCriacao = data.dataCriacao || data.dataSolicitacao || data.createdAt || data.created_at || null;
+
+                        let clienteNome = data.clienteNome || data.nome || data.nomeFantasia || null;
+                        let empresaNome = null;
+                        let donoNome = null;
+                        let donoId = null;
+                        
+                        let empresaExiste = false;
+
+                        if (empresaId) {
+                            try {
+                                const empSnap = await getDoc(doc(db, "empresarios", empresaId));
+                                if (empSnap.exists()) {
+                                    empresaExiste = true; 
+                                    const empData = empSnap.data() || {};
+                                    empresaNome = empData.nomeFantasia || empData.nome || null;
+                                    donoId = empData.donoId || null;
+                                    clienteNome = clienteNome || empresaNome;
+                                }
+                            } catch (err) {
+                                console.warn('Erro ao buscar empresa para enriquecer pagamento:', empresaId, err);
+                            }
+                        }
+
+                        if (empresaId && !empresaExiste) {
+                            console.warn(`Pagamento órfão detectado (Empresa ${empresaId} não existe). Removendo pagamento ${id}...`);
+                            try {
+                                await updateDoc(d.ref, { 
+                                    status: "rejeitado_orfao",
+                                    motivoRejeicao: "Empresa não encontrada (provavelmente deletada)."
+                                });
+                            } catch (cleanErr) {
+                                console.error(`Falha ao limpar pagamento órfão ${id}:`, cleanErr);
+                            }
+                            return null; // Não renderiza este item
+                        }
+
+
+                        if (!donoNome && donoId) {
+                            try {
+                                const userSnap = await getDoc(doc(db, "usuarios", donoId));
+                                if (userSnap.exists()) {
+                                    const udata = userSnap.data() || {};
+                                    donoNome = udata.displayName || udata.nome || udata.email || null;
+                                }
+                            } catch (err) {
+                                console.warn('Erro ao buscar usuário dono para enriquecer pagamento:', donoId, err);
+                            }
+                        }
+
+                        return {
+                            id,
+                            tipo: 'colecao',
+                            clienteNome: clienteNome || 'Cliente desconhecido',
+                            empresaNome: empresaNome || null,
+                            donoNome: donoNome || null,
+                            empresaId,
+                            dataCriacao,
+                            ...data
+                        };
+                    });
+                    
+                    const docsResult = await Promise.all(docsPromises);
+                    pendenciasDaColecao = docsResult.filter(Boolean); 
+                    renderizarListaCombinada();
+
+                } catch (err) {
+                    console.error('Erro processando pagamentosPendentes:', err);
+                }
+            }, (err) => console.error('Erro ao ouvir pagamentosPendentes:', err));
+
+            // Fonte 2: empresas com pagamentoPendente.status == 'aguardando_liberacao'
+            const empresasRef = collection(db, 'empresarios');
+            const qEmpresasPendente = query(empresasRef, where('pagamentoPendente.status', '==', 'aguardando_liberacao'));
+            unsubscribeEmpresasPendente = onSnapshot(qEmpresasPendente, (snapshot) => {
+                pendenciasDoCampo = snapshot.docs.map(d => {
+                    const empresaData = d.data() || {};
+                    const pagamentoPendente = empresaData.pagamentoPendente || {};
+                    return {
+                        id: d.id,
+                        tipo: 'campo',
+                        clienteNome: empresaData.nomeFantasia || pagamentoPendente.nome || 'Cliente desconhecido',
+                        empresaNome: empresaData.nomeFantasia || empresaData.nome || null,
+                        donoNome: null, 
+                        planoNome: pagamentoPendente.plano ? `Plano para ${pagamentoPendente.plano} usuários` : 'Plano',
+                        valor: pagamentoPendente.valor ?? 0,
+                        metodo: pagamentoPendente.metodo || 'pix',
+                        dataCriacao: pagamentoPendente.dataSolicitacao || pagamentoPendente.createdAt || empresaData.updatedAt || empresaData.createdAt || null,
+                        donoId: empresaData.donoId,
+                        empresaId: d.id
+                    };
+                });
+                renderizarListaCombinada();
+            }, (err) => console.error('Erro ao ouvir empresas (pagamentoPendente):', err));
+
+            // Fonte 3: empresas com plano == 'aguardando_liberacao' (se seu fluxo gravou nesse campo)
+            const qEmpresasPlano = query(empresasRef, where('plano', '==', 'aguardando_liberacao'));
+            unsubscribeEmpresasPlano = onSnapshot(qEmpresasPlano, (snapshot) => {
+                (async () => {
+                    const list = await Promise.all(snapshot.docs.map(async d => {
+                        const empresaData = d.data() || {};
+
+                        const pagamentoPendente = empresaData.pagamentoPendente || null;
+                        if (pagamentoPendente && pagamentoPendente.valor) {
+                            return {
+                                id: d.id,
+                                tipo: 'campo',
+                                clienteNome: empresaData.nomeFantasia || pagamentoPendente.nome || 'Cliente desconhecido',
+                                empresaNome: empresaData.nomeFantasia || empresaData.nome || null,
+                                donoNome: null,
+                                planoNome: pagamentoPendente.plano ? `Plano para ${pagamentoPendente.plano} usuários` : 'Plano',
+                                valor: pagamentoPendente.valor ?? 0,
+                                metodo: pagamentoPendente.metodo || 'pix',
+                                dataCriacao: pagamentoPendente.dataSolicitacao || pagamentoPendente.createdAt || empresaData.updatedAt || empresaData.createdAt || null,
+                                donoId: empresaData.donoId,
+                                empresaId: d.id
+                            };
+                        }
+
+                        try {
+                            const q = query(
+                                collection(db, "pagamentosPendentes"),
+                                where("empresaId", "==", d.id),
+                                where("status", "in", ['pendente_confirmacao', 'aguardando_pagamento_mp', 'aguardando_liberacao'])
+                            );
+                            const snapPag = await getDocs(q);
+                            if (!snapPag.empty) {
+                                const pdoc = snapPag.docs[0];
+                                const pdata = pdoc.data() || {};
+                                return {
+                                    id: pdoc.id,
+                                    tipo: 'colecao',
+                                    clienteNome: empresaData.nomeFantasia || pdata.nome || 'Cliente desconhecido',
+                                    empresaNome: empresaData.nomeFantasia || empresaData.nome || null,
+                                    donoNome: null,
+                                    planoNome: pdata.plano ? `Plano para ${pdata.plano} usuários` : 'Plano',
+                                    valor: pdata.valor ?? pdata.amount ?? 0,
+                                    metodo: pdata.metodo || pdata.paymentMethod || 'desconhecido',
+                                    dataCriacao: pdata.createdAt || pdata.dataSolicitacao || null,
+                                    donoId: empresaData.donoId,
+                                    empresaId: d.id
+                                };
+                            }
+                        } catch (err) {
+                            console.warn('Erro buscando pagamentosPendentes para empresa', d.id, err);
+                        }
+
+                        return {
+                            id: d.id,
+                            tipo: 'plano',
+                            clienteNome: empresaData.nomeFantasia || 'Cliente desconhecido',
+                            empresaNome: empresaData.nomeFantasia || empresaData.nome || null,
+                            donoNome: null,
+                            planoNome: 'Aguardando liberação (plano)',
+                            valor: empresaData.valorPendencia ?? 0,
+                            metodo: 'aguardando_liberacao',
+                            dataCriacao: empresaData.updatedAt || empresaData.createdAt || null,
+                            donoId: empresaData.donoId,
+                            empresaId: d.id
+                        };
+                    }));
+                    pendenciasDoPlano = list;
+                    renderizarListaCombinada();
+                })().catch(err => console.error('Erro ao processar empresas (plano aguardando):', err));
+            }, (err) => console.error('Erro ao ouvir empresas (plano aguardando):', err));
+
+            // utilitárias (sem mudanças)
+            function normalizeDate(value) {
+                if (!value) return null;
+                if (typeof value.toDate === 'function') return value.toDate();
+                if (value instanceof Date) return value;
+                const parsed = new Date(value);
+                return isNaN(parsed) ? null : parsed;
+            }
+
+            function safeCssClassForMetodo(metodo) {
+                if (!metodo) return 'desconhecido';
+                return String(metodo).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+            }
+
+            function metodoLabelHumanizado(metodo) {
+                if (!metodo) return 'Desconhecido';
+                const m = String(metodo).toLowerCase();
+                if (m.includes('pix')) return 'PIX';
+                if (m.includes('mercado') || m.includes('mercadopago') || m.includes('mp')) return 'Mercado Pago';
+                if (m.includes('boleto')) return 'Boleto';
+                if (m === 'aguardando_liberacao') return 'Aguardando liberação';
+                return metodo;
+            }
+
+            function formatValor(valor) {
+                const num = (typeof valor === 'number') ? valor : Number(valor);
+                if (isNaN(num) || num === 0) return 'R$ 0,00';
+                return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+
+            // Constrói lista única por empresa e renderiza (evita duplicatas)
+            function renderizarListaCombinada() {
+                const mapByEmpresa = new Map();
+
+                // 1) Prioriza pagamentos da coleção (se houver empresaId, usa emp#empresaId como chave)
+                pendenciasDaColecao.forEach(p => {
+                    const empresaKey = p.empresaId || null;
+                    const key = empresaKey ? `emp#${empresaKey}` : `pag#${p.id}`;
+                    mapByEmpresa.set(key, Object.assign({ origem: 'colecao' }, p));
+                });
+
+                // 2) Adiciona pendencias do campo (empresa.pagamentoPendente) somente se empresa não estiver presente
+                pendenciasDoCampo.forEach(p => {
+                    const key = `emp#${p.empresaId}`;
+                    if (!mapByEmpresa.has(key)) {
+                        mapByEmpresa.set(key, Object.assign({ origem: 'campo' }, p));
+                    } else {
+                        const existing = mapByEmpresa.get(key);
+                        if (existing.origem === 'colecao') {
+                            existing.valor = existing.valor ?? p.valor;
+                            existing.metodo = existing.metodo ?? p.metodo;
+                            existing.clienteNome = existing.clienteNome ?? p.clienteNome;
+                            existing.planoNome = existing.planoNome ?? p.planoNome;
+                            existing.empresaNome = existing.empresaNome ?? p.empresaNome;
+                            existing.donoNome = existing.donoNome ?? null;
+                            existing.dataCriacao = existing.dataCriacao ?? p.dataCriacao;
+                            mapByEmpresa.set(key, existing);
+                        }
+                    }
+                });
+
+                // 3) Adiciona pendenciasDoPlano (empresas com plano='aguardando_liberacao') se necessário
+                pendenciasDoPlano.forEach(p => {
+                    const key = `emp#${p.empresaId}`;
+                    if (!mapByEmpresa.has(key)) {
+                        mapByEmpresa.set(key, Object.assign({ origem: p.tipo || 'plano' }, p));
+                    } else {
+                        const existing = mapByEmpresa.get(key);
+                        existing.valor = existing.valor ?? p.valor;
+                        existing.metodo = existing.metodo ?? p.metodo;
+                        existing.planoNome = existing.planoNome ?? p.planoNome;
+                        existing.empresaNome = existing.empresaNome ?? p.empresaNome;
+                        existing.dataCriacao = existing.dataCriacao ?? p.dataCriacao;
+                        mapByEmpresa.set(key, existing);
+                    }
+                });
+
+                const todasAsPendencias = Array.from(mapByEmpresa.values());
+                loadingMessage.style.display = 'none';
+
+                if (todasAsPendencias.length === 0) {
+                    listaPagamentosDiv.innerHTML = '<p id="empty-message">Nenhum pagamento pendente no momento.</p>';
+                    return;
+                }
+
+                listaPagamentosDiv.innerHTML = '';
+                todasAsPendencias.forEach(pagamento => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item';
+
+                    const metodoRaw = pagamento.metodo || pagamento.status || 'desconhecido';
+                    const metodoClass = safeCssClassForMetodo(metodoRaw);
+                    const metodoLabel = metodoLabelHumanizado(metodoRaw);
+                    const dateObj = normalizeDate(pagamento.dataCriacao || pagamento.createdAt || pagamento.dataSolicitacao || pagamento.dataCriacao);
+                    const dataFormatada = dateObj ? dateObj.toLocaleDateString('pt-BR') : 'Data indisponível';
+                    const valorFormatado = formatValor(pagamento.valor ?? 0);
+
+                    const empresaNomeExibir = pagamento.empresaNome || pagamento.clienteNome || 'Cliente desconhecido';
+                    const donoNomeExibir = pagamento.donoNome || pagamento.donoId || ''; 
+
+                    const docIdDisplay = pagamento.empresaId || pagamento.empresaId || pagamento.id || 'ID indisponível';
+                    const planoNome = pagamento.planoNome || pagamento.plano || 'Plano';
+                    const metodoTag = `<span class="metodo ${metodoClass}">${metodoLabel}</span>`;
+
+                    const tipoBtn = (pagamento.origem === 'colecao' || pagamento.tipo === 'colecao') ? 'colecao' : 'campo';
+
+                    itemDiv.innerHTML = `
+                        <div class="info">
+                            <p class="nome">${empresaNomeExibir}</p>
+                            <p class="doc-id">ID da Empresa: ${docIdDisplay}${donoNomeExibir ? ` — Dono: ${donoNomeExibir}` : ''}</p>
+                            <p class="plano">${planoNome} - ${valorFormatado} ${metodoTag} - ${dataFormatada}</p>
+                        </div>
+                        <div class="acoes">
+                            <button class="btn-aprovar" data-id="${pagamento.id || pagamento.empresaId}" data-tipo="${tipoBtn}" data-empresa-id="${pagamento.empresaId || pagamento.id}">Aprovar</button>
+                        </div>
+                    `;
+                    listaPagamentosDiv.appendChild(itemDiv);
+                });
+            }
+        }
+
+        // handler do botão Aprovar
+        listaPagamentosDiv.addEventListener('click', async (e) => {
+            if (!(e.target && e.target.classList.contains('btn-aprovar'))) return;
+            const btn = e.target;
+            const id = btn.dataset.id; // pagamento doc id ou empresaId
+            const tipo = btn.dataset.tipo; // 'colecao' ou 'campo'
+            const empresaId = btn.dataset.empresaId || id;
+
+            if (!confirm(`Tem certeza de que deseja APROVAR este pagamento? Uma assinatura será iniciada.`)) return;
+
+            btn.disabled = true;
+            const previousText = btn.textContent;
+            btn.textContent = 'Aprovando...';
+
+            const dataFim = new Date();
+            dataFim.setDate(dataFim.getDate() + 30);
+            const proximoPagamentoTimestamp = Timestamp.fromDate(dataFim);
+
+            try {
+                if (tipo === 'colecao') {
+                    // transação: atualiza empresa e marca pagamento em pagamentosPendentes
+                    await runTransaction(db, async (transaction) => {
+                        const pagRef = doc(db, "pagamentosPendentes", id);
+                        const pagDoc = await transaction.get(pagRef);
+                        if (!pagDoc.exists()) throw new Error("Documento do pagamento não existe mais.");
+
+                        const dadosPagamento = pagDoc.data() || {};
+                        const idEmpresaOriginal = dadosPagamento.empresaId;
+                        if (!idEmpresaOriginal) throw new Error("empresaId faltando no documento de pagamento.");
+
+                        const empresaRef = doc(db, "empresarios", idEmpresaOriginal);
+
+                        // ==================================================
+                        // NOVO: VERIFICAÇÃO ANTI-TRAVA
+                        // Antes de atualizar a empresa, verifica se ela existe
+                        // ==================================================
+                        const empresaDoc = await transaction.get(empresaRef);
+                        if (!empresaDoc.exists()) {
+                            // A empresa não existe! A "trava" está aqui.
+                            // Solução: Atualize o pagamento para "rejeitado" e saia.
+                            transaction.update(pagRef, { 
+                                status: "rejeitado_orfao",
+                                motivoRejeicao: "Empresa não encontrada (aprovacao manual)."
+                            });
+                            throw new Error(`A empresa (ID: ${idEmpresaOriginal}) não foi encontrada. O pagamento não pode ser aprovado e foi marcado como órfão.`);
+                        }
+                        
+                        // Se a empresa existe, continua normalmente:
+                        transaction.update(empresaRef, {
+                            plano: "pago",
+                            status: "ativo",
+                            assinaturaAtiva: true,
+                            assinaturaValidaAte: proximoPagamentoTimestamp,
+                            proximoPagamento: proximoPagamentoTimestamp,
+                            freeEmDias: 0,
+                            trialDisponivel: false,
+                            pagamentoPendente: deleteField()
+                        });
+
+                        transaction.update(pagRef, { status: "aprovado_manual" });
+                    });
+
+                    alert('Pagamento aprovado! Acesso liberado por 30 dias.');
+                    btn.textContent = 'Aprovado';
+                    btn.disabled = true;
+                    return;
+                }
+
+                // tipo 'campo' (empresa com pagamentoPendente ou plano aguardando)
+                const empresaRef = doc(db, "empresarios", empresaId);
+
+                // ==================================================
+                // NOVO: VERIFICAÇÃO ANTI-TRAVA (também para tipo 'campo')
+                // ==================================================
+                const empSnap = await getDoc(empresaRef); // Faz a leitura fora da transação
+                if (!empSnap.exists()) {
+                     throw new Error(`A empresa (ID: ${empresaId}) não foi encontrada. O pagamento não pode ser aprovado.`);
+                }
+
+                await updateDoc(empresaRef, {
+                    plano: "pago",
+                    status: "ativo",
+                    assinaturaAtiva: true,
+                    assinaturaValidaAte: proximoPagamentoTimestamp,
+                    proximoPagamento: proximoPagamentoTimestamp,
+                    freeEmDias: 0,
+                    trialDisponivel: false,
+                    pagamentoPendente: deleteField()
+                });
+
+                // opcional: tentar marcar pagamentosPendentes relacionados como aprovados (não crítico)
+                try {
+                    const q = query(
+                        collection(db, "pagamentosPendentes"),
+                        where("empresaId", "==", empresaId),
+                        where("status", "in", ['pendente_confirmacao', 'aguardando_pagamento_mp', 'aguardando_liberacao'])
+                    );
+                    const snap = await getDocs(q);
+                    for (const pdoc of snap.docs) {
+                        await updateDoc(doc(db, "pagamentosPendentes", pdoc.id), { status: "aprovado_manual" }).catch(()=>{});
+                    }
+                } catch (err) {
+                    console.warn('Não foi possível atualizar pagamentosPendentes relacionados (opcional):', err);
+                }
+
+                alert('Pagamento aprovado! Acesso liberado por 30 dias.');
+                btn.textContent = 'Aprovado';
+                btn.disabled = true;
+            } catch (error) {
+                console.error("Erro ao aprovar pagamento:", error);
+                alert('Falha ao aprovar: ' + (error?.message || error));
+                btn.disabled = false;
+                btn.textContent = previousText || 'Aprovar';
+            }
+        });
+    </script>
+</body>
+</html>

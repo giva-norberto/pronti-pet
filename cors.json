@@ -1,0 +1,34 @@
+[
+  {
+    "origin": [
+      "https://pronti-app.vercel.app",
+      "https://pronti.vercel.app",
+      "https://prontiapp.com.br",
+      "https://www.prontiapp.com.br",
+      "https://pronti-app-37c6e.web.app",
+      "https://pronti-app-37c6e.firebaseapp.com",
+      "http://localhost:3000",
+      "http://localhost:5001",
+      "http://localhost:8080"
+    ],
+    "method": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS",
+      "HEAD"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable",
+      "x-goog-meta-*",
+      "x-goog-content-length-range",
+      "Origin",
+      "Accept",
+      "X-Requested-With"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

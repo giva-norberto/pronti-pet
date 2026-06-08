@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Planos - Pronti</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Inclua o CSS global da Pronti -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            color: var(--cor-texto-escuro, #22223b);
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+        #menu-container {
+            width: 250px;
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+        main {
+            flex-grow: 1;
+            padding: 40px;
+            margin-left: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+        .header-pagina {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header-pagina h1 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header-botoes {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-assinantes {
+            background-color: #0891b2;
+            color: #fff;
+        }
+        .btn-assinantes:hover {
+            background-color: #0e7490;
+        }
+        .btn-dashboard {
+            background-color: #f59e0b;
+            color: #fff;
+        }
+        .btn-dashboard:hover {
+            background-color: #d97706;
+        }
+        .btn-novo {
+            background-color: #10b981;
+            color: #fff;
+        }
+        .btn-novo:hover {
+            background-color: #059669;
+        }
+        /* --- Espaço entre o cabeçalho e os cards --- */
+        .espaco-cards {
+            height: 16px;
+        }
+        #lista-de-planos {
+            display: grid;
+            gap: 26px;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            margin-top: 0;
+        }
+        .card-plano-item {
+            display: block;
+            background: #fff;
+            padding: 28px 22px 22px 22px;
+            border-radius: 15px;
+            box-shadow: 0 6px 22px rgba(44,54,80,0.13);
+            text-decoration: none;
+            color: #22223b;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #ececec;
+            margin-top: 0;
+        }
+        .card-plano-item:hover {
+            transform: translateY(-7px) scale(1.02);
+            box-shadow: 0 14px 32px rgba(44,54,80,0.18);
+            border-color: #cdd5ea;
+        }
+        .card-plano-item h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #1e3a8a;
+            font-size: 1.18rem;
+            font-weight: 700;
+        }
+        .card-plano-item .preco {
+            font-size: 1.45rem;
+            font-weight: 600;
+            color: #10b981;
+            margin-bottom: 12px;
+        }
+        .metodo {
+            font-weight: bold;
+            padding: 5px 13px;
+            border-radius: 6px;
+            color: #fff;
+            display: inline-block;
+            font-size: 0.93em;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .metodo-automatico { background-color: #3b82f6; }
+        .metodo-manual { background-color: #f59e0b; }
+        .erro {
+            color: #fff;
+            background-color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 2rem 0;
+        }
+        .info {
+            color: #e0e7ff;
+            font-weight: 500;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        .card-plano-vazio {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 6px 32px rgba(44,54,80,0.14);
+            text-align: center;
+            margin: 32px auto;
+            max-width: 420px;
+            color: #22223b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 320px;
+            border: 1px solid #ececec;
+        }
+        .card-vazio-content i { font-size: 2.5rem; margin-bottom: 18px; color: #ffd700; display: block; }
+        .card-vazio-content h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: #22223b; }
+        .card-vazio-content p { color: #6366f1; font-size: 1.07rem; margin-bottom: 22px; }
+        .btn-novo-card {
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 14px 32px;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(14,165,233,0.15);
+            font-size: 1.05em;
+            transition: background 0.2s;
+            display: inline-block;
+            border: none;
+        }
+        .btn-novo-card:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+        }
+        @media (max-width: 992px) {
+            #menu-container { display: none; }
+            main { margin-left: 0; padding: 20px; }
+        }
+        @media (max-width: 768px) {
+            main { padding: 16px; padding-top: 70px; }
+            .header-pagina h1 { font-size: 1.3rem; }
+            #lista-de-planos { gap: 16px; }
+            .card-plano-item { padding: 18px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <aside id="menu-container"></aside>
+    <main>
+        <div class="header-pagina">
+            <h1>Meus Planos de Assinatura</h1>
+            <div class="header-botoes">
+                <a href="lista-assinantes.html" class="btn-header btn-assinantes" id="btnAssinantes"><i class="fa-solid fa-crown"></i> Clientes Assinantes</a>
+                <a href="dashboard-pagamentos.html" class="btn-header btn-dashboard" id="btnDashboard"><i class="fa-solid fa-check-to-slot"></i> Painel de Aprovações</a>
+                <a href="criar-plano.html" class="btn-header btn-novo" id="btnNovoPlano">+ Criar Novo Plano</a>
+            </div>
+        </div>
+        <div class="espaco-cards"></div>
+        <div id="lista-de-planos">
+            <p class="info">A carregar...</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db, auth } from './vitrini-firebase.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        const listaContainer = document.getElementById('lista-de-planos');
+        const btnNovoPlano = document.getElementById('btnNovoPlano');
+        const btnDashboard = document.getElementById('btnDashboard');
+        const btnAssinantes = document.getElementById('btnAssinantes');
+        let empresaId = null;
+        let isDono = false;
+        let isAdmin = false;
+
+        function getEmpresaIdAtiva() {
+            return localStorage.getItem("empresaAtivaId") || null;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            empresaId = getEmpresaIdAtiva();
+            if (!empresaId) {
+                if (listaContainer) listaContainer.innerHTML = '<p class="erro">Nenhuma empresa ativa selecionada.</p>';
+                return;
+            }
+
+            try {
+                const empresaRef = doc(db, "empresarios", empresaId);
+                const empresaSnap = await getDoc(empresaRef);
+
+                if (!empresaSnap.exists()) {
+                    listaContainer.innerHTML = '<p class="erro">Empresa ativa não encontrada.</p>';
+                    return;
+                }
+
+                const adminUID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+                isDono = empresaSnap.data().donoId === user.uid;
+                isAdmin = user.uid === adminUID;
+
+                const showButtons = isDono || isAdmin;
+                if (btnNovoPlano) btnNovoPlano.style.display = showButtons ? 'inline-flex' : 'none';
+                if (btnDashboard) btnDashboard.style.display = showButtons ? 'inline-flex' : 'none';
+                if (btnAssinantes) btnAssinantes.style.display = showButtons ? 'inline-flex' : 'none';
+
+                let papelUsuario = [];
+                if (isAdmin) papelUsuario.push('admin');
+                if (isDono) papelUsuario.push('dono');
+                if (papelUsuario.length === 0) papelUsuario.push('funcionario');
+
+                await carregarMenu(papelUsuario);
+                await carregarPlanos(empresaId);
+
+            } catch (error) {
+                console.error("Erro ao carregar dados da página:", error);
+                listaContainer.innerHTML = '<p class="erro">Ocorreu um erro ao carregar os dados. Tente novamente.</p>';
+            }
+        });
+
+        async function carregarMenu(papelUsuario) {
+            try {
+                const response = await fetch('menu-lateral.html');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) await menuModule.ativarMenuLateral(papelUsuario);
+            } catch (error) {
+                console.error("Falha ao carregar o menu lateral:", error);
+            }
+        }
+
+        async function carregarPlanos(empresaId) {
+            try {
+                const planosRef = collection(db, `empresarios/${empresaId}/planosDeAssinatura`);
+                const snapshot = await getDocs(planosRef);
+
+                if (snapshot.empty) {
+                    listaContainer.innerHTML = `
+                        <div class="card-plano-vazio">
+                            <div class="card-vazio-content">
+                                <i class="fa-solid fa-crown"></i>
+                                <h2>Você ainda não criou nenhum plano!</h2>
+                                <p>Crie seu primeiro plano para começar a fidelizar seus clientes.</p>
+                                <a href="criar-plano.html" class="btn-novo-card">+ Criar Novo Plano</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                listaContainer.innerHTML = '';
+                snapshot.docs.forEach(doc => {
+                    const plano = { id: doc.id, ...doc.data() };
+                    const card = document.createElement('a');
+                    card.href = `criar-plano.html?id=${plano.id}`;
+                    card.className = 'card-plano-item';
+                    const precoFormatado = (plano.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    card.innerHTML = `
+                        <h3>${sanitizeHTML(plano.nome)}</h3>
+                        <p class="preco">${precoFormatado} /mês</p>
+                        <span class="metodo metodo-${plano.metodo}">${plano.metodo === 'automatico' ? 'Automático (MP)' : 'Manual (PIX)'}</span>
+                    `;
+                    listaContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar planos:", error);
+                listaContainer.innerHTML = '<p class="erro">Ocorreu um erro ao carregar os planos.</p>';
+            }
+        }
+
+        function sanitizeHTML(str) {
+            if (!str) return "";
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+    </script>
+</body>
+</html>

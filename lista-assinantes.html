@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes Assinantes - Pronti</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            color: var(--cor-texto-escuro, #22223b);
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+        #menu-container {
+            width: 250px;
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+        main {
+            flex-grow: 1;
+            padding: 40px;
+            margin-left: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Espaço extra entre cabeçalho e cards */
+        .espaco-cards { height: 20px; }
+        .header-pagina {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 0;
+        }
+        .header-pagina h1 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header-botoes {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 26px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.18s;
+        }
+        .btn-assinantes {
+            background-color: #0891b2;
+            color: #fff;
+        }
+        .btn-assinantes:hover { background-color: #0e7490; }
+        .btn-dashboard {
+            background-color: #f59e0b;
+            color: #fff;
+        }
+        .btn-dashboard:hover { background-color: #d97706; }
+        .btn-novo {
+            background-color: #10b981;
+            color: #fff;
+        }
+        .btn-novo:hover { background-color: #059669; }
+        #lista-clientes {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            margin-top: 0;
+        }
+        .card-cliente {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 0;
+        }
+        .card-cliente .nome {
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 1.15rem;
+            margin-bottom: 2px;
+        }
+        .card-cliente .email {
+            font-size: 0.97em; 
+            color: #64748b;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+        .assinatura-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .badge-ativo {
+            background-color: #dcfce7;
+            color: #166534;
+            font-size: 0.92em;
+            font-weight: 700;
+            padding: 5px 18px;
+            border-radius: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 1px 4px #dcfce7;
+        }
+        .plano {
+            color: #22223b;
+            font-weight: 500;
+            font-size: 1em;
+        }
+        .vence {
+            color: #475569;
+            font-size: 0.96em;
+            margin-top: 2px;
+        }
+        .pagamento-info {
+            background: #f3f6fd;
+            border-radius: 7px;
+            padding: 8px 12px;
+            font-size: 0.97em;
+            color: #333;
+            box-shadow: 0 1px 4px rgba(99,102,241,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+        .pagamento-info span {
+            margin-bottom: 2px;
+        }
+        .pagamento-info strong {
+            color: #4f46e5;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .erro, .error-message {
+            color: #fff; background-color: #ef4444; padding: 15px; border-radius: 8px; font-weight: 500; margin: 2rem 0;
+        }
+        .info {
+            color: #e0e7ff; font-weight: 500; margin: 2rem 0; text-align: center;
+        }
+        @media (max-width: 992px) {
+            #menu-container { display: none; }
+            main { margin-left: 0; padding: 20px; }
+        }
+        @media (max-width: 768px) {
+            main { padding: 16px; padding-top: 70px; }
+            .header-pagina h1 { font-size: 1.3rem; }
+            .btn-header { font-size: 0.95rem; padding: 10px 10px; }
+            #lista-clientes { gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <aside id="menu-container"></aside>
+    <main>
+        <div class="header-pagina">
+            <h1>Clientes Assinantes</h1>
+            <div class="header-botoes">
+                <a href="lista-assinantes.html" class="btn-header btn-assinantes"><i class="fa-solid fa-crown"></i> Clientes Assinantes</a>
+                <a href="dashboard-pagamentos.html" class="btn-header btn-dashboard"><i class="fa-solid fa-check-to-slot"></i> Painel de Aprovações</a>
+                <a href="planos.html" class="btn-header btn-novo"><i class="fa-solid fa-plus"></i> Meus Planos</a>
+            </div>
+        </div>
+        <div class="espaco-cards"></div>
+        <div id="lista-clientes">
+            <p class="info">Carregando assinantes...</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db, auth } from './vitrini-firebase.js'; 
+        import { collection, query, where, getDocs, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+        const listaClientesDiv = document.getElementById('lista-clientes');
+
+        async function carregarMenu() {
+            try {
+                const response = await fetch('menu-lateral.html');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) menuModule.ativarMenuLateral(['dono']);
+            } catch (error) {
+                // ignora erro de menu
+            }
+        }
+        carregarMenu();
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                listaClientesDiv.innerHTML = '<p class="erro">Você precisa estar logado para ver esta página.</p>';
+                return;
+            }
+            const empresaAtivaId = localStorage.getItem("empresaAtivaId");
+            if (empresaAtivaId) {
+                carregarAssinantesAtivos(empresaAtivaId);
+            } else {
+                listaClientesDiv.innerHTML = '<p class="erro">Nenhuma empresa ativa selecionada.</p>';
+            }
+        });
+
+        async function buscarPagamentoDoCliente(clienteId) {
+            const pagamentosRef = collection(db, 'pagamentosPendentes');
+            const pagamentosQ = query(pagamentosRef, where('clienteId', '==', clienteId), where('status', '==', 'aprovado'));
+            const pagamentosSnap = await getDocs(pagamentosQ);
+            if (pagamentosSnap.empty) return null;
+            let pagamento = pagamentosSnap.docs[0].data();
+            pagamentosSnap.docs.forEach(doc => {
+                const docData = doc.data();
+                if (docData.dataCriacao && (!pagamento.dataCriacao || docData.dataCriacao.seconds > pagamento.dataCriacao.seconds)) {
+                    pagamento = docData;
+                }
+            });
+            return pagamento;
+        }
+
+        async function carregarAssinantesAtivos(empresaId) {
+            try {
+                const clientesRef = collection(db, `empresarios/${empresaId}/clientes`);
+                const clientesSnapshot = await getDocs(clientesRef);
+                if (clientesSnapshot.empty) {
+                    listaClientesDiv.innerHTML = `
+                        <div class="card-plano-vazio">
+                            <div class="card-vazio-content">
+                                <i class="fa-solid fa-user"></i>
+                                <h2>Sem assinantes ainda!</h2>
+                                <p>Assim que houver clientes assinantes, eles aparecerão aqui.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                const promises = clientesSnapshot.docs.map(async (clienteDoc) => {
+                    const cliente = { id: clienteDoc.id, ...clienteDoc.data() };
+                    // Busca assinatura ativa
+                    const assinaturasRef = collection(db, `empresarios/${empresaId}/clientes/${cliente.id}/assinaturas`);
+                    const q = query(assinaturasRef, where('status', '==', 'ativo'));
+                    const assinaturaSnapshot = await getDocs(q);
+
+                    let assinaturaAtiva = null;
+                    if (!assinaturaSnapshot.empty) {
+                        const docAtivo = assinaturaSnapshot.docs.find(doc => {
+                            const dataFim = doc.data().dataFim;
+                            return dataFim && dataFim.toDate() > new Date();
+                        });
+                        if (docAtivo) assinaturaAtiva = docAtivo.data();
+                    }
+
+                    // Busca e-mail do usuário
+                    let emailUsuario = null;
+                    try {
+                        const usuarioRef = doc(db, 'usuarios', cliente.id);
+                        const usuarioSnap = await getDoc(usuarioRef);
+                        if (usuarioSnap.exists()) emailUsuario = usuarioSnap.data().email;
+                    } catch (e) {}
+
+                    // Busca pagamento aprovado
+                    let pagamentoInfo = null;
+                    try {
+                        pagamentoInfo = await buscarPagamentoDoCliente(cliente.id);
+                    } catch (e) {}
+
+                    return { ...cliente, assinatura: assinaturaAtiva, emailUsuario, pagamentoInfo };
+                });
+
+                const clientesComAssinatura = await Promise.all(promises);
+                const assinantesAtivos = clientesComAssinatura.filter(c => c.assinatura !== null);
+
+                if (assinantesAtivos.length === 0) {
+                    listaClientesDiv.innerHTML = `
+                        <div class="card-plano-vazio">
+                            <div class="card-vazio-content">
+                                <i class="fa-solid fa-user"></i>
+                                <h2>Sem assinantes ainda!</h2>
+                                <p>Assim que houver clientes assinantes, eles aparecerão aqui.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listaClientesDiv.innerHTML = '';
+                assinantesAtivos.forEach(cliente => {
+                    const dataFim = cliente.assinatura.dataFim.toDate().toLocaleDateString('pt-BR');
+                    const pagamento = cliente.pagamentoInfo;
+                    let pagamentoHtml = '';
+                    if (pagamento) {
+                        const valorFormatado = pagamento.valor ? `R$ ${Number(pagamento.valor).toFixed(2)}` : '';
+                        pagamentoHtml = `
+                            <div class="pagamento-info">
+                                <span><strong>Pagamento:</strong> ${pagamento.metodo ? pagamento.metodo.toUpperCase() : '---'} ${valorFormatado}</span>
+                                <span><strong>Status:</strong> ${pagamento.status || '---'}</span>
+                                <span><strong>Plano:</strong> ${pagamento.planoNome || '---'}</span>
+                                <span><strong>Data:</strong> ${pagamento.dataCriacao && pagamento.dataCriacao.toDate ? pagamento.dataCriacao.toDate().toLocaleDateString('pt-BR') : '---'}</span>
+                            </div>
+                        `;
+                    }
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card-cliente';
+                    cardDiv.innerHTML = `
+                        <span class="nome">${cliente.nome}</span>
+                        <span class="email">${cliente.emailUsuario || 'E-mail não informado'}</span>
+                        <div class="assinatura-info">
+                            <span class="badge-ativo">ASSINANTE ATIVO</span>
+                            <span class="plano">${cliente.assinatura.planoNome}</span>
+                        </div>
+                        <span class="vence">Vence em: ${dataFim}</span>
+                        ${pagamentoHtml}
+                    `;
+                    listaClientesDiv.appendChild(cardDiv);
+                });
+
+            } catch (error) {
+                listaClientesDiv.innerHTML = '<p class="error-message">Ocorreu um erro ao carregar os assinantes.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

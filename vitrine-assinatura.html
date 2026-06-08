@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pagamento de Assinatura - Pronti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            color: #22223b;
+            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+        main {
+            flex-grow: 1;
+            box-sizing: border-box;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 0 0 0;
+        }
+        .header-pagina {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0 20px;
+        }
+        .header-pagina h1 {
+            color: #fff;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .espaco-cards { height: 18px; }
+        .container-pagamento {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .card-plano {
+            background: #fff;
+            color: #222664;
+            border-radius: 16px;
+            padding: 28px 22px;
+            max-width: 400px;
+            margin: 0 auto 30px auto;
+            box-shadow: 0 6px 22px rgba(44,54,80,0.13);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .card-plano h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #4f46e5;
+        }
+        .card-plano .preco {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0 5px 0;
+            color: #6366f1;
+        }
+        .card-plano ul {
+            list-style: '✓ ';
+            padding-left: 20px;
+            color: #333;
+            margin: 16px 0;
+            text-align: left;
+        }
+        .btn-acao {
+            width: 100%;
+            background: #10b981;
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            padding: 18px 0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            margin-top: 0;
+        }
+        .btn-acao:hover:not(:disabled) {
+            background: #0f9e70;
+            transform: translateY(-2px);
+        }
+        .btn-acao:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #instrucoes-container {
+            margin-top: 0;
+            margin-bottom: 30px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            color: #1e293b;
+            padding: 20px 26px;
+            max-width: 400px;
+            font-size: 1.05em;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #instrucoes-container strong {
+            color: #4f46e5;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .card-sucesso {
+            text-align: center;
+            width: 100%;
+        }
+        .card-sucesso i {
+            font-size: 3rem;
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        .card-sucesso h2 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .card-sucesso p {
+            color: #444;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        @media (max-width: 700px) {
+            main { padding: 20px 0 0 0; }
+            .header-pagina { padding: 0 6px; }
+            .container-pagamento { padding: 0 6px; }
+            .card-plano, #instrucoes-container { max-width: 95vw; padding: 14px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="header-pagina">
+            <h1 id="titulo-principal">Pagamento de Assinatura</h1>
+        </div>
+        <div class="espaco-cards"></div>
+        <div class="container-pagamento">
+            <div id="plano-card" class="card-plano"></div>
+            <div id="instrucoes-container" style="display: none;"></div>
+            <div id="area-acao">
+                <!-- O botão será inserido dinamicamente pelo script -->
+            </div>
+        </div>
+    </main>
+    <script type="module">
+        import { db, auth } from './vitrini-firebase.js';
+        import { doc, getDoc, addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const empresaId = urlParams.get("empresaId");
+        const planoId = urlParams.get("planoId");
+
+        const tituloPrincipal = document.getElementById('titulo-principal');
+        const planoCardDiv = document.getElementById('plano-card');
+        const areaAcaoDiv = document.getElementById('area-acao');
+        const instrucoesContainerDiv = document.getElementById('instrucoes-container');
+        
+        let planoSelecionado = null;
+        let empresaData = null;
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                carregarDadosIniciais();
+            } else {
+                areaAcaoDiv.innerHTML = '';
+                planoCardDiv.innerHTML = `<p style='color:red;'>Você precisa estar logado para fazer um pagamento.</p>`;
+            }
+        });
+
+        async function carregarDadosIniciais() {
+            areaAcaoDiv.innerHTML = `<button class="btn-acao" disabled>Carregando...</button>`;
+            if (!empresaId || !planoId) {
+                planoCardDiv.innerHTML = "<p style='color:red;'>Erro: Plano ou empresa não identificado.</p>";
+                areaAcaoDiv.innerHTML = '';
+                return;
+            }
+            try {
+                const planoRef = doc(db, `empresarios/${empresaId}/planosDeAssinatura/${planoId}`);
+                const empresaRef = doc(db, `empresarios/${empresaId}`);
+                
+                const [planoSnap, empresaSnap] = await Promise.all([getDoc(planoRef), getDoc(empresaRef)]);
+
+                if (!planoSnap.exists() || !empresaSnap.exists()) {
+                    throw new Error("Plano ou empresa não encontrado.");
+                }
+
+                planoSelecionado = { id: planoSnap.id, ...planoSnap.data() };
+                empresaData = empresaSnap.data();
+
+                planoCardDiv.innerHTML = `
+                    <h2>${planoSelecionado.nome}</h2>
+                    <p class="preco">R$ ${planoSelecionado.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span>/ mês</span></p>
+                    <ul>${(planoSelecionado.servicosInclusos || []).map(s => `<li>${s.quantidade}x ${s.nomeServico}</li>`).join('')}</ul>
+                `;
+                
+                if (planoSelecionado.metodo === 'automatico') {
+                    areaAcaoDiv.innerHTML = `<button id="btn-pagar-mp" class="btn-acao">Pagar com Mercado Pago</button>`;
+                    document.getElementById('btn-pagar-mp').addEventListener('click', handleMercadoPago);
+                } else { // PIX
+                    instrucoesContainerDiv.style.display = 'block';
+                    instrucoesContainerDiv.innerHTML = `<strong>Instruções para Pagamento PIX:</strong><p>${planoSelecionado.instrucoesPagamento || 'Instruções não fornecidas.'}</p>`;
+                    
+                    areaAcaoDiv.innerHTML = `<button id="btn-confirma-pagamento" class="btn-acao">Já Realizei o Pagamento</button>`;
+                    document.getElementById('btn-confirma-pagamento').addEventListener('click', handleConfirmacaoPix);
+                }
+
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err);
+                planoCardDiv.innerHTML = `<p style='color:red;'>${err.message}</p>`;
+                areaAcaoDiv.innerHTML = '';
+            }
+        }
+
+        async function handleMercadoPago() {
+            const btn = document.getElementById('btn-pagar-mp');
+            btn.disabled = true;
+            btn.textContent = 'Aguarde...';
+
+            try {
+                await addDoc(collection(db, "pagamentosPendentes"), {
+                    empresaId: empresaId, 
+                    planoId: planoSelecionado.id, 
+                    planoNome: planoSelecionado.nome,
+                    clienteId: currentUser.uid, 
+                    clienteNome: currentUser.displayName || currentUser.email,
+                    valor: planoSelecionado.preco, 
+                    status: 'aguardando_pagamento_mp', 
+                    metodo: 'mercado_pago',
+                    dataCriacao: serverTimestamp()
+                });
+
+                let link = planoSelecionado.mercadoPagoLink;
+                if (link) {
+                    link += `&external_reference=${empresaId}`;
+                    window.location.href = link;
+                } else {
+                    throw new Error("Link de pagamento do Mercado Pago não está configurado para este plano.");
+                }
+            } catch (error) {
+                console.error("Erro ao iniciar pagamento com Mercado Pago:", error);
+                alert("Ocorreu um erro ao tentar processar o pagamento: " + error.message);
+                btn.textContent = "Tentar Novamente";
+                btn.disabled = false;
+            }
+        }
+
+        async function handleConfirmacaoPix() {
+            const btn = document.getElementById('btn-confirma-pagamento');
+            btn.disabled = true;
+            btn.textContent = 'Enviando notificação...';
+
+            try {
+                await addDoc(collection(db, "pagamentosPendentes"), {
+                    empresaId: empresaId, planoId: planoSelecionado.id, planoNome: planoSelecionado.nome,
+                    clienteId: currentUser.uid, clienteNome: currentUser.displayName || currentUser.email,
+                    valor: planoSelecionado.preco, status: "pendente_confirmacao", metodo: 'pix',
+                    dataCriacao: serverTimestamp()
+                });
+                
+                if (empresaData && empresaData.donoId) {
+                    try {
+                        await addDoc(collection(db, "filaDeNotificacoes"), {
+                            donoId: empresaData.donoId,
+                            tipo: 'PAGAMENTO_PIX_RECEBIDO',
+                            titulo: 'Pagamento PIX Confirmado',
+                            mensagem: `O cliente ${currentUser.displayName || currentUser.email} confirmou o pagamento do plano "${planoSelecionado.nome}".`,
+                            lido: false,
+                            dataCriacao: serverTimestamp()
+                        });
+                    } catch (notificationError) {
+                        console.warn("A notificação de pagamento foi registrada, mas a criação do alerta na fila de notificações falhou:", notificationError);
+                    }
+                } else {
+                    console.warn("A notificação de pagamento foi registrada, mas o 'donoId' da empresa não foi encontrado para criar a notificação.");
+                }
+
+                tituloPrincipal.textContent = "Notificação Enviada!";
+                planoCardDiv.innerHTML = `
+                    <div class="card-sucesso">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <h2>Obrigado!</h2>
+                        <p>A <strong>${empresaData.nomeFantasia || 'empresa'}</strong> agradece pelo seu pagamento.<br>Sua assinatura será liberada assim que confirmarmos o recebimento.</p>
+                    </div>
+                `;
+                instrucoesContainerDiv.style.display = 'none';
+                areaAcaoDiv.style.display = 'none';
+
+            } catch (error) {
+                console.error("Erro ao registrar a confirmação de pagamento PIX:", error);
+                alert("Ocorreu um erro ao registrar a notificação. Verifique sua conexão e tente novamente.");
+                btn.textContent = 'Tentar Novamente';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Perfil e Configurações - Pronti IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+        --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        --primary-color: #4f46e5;
+        --card-bg: #ffffff;
+        --text-main: #1e293b;
+        --text-secondary: #64748b;
+        --border-color: #e2e8f0;
+        --input-bg: #f8fafc;
+        --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--gradient-primary);
+      margin: 0;
+      color: var(--text-main);
+      display: flex;
+    }
+
+    .main-content {
+      margin-left: 270px;
+      padding: 32px;
+      flex-grow: 1;
+      min-height: 100vh;
+    }
+
+    .form-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .header-content h1 {
+      font-size: 1.9rem;
+      margin: 0 0 6px 0;
+      color: var(--text-main);
+      font-weight: 800;
+    }
+
+    .header-content p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-new, .btn-submit, .btn-copy, .btn-open, .btn-upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-new {
+      background-color: var(--primary-color) !important;
+      color: white !important;
+    }
+
+    .btn-new:hover {
+      background-color: #4338ca !important;
+    }
+
+    .btn-submit {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
+
+    .btn-submit:hover {
+      background-color: #4338ca;
+    }
+
+    .btn-copy, .btn-open {
+      background: #f9fafb;
+      color: var(--primary-color);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      font-size: 0.95rem;
+    }
+
+    .btn-copy:hover, .btn-open:hover {
+      background: #eef2ff;
+    }
+
+    .btn-upload {
+      background: #f9fafb;
+      color: #374151;
+      border: 1px dashed #cbd5e1;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+    }
+
+    .btn-upload:hover {
+      background: #eef2ff;
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .form-section h3 {
+      margin: 24px 0 18px 0;
+      font-size: 1.2em;
+      color: var(--primary-color);
+      font-weight: 600;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid var(--border-color);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      font-size: 1em;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      font-weight: 500;
+      display: block;
+    }
+
+    .form-group input[type="text"],
+    .form-group textarea,
+    #selectEmpresa,
+    .form-group input[type="number"],
+    .form-group select {
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 1em;
+      background: var(--input-bg);
+      color: var(--text-main);
+      transition: border 0.2s, box-shadow 0.2s, transform 0.12s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="number"]:focus,
+    .form-group textarea:focus,
+    #selectEmpresa:focus,
+    .form-group select:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+      transform: translateY(-1px);
+    }
+
+    .form-actions {
+      text-align: right;
+      margin-top: 32px;
+    }
+
+    .vitrine-link-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--input-bg);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+    }
+
+    .vitrine-url {
+      font-size: 0.95em;
+      color: #2563eb;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      padding: 0;
+      flex-grow: 1;
+    }
+
+    .logo-upload-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-upload-container img#logo-preview {
+      width: 80px;
+      height: 80px;
+      min-width: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+    }
+
+    .guia-campo {
+      background: linear-gradient(135deg, #eef2ff 0%, #f8faff 100%);
+      border: 1.5px solid #c7d2fe;
+      border-radius: 16px;
+      padding: 18px 16px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.08);
+    }
+
+    .guia-campo-topo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .guia-campo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: #4f46e5;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .guia-campo-titulo {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #3730a3;
+    }
+
+    .guia-campo-subtitulo {
+      font-size: 0.93rem;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .guia-campo-exemplo {
+      background: rgba(255,255,255,0.75);
+      border: 1px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      color: #334155;
+    }
+
+    .guia-campo-exemplo strong {
+      color: #4338ca;
+    }
+
+    .campo-ativo {
+      border-color: #4f46e5 !important;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
+      background: #fff !important;
+    }
+
+    .floating-back-btn {
+      position: fixed;
+      left: 16px;
+      bottom: 22px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      border: 2px solid rgba(79,70,229,0.12);
+      z-index: 4000;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+      opacity: 1;
+    }
+
+    .floating-back-btn:hover {
+      transform: translateY(-3px);
+    }
+
+    @media (min-width: 901px) {
+      .floating-back-btn {
+        display: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+
+      .header-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+      }
+
+      .header-actions .btn-new {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <div class="form-card">
+      <div class="header-section">
+        <div class="header-content">
+          <h1 id="main-title">Meu Perfil e Configurações</h1>
+          <p>Defina aqui todas as informações do seu negócio.</p>
+        </div>
+        <div class="header-actions">
+          <a id="btn-abrir-vitrine" href="#" target="_blank" class="btn-new" style="display: none;">
+            <i class="fa-solid fa-store"></i> Abrir Minha Vitrine
+          </a>
+          <button id="btn-criar-nova-empresa" class="btn-new" type="button">
+            <i class="fa-solid fa-plus"></i> Criar Nova Empresa
+          </button>
+        </div>
+      </div>
+
+      <div id="guia-campo" class="guia-campo">
+        <div class="guia-campo-topo">
+          <div id="guia-campo-icon" class="guia-campo-icon">
+            <i class="fa-solid fa-circle-info"></i>
+          </div>
+          <div id="guia-campo-titulo" class="guia-campo-titulo">Preencha seu perfil passo a passo</div>
+        </div>
+        <div id="guia-campo-subtitulo" class="guia-campo-subtitulo">
+          Clique em qualquer campo abaixo e o Pronti vai te explicar exatamente o que colocar.
+        </div>
+        <div id="guia-campo-exemplo" class="guia-campo-exemplo">
+          <strong>Dica:</strong> comece pelo nome do negócio. Depois complete o link, descrição, endereço e horário.
+        </div>
+      </div>
+
+      <div class="form-group" id="empresa-selector-group" style="display:none;">
+        <label for="selectEmpresa"><i class="fa-solid fa-building"></i> Selecione sua empresa:</label>
+        <select id="selectEmpresa"></select>
+      </div>
+
+      <div id="mensagem-cadastro-sucesso"></div>
+
+      <div id="mensagem-free" style="display:none; margin:20px auto; max-width:560px; background:#e0e7ff; color:#3730a3; border-radius:10px; padding:12px 18px; text-align:center; font-weight:bold;">
+        Plano atual: FREE
+      </div>
+
+      <form id="form-perfil">
+        <div class="form-section">
+          <h3>Informações do Negócio</h3>
+
+          <div class="form-group">
+            <label for="nomeNegocio">Nome do Negócio</label>
+            <input type="text" id="nomeNegocio" placeholder="Ex: Barbearia do João" required>
+          </div>
+
+          <div class="form-group">
+            <label for="slug">Link Personalizado (Apelido)</label>
+            <input type="text" id="slug" placeholder="Ex: barbearia-do-joao">
+          </div>
+
+          <div class="form-group" id="container-link-vitrine" style="display: none;">
+            <label>Link da sua Vitrine Pública</label>
+            <div class="vitrine-link-container">
+              <div class="vitrine-url" id="url-vitrine-display"></div>
+              <div class="vitrine-actions">
+                <button type="button" id="btn-copiar-link" class="btn-copy">
+                  <i class="fa-regular fa-copy"></i> Copiar
+                </button>
+                <a href="#" target="_blank" class="btn-open" id="btn-abrir-vitrine-inline">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="logoNegocio">Logótipo do Negócio (Opcional)</label>
+            <div class="logo-upload-container">
+              <img id="logo-preview" src="https://placehold.co/80x80/eef2ff/4f46e5?text=Logo" alt="Pré-visualização do logotipo">
+              <div class="logo-upload-actions">
+                <input type="file" id="logoNegocio" accept="image/png, image/jpeg" style="display: none;">
+                <button type="button" id="btn-upload-logo" class="btn-upload">
+                  <i class="fa-regular fa-image"></i> Escolher Arquivo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descricao">Descrição Curta</label>
+            <textarea id="descricao" rows="3" placeholder="Uma breve descrição do seu negócio."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="localizacao">Localização (Endereço )</label>
+            <input type="text" id="localizacao" placeholder="Ex: Rua das Flores, 123, São Paulo">
+          </div>
+
+          <div class="form-group">
+            <label for="horarioFuncionamento">Horário de Funcionamento</label>
+            <input type="text" id="horarioFuncionamento" placeholder="Ex: Seg a Sex, 9h - 18h">
+          </div>
+
+          <div class="form-group">
+            <label for="chavePix">Chave PIX (Opcional)</label>
+            <input type="text" id="chavePix" placeholder="Digite sua chave PIX">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Salvar Todas as Configurações</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <button id="floating-back-btn" class="floating-back-btn" aria-label="Voltar" title="Voltar">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
+
+  <div id="modal-add-profissional" class="modal-overlay" style="display: none;"></div>
+
+  <div id="modal-confirmacao-pronti" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;background:rgba(24,27,124,.35);align-items:center;justify-content:center;">
+    <div style="background:#4f46e5;color:#fff;padding:30px 30px 22px 30px;border-radius:18px;max-width:340px;box-shadow:0 2px 20px #0005;margin:auto;position:relative;">
+      <div id="modal-confirmacao-pronti-pergunta" style="font-size:1.16em;font-weight:500;text-align:center;margin-bottom:13px;"></div>
+      <div style="display:flex;justify-content:center;gap:15px;padding-top:8px;">
+        <button id="modal-confirmacao-pronti-ok" style="background:#2563eb;color:#fff;font-weight:600;padding:9px 30px;border-radius:7px;border:none;cursor:pointer;font-size:1em;box-shadow:0 2px 10px #0002;">OK</button>
+        <button id="modal-confirmacao-pronti-cancelar" style="background:#4757d3;color:#fff;font-weight:500;padding:9px 30px;border-radius:7px;border:none;cursor:pointer;font-size:1em;box-shadow:0 2px 8px #0002;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      fetch('menu-lateral.html')
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('sidebar-placeholder').innerHTML = html;
+          setTimeout(() => {
+            const links = document.querySelectorAll('.sidebar-links a');
+            links.forEach(link => link.classList.remove('active'));
+            const perfilLink = document.querySelector('.sidebar-links a[href="perfil.html"]');
+            if (perfilLink) perfilLink.classList.add('active');
+          }, 10);
+        });
+
+      const backBtn = document.getElementById('floating-back-btn');
+      if (backBtn) {
+        if (!history.length || history.length <= 1) {
+          backBtn.style.display = 'none';
+        }
+        backBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (document.referrer && document.referrer !== window.location.href) {
+            history.back();
+            setTimeout(() => {
+              if (document.location.href.indexOf(window.location.origin) !== 0) return;
+            }, 150);
+          } else {
+            window.location.href = '/';
+          }
+        });
+      }
+
+      const ajudaCampos = {
+        nomeNegocio: {
+          titulo: "Nome do Negócio",
+          subtitulo: "Digite o nome que seu cliente conhece. Esse nome aparece no seu perfil e ajuda a identificar sua empresa dentro do Pronti.",
+          exemplo: "Exemplo: <strong>Barbearia do João</strong>, <strong>Studio Bella</strong>, <strong>Clínica Vida</strong>",
+          icon: "fa-solid fa-store"
+        },
+        slug: {
+          titulo: "Link Personalizado",
+          subtitulo: "Esse apelido vira parte do link da sua vitrine pública. Use algo simples, sem espaço, fácil de lembrar e relacionado ao seu negócio.",
+          exemplo: "Exemplo: <strong>barbearia-do-joao</strong> ou <strong>studio-bella</strong>",
+          icon: "fa-solid fa-link"
+        },
+        logoNegocio: {
+          titulo: "Logo do Negócio",
+          subtitulo: "Escolha uma imagem para deixar sua empresa mais profissional. Pode ser sua logo, símbolo ou foto principal da marca.",
+          exemplo: "Dica: use uma imagem quadrada e nítida para ficar bonita na vitrine.",
+          icon: "fa-regular fa-image"
+        },
+        descricao: {
+          titulo: "Descrição Curta",
+          subtitulo: "Explique rapidamente o que seu negócio faz. Essa descrição ajuda o cliente a entender seu atendimento e seu diferencial.",
+          exemplo: "Exemplo: <strong>Especialista em cortes modernos, barba e atendimento com horário marcado.</strong>",
+          icon: "fa-solid fa-align-left"
+        },
+        localizacao: {
+          titulo: "Endereço do Negócio",
+          subtitulo: "Coloque o local onde você atende para o cliente saber onde fica sua empresa. Quanto mais claro, melhor.",
+          exemplo: "Exemplo: <strong>Rua das Flores, 123, Centro, Contagem - MG</strong>",
+          icon: "fa-solid fa-location-dot"
+        },
+        horarioFuncionamento: {
+          titulo: "Horário de Funcionamento",
+          subtitulo: "Informe os dias e horários que sua empresa costuma funcionar. Isso ajuda a organizar melhor seu perfil.",
+          exemplo: "Exemplo: <strong>Seg a Sex, 9h às 18h | Sábado, 8h às 14h</strong>",
+          icon: "fa-regular fa-clock"
+        },
+        chavePix: {
+          titulo: "Chave PIX",
+          subtitulo: "Esse campo é opcional. Use se quiser facilitar recebimentos e pagamentos ligados ao seu negócio.",
+          exemplo: "Exemplo: <strong>seuemail@provedor.com</strong> ou <strong>(31) 99999-9999</strong>",
+          icon: "fa-solid fa-money-bill-transfer"
+        }
+      };
+
+      const guiaTitulo = document.getElementById("guia-campo-titulo");
+      const guiaSubtitulo = document.getElementById("guia-campo-subtitulo");
+      const guiaExemplo = document.getElementById("guia-campo-exemplo");
+      const guiaIcon = document.getElementById("guia-campo-icon");
+
+      function limparCampoAtivo() {
+        document.querySelectorAll("#form-perfil input, #form-perfil textarea, #form-perfil select").forEach(el => {
+          el.classList.remove("campo-ativo");
+        });
+      }
+
+      function atualizarAjudaCampo(id) {
+        const ajuda = ajudaCampos[id];
+        if (!ajuda) return;
+
+        if (guiaTitulo) guiaTitulo.textContent = ajuda.titulo;
+        if (guiaSubtitulo) guiaSubtitulo.textContent = ajuda.subtitulo;
+        if (guiaExemplo) guiaExemplo.innerHTML = ajuda.exemplo;
+        if (guiaIcon) guiaIcon.innerHTML = `<i class="${ajuda.icon}"></i>`;
+      }
+
+      Object.keys(ajudaCampos).forEach((id) => {
+        const campo = document.getElementById(id);
+        if (!campo) return;
+
+        ["focus", "click"].forEach((evento) => {
+          campo.addEventListener(evento, () => {
+            limparCampoAtivo();
+            campo.classList.add("campo-ativo");
+            atualizarAjudaCampo(id);
+          });
+        });
+      });
+
+      const primeiroCampo = document.getElementById("nomeNegocio");
+      if (primeiroCampo) {
+        primeiroCampo.classList.add("campo-ativo");
+        atualizarAjudaCampo("nomeNegocio");
+      }
+    });
+  </script>
+
+  <script src="perfil.js" type="module"></script>
+</body>
+</html>

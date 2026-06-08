@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pronti - Ficha do Cliente</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* Pequenos ajustes para integração visual, sem sobrescrever seu style.css */
+    .info-card {
+      max-width: 700px;
+      margin: 0 auto 32px auto;
+      margin-top: 32px;
+      padding: 32px 28px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+      background: var(--cor-branco, #fff);
+      position: relative;
+    }
+    .info-card .client-name {
+      font-size: 2.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cor-primaria, #6366f1), var(--cor-secundaria, #ec4899));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+    .info-card .client-description {
+      color: var(--cor-texto-leve, #6b7280);
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .history-container {
+      max-width: 700px;
+      margin: 0 auto 0 auto;
+      background: var(--cor-branco, #fff);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+      border: 1px solid #e5e7eb;
+      padding: 32px 28px;
+      margin-bottom: 40px;
+      margin-top: 0;
+      position: relative;
+    }
+    .history-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--cor-primaria, #6366f1);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .history-title::before {
+      content: '📅';
+      font-size: 1.2rem;
+    }
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0;
+      color: var(--cor-texto-leve, #6b7280);
+      font-size: 1.1rem;
+    }
+    .loading-spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid #e0e7ff;
+      border-top: 3px solid var(--cor-primaria, #6366f1);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 1rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+    @media (max-width: 900px) {
+      .info-card, .history-container { padding: 20px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <a href="index.html" class="sidebar-brand">Pronti</a>
+    <div class="sidebar-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="index.html">Home</a>
+      <a href="servicos.html">Serviços</a>
+      <a href="agenda.html">Agenda</a>
+      <a href="clientes.html" class="active">Clientes</a>
+      <a href="contato.html">Contato</a>
+      <!-- Adicione outros menus se houver -->
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <a href="clientes.html" class="btn-new" style="margin-bottom: 32px; padding: 10px 22px; display:inline-block;">&larr; Voltar para a lista de clientes</a>
+
+    <div class="info-card">
+      <h1 id="nome-cliente-titulo" class="client-name">Carregando...</h1>
+      <p class="client-description">Abaixo está o histórico completo de todos os agendamentos deste cliente.</p>
+    </div>
+
+    <div class="history-container">
+      <h2 class="history-title">Histórico de Agendamentos</h2>
+      <div id="historico-agendamentos">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          Carregando histórico...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="ficha-cliente.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+// ======================================================================
+//              Módulo: perfil-profissional-foto
+//      Responsabilidade: Gerenciar a exibição, seleção, upload e
+//                      deleção da foto de perfil do profissional.
+// ======================================================================
+
+// CORREÇÃO: Importações centralizadas e versão do SDK atualizada para consistência.
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+import { db, storage } from './firebase-config.js'; // A sua configuração central
+
+/**
+ * MULTIEMPRESA: Obtém o empresaId da empresa ativa do localStorage.
+ */
+function getEmpresaIdAtiva( ) {
+    return localStorage.getItem("empresaAtivaId") || null;
+}
+
+/**
+ * Renderiza o componente de foto do profissional na tela e configura os eventos.
+ * @param {string} fotoUrl - URL atual da foto do profissional (pode ser nula).
+ * @param {(file: File, profissionalId: string) => Promise<string|null>} onTrocarFoto - Callback para fazer o upload de uma nova foto.
+ * @param {() => Promise<boolean>} onDeletarFoto - Callback para deletar a foto existente.
+ * @param {string} profissionalId - UID do profissional logado.
+ */
+export function renderizarFotoProfissional(fotoUrl, onTrocarFoto, onDeletarFoto, profissionalId) {
+    const fotoContainer = document.getElementById('perfil-profissional-foto-container');
+    if (!fotoContainer) {
+        console.error("Elemento 'perfil-profissional-foto-container' não encontrado no DOM.");
+        return;
+    }
+
+    const botaoDeletarHtml = fotoUrl ?
+        `<button type="button" id="btn-deletar-foto-profissional" class="botao-perigo">Remover foto</button>` :
+        '';
+
+    fotoContainer.innerHTML = `
+        <img id="perfil-profissional-foto" 
+             src="${fotoUrl || 'https://placehold.co/80x80/6366f1/white?text=Foto'}" 
+             alt="Foto do profissional"
+             style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px; object-fit: cover; border: 2px solid #e5e7eb;">
+          
+
+        <input type="file" id="input-foto-profissional" accept="image/*" style="display:none;">
+        <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-trocar-foto-profissional" class="botao-secundario">Trocar foto</button>
+            ${botaoDeletarHtml}
+        </div>
+        <span id="status-foto-profissional" style="display: block; margin-top: 8px; color: #6b7280; font-size: 0.875em;"></span>
+    `;
+
+    const btnTrocar = document.getElementById('btn-trocar-foto-profissional' );
+    const inputFoto = document.getElementById('input-foto-profissional');
+    const statusSpan = document.getElementById('status-foto-profissional');
+    const imgPreview = document.getElementById('perfil-profissional-foto');
+    const btnDeletar = document.getElementById('btn-deletar-foto-profissional');
+
+    btnTrocar.onclick = () => inputFoto.click();
+
+    inputFoto.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            statusSpan.textContent = "Arquivo inválido, escolha uma imagem.";
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB
+            statusSpan.textContent = "Imagem muito grande (máx. 5MB).";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => { imgPreview.src = event.target.result; };
+        reader.readAsDataURL(file);
+
+        statusSpan.textContent = "Enviando imagem...";
+
+        if (onTrocarFoto) {
+            try {
+                const url = await onTrocarFoto(file, profissionalId);
+                if (url) {
+                    statusSpan.textContent = "Foto atualizada com sucesso!";
+                    renderizarFotoProfissional(url, onTrocarFoto, onDeletarFoto, profissionalId);
+                } else {
+                    throw new Error("Callback de upload não retornou uma URL.");
+                }
+            } catch (error) {
+                console.error("Falha no callback onTrocarFoto:", error);
+                statusSpan.textContent = "Erro ao enviar a foto.";
+                imgPreview.src = fotoUrl || 'https://placehold.co/80x80/6366f1/white?text=Foto';
+            }
+        }
+    };
+
+    if (btnDeletar && onDeletarFoto ) {
+        btnDeletar.onclick = async () => {
+            if (confirm("Tem certeza que deseja remover a foto de perfil?")) {
+                statusSpan.textContent = "Removendo foto...";
+                const sucesso = await onDeletarFoto();
+                if (sucesso) {
+                    statusSpan.textContent = "Foto removida.";
+                    imgPreview.src = 'https://placehold.co/80x80/6366f1/white?text=Foto';
+                    renderizarFotoProfissional(null, onTrocarFoto, onDeletarFoto, profissionalId );
+                } else {
+                    statusSpan.textContent = "Erro ao remover a foto.";
+                }
+            }
+        };
+    }
+}
+
+/**
+ * Realiza o upload de um arquivo para o Firebase Storage e atualiza o documento correspondente no Firestore.
+ */
+export async function uploadFotoProfissional(file, empresaId, profissionalId) {
+    if (!file || !empresaId || !profissionalId) {
+        console.error("uploadFotoProfissional chamado com parâmetros inválidos.");
+        return null;
+    }
+
+    try {
+        const nomeUnico = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
+        // Corrigido: garantir que profissionalId seja o UID do usuário autenticado
+        const storageRef = ref(storage, `fotos-profissionais/${empresaId}/${profissionalId}/${nomeUnico}`);
+
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+
+        // A função 'doc' agora usa a instância 'db' correta importada de firebase-config.js
+        const profDocRef = doc(db, "empresarios", empresaId, "profissionais", profissionalId);
+        await updateDoc(profDocRef, { fotoUrl: url });
+
+        console.log("Foto do profissional atualizada com sucesso no Firestore.");
+        return url;
+
+    } catch (error) {
+        console.error("Erro detalhado ao enviar foto do profissional:", error);
+        return null;
+    }
+}
+
+/**
+ * Deleta a foto de um profissional do Firebase Storage e remove a referência do Firestore.
+ */
+export async function deletarFotoProfissional(empresaId, profissionalId) {
+    if (!empresaId || !profissionalId) {
+        console.error("deletarFotoProfissional chamado com parâmetros inválidos.");
+        return false;
+    }
+
+    const profDocRef = doc(db, "empresarios", empresaId, "profissionais", profissionalId);
+
+    try {
+        const docSnap = await getDoc(profDocRef);
+        if (!docSnap.exists() || !docSnap.data().fotoUrl) {
+            console.log("Profissional não encontrado ou já não possui foto.");
+            return true;
+        }
+
+        const fotoUrl = docSnap.data().fotoUrl;
+        let fotoRef;
+        
+        // Esta lógica para extrair o caminho da URL está correta e mantida.
+        if (fotoUrl.startsWith('https://' )) {
+            try {
+                const urlObj = new URL(fotoUrl);
+                const pathParam = urlObj.pathname.split('/o/')[1];
+                const pathDecoded = decodeURIComponent(pathParam.split('?')[0]);
+                fotoRef = ref(storage, pathDecoded);
+            } catch (err) {
+                console.warn("Não foi possível extrair o caminho do Storage a partir da URL. Pulando deleção física.");
+                fotoRef = null;
+            }
+        } else {
+            fotoRef = ref(storage, fotoUrl);
+        }
+
+        if (fotoRef) {
+            await deleteObject(fotoRef);
+            console.log("Arquivo de foto deletado do Storage com sucesso.");
+        }
+
+        await updateDoc(profDocRef, {
+            fotoUrl: null
+        });
+        console.log("URL da foto removida do Firestore.");
+
+        return true;
+
+    } catch (error) {
+        if (error.code === 'storage/object-not-found') {
+            console.warn("O arquivo de foto não foi encontrado no Storage, mas o Firestore será limpo.");
+            await updateDoc(profDocRef, { fotoUrl: null });
+            return true;
+        }
+        console.error("Erro ao deletar foto do profissional:", error);
+        return false;
+    }
+}

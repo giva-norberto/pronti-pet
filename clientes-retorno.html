@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clientes para Retorno</title>
+
+  <link rel="stylesheet" href="menu-principal.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .pagina {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .topo {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .titulo-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .titulo-box h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .titulo-box p {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 0.95rem;
+    }
+
+    .btn-voltar {
+      background: #eef2ff;
+      color: #4338ca;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .painel {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      margin-bottom: 20px;
+    }
+
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .filtro-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+    }
+
+    .filtro-btn.ativo {
+      background: #fff;
+      color: #4338ca;
+    }
+
+    .resumo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card-resumo {
+      background: rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .card-resumo .rotulo {
+      font-size: 0.9rem;
+      color: #dbeafe;
+      margin-bottom: 8px;
+    }
+
+    .card-resumo .valor {
+      font-size: 1.7rem;
+      font-weight: 700;
+    }
+
+    .lista {
+      display: grid;
+      gap: 14px;
+    }
+
+    .cliente-card {
+      background: #fff;
+      color: #1f2937;
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+    }
+
+    .cliente-topo {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cliente-info {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .cliente-foto {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .cliente-nome {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .cliente-sub {
+      margin: 2px 0 0;
+      color: #6b7280;
+      font-size: 0.92rem;
+    }
+
+    .badge-status {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-atrasado { background: #fee2e2; color: #b91c1c; }
+    .status-hoje { background: #fef3c7; color: #b45309; }
+    .status-em_breve { background: #dbeafe; color: #1d4ed8; }
+    .status-futuro { background: #e5e7eb; color: #374151; }
+    .status-sem_historico { background: #ede9fe; color: #6d28d9; }
+
+    .cliente-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .info-box .label {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+
+    .info-box .texto {
+      font-size: 0.96rem;
+      color: #111827;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .vazio {
+      background: rgba(255,255,255,0.12);
+      border: 1px dashed rgba(255,255,255,0.28);
+      border-radius: 18px;
+      padding: 28px;
+      text-align: center;
+      color: #e0e7ff;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px 12px;
+      color: #e0e7ff;
+    }
+
+    @media (max-width: 640px) {
+      .titulo-box h1 {
+        font-size: 1.5rem;
+      }
+
+      .cliente-topo {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="pagina">
+    <div class="topo">
+      <div class="titulo-box">
+        <h1>Clientes para Retorno</h1>
+        <p>Baseado na média dos últimos atendimentos realizados de cada cliente.</p>
+      </div>
+
+      <a href="https://prontiapp.com.br/clientes.html" class="btn-voltar">← Voltar</a>
+    </div>
+
+    <div class="painel">
+      <div class="filtros" id="filtros-retorno">
+        <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
+        <button class="filtro-btn" data-filtro="atrasado">Atrasados</button>
+        <button class="filtro-btn" data-filtro="hoje">Hoje</button>
+        <button class="filtro-btn" data-filtro="em_breve">Em breve</button>
+        <button class="filtro-btn" data-filtro="futuro">Futuro</button>
+        <button class="filtro-btn" data-filtro="sem_historico">Sem histórico</button>
+      </div>
+
+      <div class="resumo" id="cards-resumo">
+        <div class="card-resumo">
+          <div class="rotulo">Total analisado</div>
+          <div class="valor" id="resumo-total">0</div>
+        </div>
+        <div class="card-resumo">
+          <div class="rotulo">Atrasados</div>
+          <div class="valor" id="resumo-atrasados">0</div>
+        </div>
+        <div class="card-resumo">
+          <div class="rotulo">Hoje</div>
+          <div class="valor" id="resumo-hoje">0</div>
+        </div>
+        <div class="card-resumo">
+          <div class="rotulo">Em breve</div>
+          <div class="valor" id="resumo-em-breve">0</div>
+        </div>
+      </div>
+
+      <div id="estado-loading" class="loading">Carregando clientes para retorno...</div>
+      <div id="lista-retorno" class="lista" style="display:none;"></div>
+      <div id="estado-vazio" class="vazio" style="display:none;">
+        Nenhum cliente encontrado para o filtro selecionado.
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./clientes-retorno.js"></script>
+</body>
+</html>

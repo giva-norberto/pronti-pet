@@ -1,0 +1,6 @@
+{
+    "require": {
+        "kreait/firebase-php": "^7.0",
+        "mercadopago/dx-php": "3.0.*"
+    }
+}

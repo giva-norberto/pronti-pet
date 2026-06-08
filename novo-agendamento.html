@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronti - Novo Agendamento</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+    <div id="sidebar-placeholder"></div>
+
+    <main class="main-content">
+        
+        <div class="page-header">
+            <h1>Novo Agendamento</h1>
+            <a href="agenda.html" class="btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Voltar para Agenda
+            </a>
+        </div>
+        
+        <form id="form-agendamento" class="card" autocomplete="off">
+            <div class="card-info" style="padding: 24px;">
+                <div class="form-group">
+                    <label for="cliente">Nome do Cliente:</label>
+                    <input type="text" id="cliente" name="cliente" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="dia">1. Escolha o Dia:</label>
+                    <input type="date" id="dia" name="dia" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="servico">2. Escolha o Serviço:</label>
+                    <div id="aviso-multiplo" class="aviso-multiplo" style="display:none; color: #0ea5e9; font-weight: 600; margin-bottom: 6px;">
+                      <i class="fa fa-layer-group"></i>
+                      Modo múltiplos serviços ativado!
+                    </div>
+                    <select id="servico" name="servico" required class="form-select" disabled>
+                        <option value="">Primeiro, selecione um dia</option>
+                    </select>
+                </div>
+
+                <div id="resumo-agendamento" class="resumo-agendamento" style="display: none;">
+                    <div class="resumo-linha">
+                        <span>Preço Original:</span>
+                        <span id="preco-original"></span>
+                    </div>
+                    <div id="linha-desconto" class="resumo-linha desconto-aplicado" style="display: none;">
+                        <span id="desconto-nome"></span>
+                        <span id="desconto-valor"></span>
+                    </div>
+                    <hr>
+                    <div class="resumo-linha total">
+                        <span>Preço Final:</span>
+                        <strong id="preco-final"></strong>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="profissional">3. Escolha o Profissional:</label>
+                    <select id="profissional" name="profissional" required class="form-select" disabled>
+                        <option value="">Primeiro, selecione um serviço</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>4. Escolha o Horário Disponível:</label>
+                    <div id="grade-horarios">
+                        <p class="aviso-horarios">Preencha os campos acima para ver os horários.</p>
+                    </div>
+                    <input type="hidden" id="horario-final" name="horario-final">
+                </div>
+            </div>
+            <div class="card-actions">
+                 <button type="submit" class="btn btn-primary">Salvar Agendamento</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+    // Carrega o menu lateral e destaca o link da agenda
+    document.addEventListener("DOMContentLoaded", function() {
+      const sidebarPlaceholder = document.getElementById('sidebar-placeholder');
+      if (sidebarPlaceholder) {
+        fetch('menu-lateral.html')
+          .then(res => res.ok ? res.text() : Promise.reject('Erro ao carregar menu.'))
+          .then(html => {
+            sidebarPlaceholder.innerHTML = html;
+            const activeLink = document.querySelector('.sidebar-links a[href="agenda.html"]');
+            if (activeLink) {
+              document.querySelectorAll('.sidebar-links a.active').forEach(link => link.classList.remove('active'));
+              activeLink.classList.add('active');
+            }
+          })
+          .catch(error => {
+            console.error('Erro ao carregar o menu lateral:', error);
+            sidebarPlaceholder.innerHTML = '<p style="color:red; padding: 20px;">Erro ao carregar menu.</p>';
+          });
+      }
+    });
+    </script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="novo-agendamento.js" type="module"></script>
+</body>
+</html>

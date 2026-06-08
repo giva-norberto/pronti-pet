@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecionando...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #6b7280;
+        }
+        .container { text-align: center; }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s ease infinite;
+            margin: 0 auto 16px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <p>Aguarde, estamos te redirecionando...</p>
+    </div>
+
+    <!-- Scripts do Firebase e da lógica de redirecionamento ->
+    
+    <!-- 
+      CORREÇÃO APLICADA AQUI: 
+      Alterado de "firebase-config.js" para "vitrini-firebase.js".
+      Isso garante que o redirecionador use a mesma instância isolada do Firebase 
+      que a vitrine, eliminando o conflito.
+    -->
+    <script src="vitrini-firebase.js" type="module"></script>
+    
+    <script src="redirecionar.js" type="module"></script>
+</body>
+</html>
+

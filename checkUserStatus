@@ -1,0 +1,89 @@
+// src/services/userService.js
+
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+// Importe suas configurações do Firebase.
+// O caminho '../config/firebase' pode precisar de ajuste dependendo da sua estrutura.
+import { db, auth } from '../config/firebase'; 
+
+/**
+ * Garante que o usuário tenha um documento no Firestore e inicia o trial se necessário.
+ * Esta é a sua função, otimizada para ser chamada quando o usuário ativa o teste.
+ */
+export async function ensureTrialStart() {
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Tentativa de iniciar trial sem usuário logado.");
+    return;
+  }
+
+  const userRef = doc(db, "usuarios", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    // Primeiro acesso: cria documento já com trialStart
+    await setDoc(userRef, {
+      nome: user.displayName || "Nome não informado",
+      email: user.email,
+      trialStart: new Date().toISOString(), // Salva a data de início do trial
+      isPremium: false,
+      createdAt: new Date().toISOString()
+    });
+    console.log("Documento criado e trial iniciado para o usuário:", user.uid);
+  } else if (!userSnap.data().trialStart) {
+    // Documento existe mas não tem trialStart: adiciona o campo
+    await updateDoc(userRef, {
+      trialStart: new Date().toISOString()
+    });
+    console.log("Trial iniciado para usuário existente:", user.uid);
+  }
+}
+
+
+/**
+ * Verifica o status de assinatura e trial do usuário logado,
+ * usando o campo trialStart para o cálculo.
+ * @returns {Promise<{hasActivePlan: boolean, isTrialActive: boolean}>}
+ */
+export async function checkUserStatus() {
+  const user = auth.currentUser;
+  if (!user) {
+    // Se não há usuário logado, ele definitivamente não tem acesso.
+    return { hasActivePlan: false, isTrialActive: false };
+  }
+
+  const userDocRef = doc(db, "usuarios", user.uid);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (!userDocSnap.exists()) {
+    // Se o documento ainda não foi criado, ele não tem acesso.
+    return { hasActivePlan: false, isTrialActive: false };
+  }
+
+  const userData = userDocSnap.data();
+  
+  // Verifica se o usuário tem um plano premium ativo.
+  const hasActivePlan = userData.isPremium === true;
+
+  let isTrialActive = false;
+  
+  // Lógica principal: calcula se o trial ainda é válido.
+  if (userData.trialStart) {
+    const startDate = new Date(userData.trialStart);
+    const today = new Date();
+    
+    // Calcula a diferença de tempo em milissegundos
+    const diffTime = today.getTime() - startDate.getTime();
+    
+    // Converte a diferença para dias (1000ms * 60s * 60min * 24h)
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+    // Se a diferença for menor ou igual a 15 dias, o trial está ativo
+    if (diffDays <= 15) {
+      isTrialActive = true;
+    }
+  }
+
+  return { hasActivePlan, isTrialActive };
+}

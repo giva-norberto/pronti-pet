@@ -1,0 +1,40 @@
+<!-- Modal de Perfil do Profissional -->
+<div id="modal-perfil-profissional" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="perfil-nome-profissional">👤 Perfil do Profissional</h2>
+      <p>Configure os serviços e horários de atendimento</p>
+      <button type="button" id="btn-fechar-modal-perfil" class="btn btn-close" title="Fechar">&times;</button>
+    </div>
+
+    <div class="perfil-section">
+      <h3>🛠️ Serviços Disponíveis</h3>
+      <p style="color: #7f8c8d; margin-bottom: 15px;">
+        Selecione os serviços que este profissional pode realizar:
+      </p>
+      <div id="servicos-lista" class="servicos-grid">
+        <!-- Serviços carregados via JS -->
+      </div>
+    </div>
+
+    <div class="perfil-section">
+      <h3>🕐 Horários de Atendimento</h3>
+      <p style="color: #7f8c8d; margin-bottom: 15px;">
+        Configure os horários de trabalho para cada dia da semana:
+      </p>
+      <div id="horarios-lista" class="horarios-grid">
+        <!-- Horários carregados via JS -->
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" id="btn-cancelar-perfil" class="btn btn-secondary">
+        ❌ Cancelar
+      </button>
+      <button type="button" id="btn-salvar-perfil" class="btn btn-success">
+        💾 Salvar Configurações
+      </button>
+    </div>
+  </div>
+</div>
+

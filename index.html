@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google-site-verification" content="ufJvm5YVeJTdH-mwyQGxvPpZekd7WojsxYTHCfWE7b0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronti - Início</title>
+
+    <link rel="manifest" href="manifest.json">
+
+    <meta property="og:title" content="Pronti - Painel de Gestão" />
+    <meta property="og:description" content="Acesse seu painel Pronti para gerenciar sua agenda, clientes e serviços." />
+    <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/logos%2FBX6Q7HrVMrcCBqe72r7K76EBPkX2%2F1758126224738-LOGO%20PRONTI%20FUNDO%20AZUL.png?alt=media&token=e01a4e43-a304-4550-8573-c1c15059d164" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://prontiapp.com.br" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root { --sidebar-width: 240px; }
+        body {
+            display: flex; margin: 0; font-family: 'Poppins', sans-serif;
+            visibility: hidden; 
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out;
+            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+        }
+        body.loaded { visibility: visible; opacity: 1; }
+        #menu-container { flex-shrink: 0; }
+        main.main-content {
+            flex-grow: 1; padding: 40px; box-sizing: border-box;
+            height: 100vh; overflow-y: auto; display: flex; flex-direction: column;
+            justify-content: flex-start; align-items: center;
+        }
+        .dashboard-welcome-center { text-align: center; margin-bottom: 5vh; width: 100%; }
+        .dashboard-welcome-center h1 { font-size: clamp(2rem, 5vw, 3.2rem); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .dashboard-welcome-center p { font-size: clamp(1rem, 2.5vw, 1.25rem); font-weight: 400; color: #e0e7ff; }
+        .dashboard-grid-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px; width: 100%; max-width: 900px;
+        }
+        .menu-card {
+            color: #fff; border-radius: 16px; padding: 20px 10px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; gap: 12px;
+            font-weight: 600; font-size: 0.9rem; text-decoration: none;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            transition: transform 0.25s, box-shadow 0.25s, filter 0.25s;
+            border: none; aspect-ratio: 1 / 1;
+        }
+        .menu-card:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 10px 25px rgba(0,0,0,0.2); filter: brightness(1.1); cursor: pointer; }
+        .menu-card i { font-size: 2rem; }
+        [data-card-id="dashboard"] { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        [data-card-id="agenda"] { background: linear-gradient(135deg, #6366f1, #4facfe); }
+        [data-card-id="servicos"] { background: linear-gradient(135deg, #f59e42, #ff5858); }
+        [data-card-id="planos"] { background: linear-gradient(135deg, #a855f7, #d946ef); }
+        [data-card-id="clientes"] { background: linear-gradient(135deg, #4facfe, #6366f1); }
+        [data-card-id="equipe"] { background: linear-gradient(135deg, #00f2fe, #6366f1); }
+        [data-card-id="perfil"] { background: linear-gradient(135deg, #ff5858, #a18cd1); }
+        [data-card-id="relatorios"] { background: linear-gradient(135deg, #374151, #111827); }
+        [data-card-id="administracao"], [data-card-id="permissoes"] { background: linear-gradient(135deg, #111827, #374151); }
+        .notification-button {
+            background-color: #ff5858;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+            display: none;
+        }
+        .notification-button:hover { background-color: #f59e42; }
+        .notification-message {
+            margin: 18px auto 0 auto;
+            padding: 12px 24px;
+            background: #eef2ff;
+            border-radius: 8px;
+            color: #4f46e5;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            max-width: 400px;
+            text-align: center;
+            display: none;
+        }
+        .notification-message.success { color: #10b981; background: #f0fdf4; }
+        .notification-message.error { color: #dc2626; background: #fef2f2; }
+        .notification-message.info { color: #6366f1; background: #eef2ff; }
+        #btn-logout {
+            display: none;
+            background: #374151;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 1002;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #btn-logout i { margin-right: 8px; }
+        #btn-logout:hover { background: #111827; }
+        @media (max-width: 600px) { #btn-logout { display: block; } }
+        @media (max-width: 900px) { body { flex-direction: column; } main.main-content { height: auto; } }
+
+        /* Badge de status da assinatura (menor visual no canto superior direito) */
+        #statusAssinatura {
+          --badge-scale: 1;
+          position: fixed;
+          top: 12px;
+          right: 12px;
+          background: linear-gradient(90deg, #4f8cff, #7b5cff);
+          color: white;
+          padding: 6px 10px;
+          border-radius: 14px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          display: none;
+          z-index: 9999;
+          opacity: 0;
+          transform: translateY(-6px) scale(var(--badge-scale));
+          transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+        @media (max-width: 600px) {
+          #statusAssinatura {
+            --badge-scale: 0.6;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            font-size: 0.65rem;
+            border-radius: 12px;
+          }
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="main-content">
+        <div class="dashboard-welcome-center">
+            <h1><span id="saudacao"></span>, <span id="nome-usuario">Usuário</span>!</h1>
+            <p>Pronto para gerenciar seu dia?</p>
+            <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
+                <i class="fa-solid fa-bell"></i> Ativar Notificações
+            </button>
+            <div id="notification-message" class="notification-message info"></div>
+        </div>
+        <div class="dashboard-grid-cards" id="dashboard-grid-cards">
+            <a href="dashboard.html" class="menu-card" data-card-id="dashboard"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></a>
+            <a href="agenda.html" class="menu-card" data-card-id="agenda"><i class="fa-solid fa-calendar-check"></i><span>Agenda</span></a>
+            <a href="servicos.html" class="menu-card" data-card-id="servicos"><i class="fa-solid fa-concierge-bell"></i><span>Serviços</span></a>
+            <a href="planos.html" class="menu-card" data-card-id="planos"><i class="fa-solid fa-file-invoice-dollar"></i><span>Planos</span></a>
+            <a href="clientes.html" class="menu-card" data-card-id="clientes"><i class="fa-solid fa-user-group"></i><span>Clientes</span></a>
+            <a href="equipe.html" class="menu-card" data-card-id="equipe"><i class="fa-solid fa-users"></i><span>Equipe</span></a>
+            <a href="perfil.html" class="menu-card" data-card-id="perfil"><i class="fa-solid fa-user-gear"></i><span>Empresa</span></a>
+            <a href="relatorios.html" class="menu-card" data-card-id="relatorios"><i class="fa-solid fa-file-lines"></i><span>Relatórios</span></a>
+            <a href="admin-clientes.html" class="menu-card" data-card-id="administracao"><i class="fa-solid fa-shield-halved"></i><span>Administração</span></a>
+            <a href="permissoes.html" class="menu-card" data-card-id="permissoes"><i class="fa-solid fa-sliders"></i><span>Permissões</span></a>
+        </div>
+    </main>
+
+    <button id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+
+    <!-- Badge de status da assinatura (inserido sem alterar validação) -->
+    <div id="statusAssinatura" aria-hidden="true"></div>
+
+    <script type="module" src="messaging.js"></script>
+    <script type="module">
+        import { unlockAudio, iniciarOuvinteDeNotificacoes } from './messaging.js';
+        import { verificarAcesso } from './userService.js'; 
+        import { db } from './firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        // Guard simples para evitar redirect-loop rápido
+        const REDIRECT_GUARD_KEY = 'ultimaRedirectIndex';
+        function canRedirectTo(target, windowMs = 5000) {
+            try {
+                const raw = sessionStorage.getItem(REDIRECT_GUARD_KEY);
+                const now = Date.now();
+                if (raw) {
+                    const last = JSON.parse(raw);
+                    if (last && last.target === target && (now - last.ts) < windowMs) {
+                        console.warn(`Redirect para ${target} bloqueado pelo guard (muito recente).`);
+                        return false;
+                    }
+                }
+                sessionStorage.setItem(REDIRECT_GUARD_KEY, JSON.stringify({ target, ts: now }));
+                return true;
+            } catch (e) {
+                console.error("Erro no redirect guard:", e);
+                return true;
+            }
+        }
+
+        // --- Funções utilitárias de data / normalização ---
+        function toDateObj(value) {
+            if (!value) return null;
+            if (typeof value.toDate === 'function') return value.toDate(); // Firestore Timestamp
+            const d = new Date(value);
+            return isNaN(d) ? null : d;
+        }
+        function dateOnlyUTCms(dateLike) {
+            const d = toDateObj(dateLike);
+            if (!d) return null;
+            return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        }
+        function todayUTCms() {
+            const now = new Date();
+            return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        }
+
+        // --- Regras de validação de empresa (VALIDAR TRIAL SOMENTE POR trialEndDate — date-only) ---
+        function checkEmpresaStatus(empresaData) {
+            try {
+                if (!empresaData) return { isPaid: false, isTrialActive: false };
+                if (empresaData.status && String(empresaData.status).toLowerCase() !== 'ativo') {
+                    return { isPaid: false, isTrialActive: false };
+                }
+
+                const hojeUTC = todayUTCms();
+
+                // Pagamento / assinatura
+                const assinaturaValidaAteMs = dateOnlyUTCms(empresaData.assinaturaValidaAte || empresaData.paidUntil);
+                const planoPago = (empresaData.plano === 'pago' || empresaData.plano === 'premium' || empresaData?.planStatus === 'active');
+                const assinaturaAtivaFlag = empresaData.assinaturaAtiva === true;
+                const isApprovedManual = empresaData.aprovado === true || empresaData.approved === true;
+
+                if (planoPago || assinaturaAtivaFlag || isApprovedManual) {
+                    if (assinaturaValidaAteMs !== null) {
+                        return { isPaid: assinaturaValidaAteMs >= hojeUTC, isTrialActive: false };
+                    }
+                    return { isPaid: true, isTrialActive: false };
+                }
+
+                // TRIAL — validar SOMENTE por trialEndDate (ignora trialDisponivel)
+                if (empresaData.trialEndDate) {
+                    const trialEndMs = dateOnlyUTCms(empresaData.trialEndDate);
+                    if (trialEndMs !== null && trialEndMs >= hojeUTC) {
+                        return { isPaid: false, isTrialActive: true };
+                    }
+                }
+
+                return { isPaid: false, isTrialActive: false };
+            } catch (err) {
+                console.error("Erro em checkEmpresaStatus:", err);
+                return { isPaid: false, isTrialActive: false };
+            }
+        }
+
+        // --- Valida se a empresa ativa permite acesso ao index ---
+        async function validarEmpresaAtiva(sessao) {
+            try {
+                // Preferência: localStorage (selecionar-empresa) -> sessao -> null
+                const empresaId = localStorage.getItem('empresaAtivaId') || sessao?.empresaAtivaId || sessao?.empresaId;
+                if (!empresaId) {
+                    // sem empresa ativa: enviar para seleção (evita loop com guard)
+                    if (canRedirectTo('selecionar-empresa')) {
+                        location.replace('selecionar-empresa.html');
+                    }
+                    // se guard bloquear, apenas retorna e deixa a tela carregar (evita loop)
+                    return;
+                }
+
+                const empresaRef = doc(db, "empresarios", empresaId);
+                const empresaSnap = await getDoc(empresaRef);
+                if (!empresaSnap.exists()) {
+                    console.warn("Empresa ativa não encontrada:", empresaId);
+                    if (canRedirectTo('selecionar-empresa')) {
+                        location.replace('selecionar-empresa.html');
+                    }
+                    return;
+                }
+                const empresaData = empresaSnap.data();
+                const status = checkEmpresaStatus(empresaData);
+                console.debug("validarEmpresaAtiva ->", { empresaId, status, empresaData });
+
+                // Se não estiver paga nem em trial válido, barrar e mandar para assinatura (alterado para assinatura.html)
+                if (!(status.isPaid || status.isTrialActive)) {
+                    if (canRedirectTo('assinatura')) {
+                        // usar replace para não empilhar histórico e reduzir risco de loop
+                        location.replace('assinatura.html');
+                    }
+                    return;
+                }
+                // caso esteja ok, nada a fazer — a inicialização continua
+            } catch (error) {
+                console.error("Erro ao validar empresa ativa:", error);
+            }
+        }
+
+        function temPermissao(menus, id, papelUsuario ) {
+            if (!menus[id]) return false;
+            if (Array.isArray(papelUsuario)) {
+                return papelUsuario.some(papel => menus[id][papel] === true);
+            } else {
+                return menus[id][papelUsuario] === true;
+            }
+        }
+        async function aplicarPermissoes(papelUsuario) {
+            try {
+                const permissoesRef = doc(db, "configuracoesGlobais", "permissoes");
+                const permissoesSnap = await getDoc(permissoesRef);
+                const regras = permissoesSnap.exists() ? permissoesSnap.data() : {};
+                const menus = regras;
+                document.querySelectorAll('[data-card-id]').forEach(el => {
+                    const id = el.dataset.cardId;
+                    const podeVer = temPermissao(menus, id, papelUsuario);
+                    el.style.display = podeVer ? 'flex' : 'none';
+                });
+            } catch (error) {
+                console.error("Erro ao aplicar permissões nos cards:", error);
+            }
+        }
+        async function loadAndSetupMenu(papelUsuario) {
+            try {
+                const response = await fetch('menu-lateral.html');
+                if (!response.ok) throw new Error('menu-lateral.html não encontrado');
+                document.getElementById('menu-container').innerHTML = await response.text();
+                const menuModule = await import('./menu-lateral.js');
+                if (menuModule.ativarMenuLateral) {
+                    await menuModule.ativarMenuLateral(papelUsuario);
+                }
+            } catch (error) {
+                console.error("Falha ao carregar o menu lateral:", error);
+            }
+        }
+        function popularCabecalho(sessao) {
+            const nomeUsuario = sessao.user.displayName?.split(" ")[0] || sessao.perfil?.nome?.split(" ")[0] || "Usuário";
+            const hora = new Date().getHours();
+            document.getElementById('saudacao').textContent = 
+                (hora >= 5 && hora < 12) ? "Bom dia" :
+                (hora >= 12 && hora < 18) ? "Boa tarde" : "Boa noite";
+            document.getElementById('nome-usuario').textContent = nomeUsuario;
+        }
+        async function inicializarPagina() {
+            try {
+                const sessao = await verificarAcesso();
+                if (!sessao || !sessao.user) {
+                    return;
+                }
+
+                // valida a empresa ativa antes de montar o menu / permissões
+                await validarEmpresaAtiva(sessao);
+
+                let papelUsuario = sessao.papel;
+                if (sessao.papeis && Array.isArray(sessao.papeis) && sessao.papeis.length > 0) {
+                    papelUsuario = sessao.papeis;
+                }
+                if ((!Array.isArray(papelUsuario) || papelUsuario.length === 0) && (sessao.isAdmin || sessao.isOwner)) {
+                    papelUsuario = [];
+                    if (sessao.isAdmin) papelUsuario.push('admin');
+                    if (sessao.isOwner) papelUsuario.push('dono');
+                }
+                if (!papelUsuario || (Array.isArray(papelUsuario) && papelUsuario.length === 0)) throw new Error("O papel do usuário não foi definido na sessão.");
+                popularCabecalho(sessao);
+                await loadAndSetupMenu(papelUsuario);
+                await aplicarPermissoes(papelUsuario);
+
+                const notificationButton = document.querySelector('.notification-button');
+                if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
+                    if (Notification.permission === 'granted') {
+                        notificationButton.style.display = 'none';
+                        const finalizarConfiguracaoPosInteracao = (e) => {
+                            if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout'))) {
+                                return;
+                            }
+                            try { unlockAudio(); } catch (err) { console.warn('unlockAudio falhou:', err); }
+                            try { iniciarOuvinteDeNotificacoes(sessao.user.uid); } catch (err) { console.warn('iniciarOuvinteDeNotificacoes falhou:', err); }
+                            window.removeEventListener('click', finalizarConfiguracaoPosInteracao);
+                            window.removeEventListener('touchstart', finalizarConfiguracaoPosInteracao);
+                        };
+                        window.addEventListener('click', finalizarConfiguracaoPosInteracao);
+                        window.addEventListener('touchstart', finalizarConfiguracaoPosInteracao);
+                    } else if (Notification.permission === 'default') {
+                        notificationButton.style.display = 'block';
+                    } else {
+                        notificationButton.style.display = 'none';
+                    }
+                } else {
+                    notificationButton.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Erro crítico ao inicializar a página:", error);
+            } finally {
+                document.body.classList.add('loaded');
+            }
+        }
+        inicializarPagina();
+
+        window.mostrarMensagemNotificacao = function (texto, tipo = 'info') {
+            const el = document.getElementById('notification-message');
+            el.textContent = texto;
+            el.className = `notification-message ${tipo}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3500);
+        }
+
+        document.getElementById('btn-logout').addEventListener('click', async function() {
+            try {
+                if (window.firebaseAuth && window.firebaseAuth.signOut) {
+                    await window.firebaseAuth.signOut();
+                }
+                window.location.href = "login.html";
+            } catch (error) {
+                mostrarMensagemNotificacao("Erro ao sair: " + error.message, "error");
+            }
+        });
+
+        // -------------------------
+        // Listener para atualizar badge de status da assinatura
+        // Apenas exibe "✅ Plano ativo" quando a sessão indicar hasActivePlan = true.
+        // Não altera nenhuma lógica de validação ou redirecionamento.
+        // -------------------------
+        window.addEventListener('sessionProfileReady', (event) => {
+            try {
+                const badge = document.getElementById('statusAssinatura');
+                if (!badge) return;
+                const sess = event?.detail || {};
+                const statusAssinatura = sess.statusAssinatura || sess.status || {};
+                if (statusAssinatura.hasActivePlan) {
+                    badge.textContent = '✅ Plano ativo';
+                    badge.style.background = 'linear-gradient(90deg, #10b981, #06a66a)';
+                    badge.style.display = 'block';
+                    requestAnimationFrame(() => {
+                        badge.style.opacity = '1';
+                        badge.style.transform = 'translateY(0) scale(var(--badge-scale))';
+                    });
+                    return;
+                }
+                // se não houver plano ativo, não mostrar badge
+                badge.style.opacity = '0';
+                badge.style.transform = 'translateY(-6px) scale(var(--badge-scale))';
+                setTimeout(() => { badge.style.display = 'none'; }, 300);
+            } catch (err) {
+                console.error('Erro ao atualizar badge de assinatura:', err);
+            }
+        });
+
+        // 🔔 AVISO + BOTÃO PAGAMENTO + FECHAR (24H antes do vencimento)
+        window.addEventListener('sessionProfileReady', async (event) => {
+            try {
+                const sess = event?.detail || {};
+                const empresaId = localStorage.getItem('empresaAtivaId') || sess?.empresaAtivaId || sess?.empresaId;
+
+                if (!empresaId) return;
+                if (document.getElementById('banner-renovar-plano')) return;
+
+                const empresaRef = doc(db, "empresarios", empresaId);
+                const snap = await getDoc(empresaRef);
+
+                if (!snap.exists()) return;
+
+                const empresa = snap.data();
+
+                if (!empresa.assinaturaValidaAte || typeof empresa.assinaturaValidaAte.toDate !== 'function') {
+                    return;
+                }
+
+                const validade = empresa.assinaturaValidaAte.toDate();
+                const agora = new Date();
+                const diffHoras = (validade.getTime() - agora.getTime()) / (1000 * 60 * 60);
+
+                if (diffHoras > 0 && diffHoras <= 24) {
+                    const horasRestantes = Math.ceil(diffHoras);
+
+                    const banner = document.createElement('div');
+                    banner.id = 'banner-renovar-plano';
+
+                    banner.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: linear-gradient(135deg, #4f46e5, #6366f1);
+                        color: #fff;
+                        padding: 16px 20px;
+                        border-radius: 14px;
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+                        z-index: 9999;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        font-family: Poppins, sans-serif;
+                        max-width: calc(100% - 32px);
+                        flex-wrap: wrap;
+                        justify-content: center;
+                        text-align: center;
+                    `;
+
+                    banner.innerHTML = `
+                        <span style="font-weight:600;">
+                            ⚠️ Sua assinatura vence em ${horasRestantes}h
+                        </span>
+
+                        <button id="btn-renovar-plano" style="background:#22c55e;border:none;color:white;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-family:Poppins, sans-serif;">
+                            Ir para pagamento
+                        </button>
+
+                        <button id="btn-fechar-aviso-plano" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);color:white;padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-family:Poppins, sans-serif;">
+                            Fechar
+                        </button>
+                    `;
+
+                    document.body.appendChild(banner);
+
+                    const btnRenovar = document.getElementById('btn-renovar-plano');
+                    const btnFechar = document.getElementById('btn-fechar-aviso-plano');
+
+                    if (btnRenovar) {
+                        btnRenovar.addEventListener('click', () => {
+                            window.location.href = `pagamento.html?empresaId=${empresaId}`;
+                        });
+                    }
+
+                    if (btnFechar) {
+                        btnFechar.addEventListener('click', () => {
+                            banner.remove();
+                        });
+                    }
+                }
+
+            } catch (e) {
+                console.error("Erro aviso vencimento:", e);
+            }
+        });
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(() => console.log('✅ Service Worker registrado com sucesso.'))
+                    .catch(err => console.warn('⚠️ Falha ao registrar o Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

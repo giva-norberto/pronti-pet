@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos de Assinatura - Pronti</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 20px auto; }
+        h1 { color: #1e3a8a; text-align: center; margin-bottom: 40px; }
+        .planos-grid { display: grid; gap: 25px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .card-plano { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); padding: 25px; display: flex; flex-direction: column; }
+        .card-plano h2 { margin-top: 0; color: #4f46e5; font-size: 1.4rem; }
+        .card-plano .preco { font-size: 2.2rem; font-weight: 700; color: #1e3a8a; margin: 10px 0; }
+        .card-plano .preco span { font-size: 1rem; font-weight: 400; color: #666; }
+        .card-plano .descricao { color: #444; font-size: 0.95rem; flex-grow: 1; margin-bottom: 20px; }
+        .servicos-lista { list-style: '✓ '; padding-left: 20px; color: #333; }
+        .btn-assinar { background-color: #10b981; color: white; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; text-align: center; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; font-size: 1rem; }
+        .btn-assinar:hover { background-color: #0f9e70; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="nome-salao">Planos de Assinatura</h1>
+        <div id="planos-grid">
+            <p>A carregar planos disponíveis...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        const planosGrid = document.getElementById('planos-grid');
+        const nomeSalaoH1 = document.getElementById('nome-salao');
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            console.log(user ? `Cliente logado: ${user.uid}` : "Nenhum cliente logado.");
+        });
+
+        async function carregarTudo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const empresaId = urlParams.get('empresaId');
+
+            if (!empresaId) {
+                planosGrid.innerHTML = '<p>Erro: ID do salão não encontrado.</p>';
+                return;
+            }
+            
+            const empresaRef = doc(db, 'empresarios', empresaId);
+            const empresaSnap = await getDoc(empresaRef);
+            if (empresaSnap.exists()) {
+                nomeSalaoH1.textContent = `Planos de Assinatura de ${empresaSnap.data().nomeFantasia}`;
+            }
+
+            try {
+                const planosRef = collection(db, `empresarios/${empresaId}/planosDeAssinatura`);
+                const snapshot = await getDocs(planosRef);
+
+                if (snapshot.empty) {
+                    planosGrid.innerHTML = '<p>Este salão ainda não oferece planos de assinatura.</p>';
+                    return;
+                }
+
+                planosGrid.innerHTML = '';
+                snapshot.docs.forEach(doc => {
+                    const plano = { id: doc.id, ...doc.data() };
+                    if (plano.ativo) {
+                        const card = document.createElement('div');
+                        card.className = 'card-plano';
+
+                        const servicosHTML = Array.isArray(plano.servicosInclusos)
+                            ? plano.servicosInclusos.map(s => `<li>${s.quantidade}x ${s.nomeServico}</li>`).join('')
+                            : '';
+
+                        // =============================================================
+                        // ✅ ALTERAÇÃO: Usamos um <button> em vez de <a> e adicionamos data-attributes
+                        // =============================================================
+                        card.innerHTML = `
+                            <h2>${plano.nome}</h2>
+                            <p class="preco">${(plano.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span>/mês</span></p>
+                            <p class="descricao">${plano.descricao || ""}</p>
+                            <ul class="servicos-lista">${servicosHTML}</ul>
+                            <button class="btn-assinar"
+                                    data-plano-id="${plano.id}"
+                                    data-plano-nome="${plano.nome}"
+                                    data-metodo="${plano.metodo}"
+                                    data-link="${plano.mercadoPagoLink || ''}"
+                                    data-instrucoes="${plano.instrucoesPagamento || ''}">
+                                Assinar Agora
+                            </button>
+                        `;
+                        planosGrid.appendChild(card);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar planos:", error);
+                planosGrid.innerHTML = '<p>Ocorreu um erro ao carregar os planos.</p>';
+            }
+        }
+        
+        // =============================================================
+        // ✅ ALTERAÇÃO: Adicionamos um único event listener ao container dos planos
+        // =============================================================
+        planosGrid.addEventListener('click', (e) => {
+            // Verifica se o elemento clicado (ou um dos seus pais) é um botão de assinar
+            if (e.target && e.target.classList.contains('btn-assinar')) {
+                const botao = e.target;
+                handleAssinatura(botao);
+            }
+        });
+
+        async function handleAssinatura(botao) {
+            if (!currentUser) {
+                alert("Você precisa de fazer login para assinar um plano. A redirecionar...");
+                sessionStorage.setItem('redirectAfterLogin', window.location.href);
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Pega os dados diretamente do botão que foi clicado
+            const { planoId, planoNome, metodo, link, instrucoes } = botao.dataset;
+            const urlParams = new URLSearchParams(window.location.search);
+            const empresaId = urlParams.get('empresaId');
+
+            if (metodo === 'automatico') {
+                if (link && link.startsWith('http')) {
+                    let linkFinal = link;
+                    const externalReference = `${empresaId}_${currentUser.uid}`;
+                    linkFinal += `&external_reference=${externalReference}`;
+                    window.location.href = linkFinal;
+                } else {
+                    alert("Link de pagamento não configurado. Por favor, contacte o salão.");
+                }
+            } 
+            else if (metodo === 'manual') {
+                try {
+                    botao.disabled = true;
+                    botao.textContent = 'A registar...';
+                    const assinaturasClienteRef = collection(db, `empresarios/${empresaId}/clientes/${currentUser.uid}/assinaturasAtivas`);
+                    await addDoc(assinaturasClienteRef, {
+                        planoId: planoId,
+                        planoNome: planoNome,
+                        status: "pendente",
+                        dataSolicitacao: serverTimestamp()
+                    });
+                    alert(`Interesse registado com sucesso!\n\nPara ativar o seu plano, siga as instruções:\n\n${instrucoes}`);
+                } catch(error) {
+                    console.error("Erro ao registrar interesse:", error);
+                    alert("Ocorreu um erro ao registrar o seu interesse. Tente novamente.");
+                } finally {
+                    botao.disabled = false;
+                    botao.textContent = 'Assinar Agora';
+                }
+            }
+        }
+
+        carregarTudo();
+    </script>
+</body>
+</html>

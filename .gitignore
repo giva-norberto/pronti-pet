@@ -1,0 +1,29 @@
+# Arquivo para ignorar arquivos e pastas no Git
+
+# 1. Ignorar a pasta de dependências do Node.js
+# Essa pasta pode ser recriada com o comando "npm install"
+/node_modules
+
+# 2. Ignorar a pasta de build/distribuição
+# Essa pasta é gerada automaticamente ao construir o projeto
+/dist
+
+# 3. Ignorar arquivos de variáveis de ambiente
+# Contém chaves de API e outras informações sensíveis. NUNCA ENVIE PARA O GITHUB!
+.env
+.env.local
+.env.*.local
+
+# Arquivos de log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 4. Ignorar chave do Firebase – NUNCA COMITAR
+firebase-credentials.json
+
+service-account.json
+service-account.json
+service-account.json
+service-account.json
+service-account.json

@@ -1,0 +1,28 @@
+// Exibe e permite editar o nome do profissional no modal de perfil
+// MULTIEMPRESA: empresaId deve ser repassado nos callbacks para qualquer operação de atualização
+
+/**
+ * Obtém o empresaId da empresa ativa do localStorage (multiempresa).
+ */
+function getEmpresaIdAtiva() {
+    return localStorage.getItem("empresaAtivaId") || null;
+}
+
+export function renderizarNomeProfissional(nomeAtual, onNomeAlterado) {
+    const nomeDiv = document.getElementById('perfil-profissional-nome');
+    if (!nomeDiv) return;
+
+    nomeDiv.innerHTML = `
+        <input type="text" id="input-nome-profissional" value="${nomeAtual || ''}" 
+            placeholder="Nome do profissional" style="font-size:1.2em; width:80%; padding:6px;">
+    `;
+
+    const inputNome = document.getElementById('input-nome-profissional');
+    inputNome.onchange = (e) => {
+        if (onNomeAlterado) {
+            // MULTIEMPRESA: repassa empresaId ativa no callback, se o callback aceitar
+            const empresaId = getEmpresaIdAtiva();
+            onNomeAlterado(e.target.value, empresaId);
+        }
+    };
+}

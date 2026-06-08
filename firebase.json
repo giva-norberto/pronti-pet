@@ -1,0 +1,26 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "pronti-app/**",
+      "service-account.json",
+      "*.log",
+      ".env"
+    ],
+    "rewrites": [
+      {
+        "source": "/:slug",
+        "destination": "/vitrine.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20",
+    "databaseId": "pronti-app"
+  }
+}
