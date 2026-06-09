@@ -3,20 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Novo Serviço</title>
+  <title>Novo Serviço - Pronti Pet</title>
+
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --primary-soft: #eef2ff;
+      --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%);
+      --sidebar-width: 240px;
+      --danger: #dc2626;
+      --danger-dark: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: linear-gradient(135deg, #4f7df7 0%, #6ea8ff 50%, #8fc9ff 100%);
+      margin: 0;
+      background: var(--gradient-primary);
       font-family: 'Inter', sans-serif;
-      color: #1a1a2e;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    #menu-container {
+      position: relative;
+      z-index: 20;
     }
 
     .main-content {
-      margin-left: 240px;
-      padding: 40px;
+      margin-left: var(--sidebar-width);
+      padding: 34px;
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
@@ -24,42 +47,67 @@
     }
 
     .form-card {
-      background: rgba(255, 255, 255, 0.93);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 36px 34px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 22px;
+      padding: 34px;
       width: 100%;
-      max-width: 480px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      max-width: 920px;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.24);
       animation: fadeUp 0.35s ease-out;
+      border: 1px solid rgba(255,255,255,0.55);
     }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .form-card h1 {
-      font-size: 2.1rem;
-      font-weight: 700;
+    .page-title {
       text-align: center;
-      color: #1e1b4b;
       margin-bottom: 28px;
+    }
+
+    .page-title .icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: var(--gradient-primary);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      box-shadow: 0 8px 22px rgba(79,70,229,0.28);
+      margin-bottom: 12px;
+    }
+
+    .page-title h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #1e1b4b;
+      margin: 0;
       letter-spacing: -0.5px;
     }
 
+    .page-title p {
+      color: #64748b;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
     .form-group {
-      margin-bottom: 22px;
+      margin-bottom: 18px;
       width: 100%;
       display: flex;
       flex-direction: column;
     }
 
     .form-group label {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 6px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      margin-bottom: 7px;
       color: #1e1b4b;
     }
 
@@ -67,35 +115,51 @@
     .form-group textarea,
     .form-group select {
       padding: 14px;
-      border: 1.7px solid #cfd1ff;
+      border: 1.7px solid #c7d2fe;
       background: #ffffff;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 1rem;
-      transition: all 0.25s;
+      transition: all 0.22s;
       outline: none;
-      color: #1a1a2e;
+      color: #1e293b;
+      font-family: 'Inter', sans-serif;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
-      border-color: #6366f1;
-      background: #f3f4ff;
-      box-shadow: 0 0 0 3px #6366f122;
+      border-color: var(--primary);
+      background: #f8faff;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.14);
+    }
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn-submit,
+    .btn-delete {
+      color: #fff;
+      padding: 15px 22px;
+      border-radius: 13px;
+      border: none;
+      font-size: 1.08rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.22s;
+      font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
     }
 
     .btn-submit {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #fff;
-      padding: 15px 0;
-      width: 100%;
-      border-radius: 12px;
-      border: none;
-      font-size: 1.2rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-      transition: 0.25s;
+      flex: 1;
       box-shadow: 0 8px 20px rgba(99,102,241,0.25);
     }
 
@@ -105,38 +169,113 @@
       box-shadow: 0 10px 30px rgba(99,102,241,0.35);
     }
 
-    @media (max-width: 900px) { .main-content { margin-left: 0; padding: 22px; } }
-    @media (max-width: 600px) { .form-card { padding: 28px 22px; } }
+    .btn-delete {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      display: none;
+      box-shadow: 0 8px 20px rgba(220,38,38,0.22);
+    }
+
+    .btn-delete:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 900px) {
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .form-card {
+        padding: 24px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn-submit,
+      .btn-delete {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <div id="sidebar-placeholder"></div>
+  <div id="menu-container"></div>
 
-  <div class="main-content">
+  <main class="main-content">
     <div class="form-card">
-      <h1>Novo Serviço</h1>
+      <div class="page-title">
+        <div class="icon">
+          <i class="fa-solid fa-paw"></i>
+        </div>
+        <h1>Novo Serviço</h1>
+        <p>Cadastre serviços, categorias, preços por porte e foto para a vitrine.</p>
+      </div>
 
       <form id="form-servico">
-        <!-- Container para campos dinâmicos (Salão ou Pet Shop) -->
         <div id="campos-dinamicos"></div>
 
-        <button type="submit" class="btn-submit">Salvar Serviço</button>
+        <div class="actions">
+          <button type="submit" class="btn-submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Salvar Serviço
+          </button>
+
+          <button type="button" id="btn-excluir-servico" class="btn-delete">
+            <i class="fa-solid fa-trash"></i>
+            Excluir Serviço
+          </button>
+        </div>
       </form>
     </div>
-  </div>
+  </main>
 
-  <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="novo-servico.js"></script>
+  <script type="module">
+    import { verificarAcesso } from './userService.js';
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      fetch('menu-lateral.html')
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById('sidebar-placeholder').innerHTML = html;
-        });
-    });
+    async function carregarMenuEPagina() {
+      try {
+        const sessao = await verificarAcesso();
+        if (!sessao || !sessao.user) return;
+
+        let papelUsuario = sessao.papeis || [];
+
+        if (papelUsuario.length === 0) {
+          if (sessao.isAdmin) papelUsuario.push('admin');
+          if (sessao.isOwner) papelUsuario.push('dono');
+          if (papelUsuario.length === 0) papelUsuario.push('funcionario');
+        }
+
+        const response = await fetch('menu-lateral.html');
+
+        if (!response.ok) {
+          throw new Error('menu-lateral.html não encontrado');
+        }
+
+        document.getElementById('menu-container').innerHTML = await response.text();
+
+        const menuModule = await import('./menu-lateral.js');
+
+        if (menuModule.ativarMenuLateral) {
+          await menuModule.ativarMenuLateral(papelUsuario);
+        }
+
+        await import('./novo-servico.js');
+
+      } catch (error) {
+        console.error("Erro crítico ao inicializar novo-servico.html:", error);
+
+        document.querySelector('.form-card').innerHTML = `
+          <h1>Ocorreu um erro</h1>
+          <p>Não foi possível carregar a página. Tente novamente.</p>
+        `;
+      }
+    }
+
+    carregarMenuEPagina();
   </script>
 </body>
 </html>
