@@ -6,26 +6,25 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Usa o mesmo banco nomeado do index.js
-const db = getFirestore("pronti-app");
+const db = getFirestore();
 const fcm = admin.messaging();
 
 const REGION = "southamerica-east1";
 
 function montarMensagemRetorno({ nome, statusRetorno }) {
-  const primeiroNome = String(nome || "Cliente").trim().split(" ")[0] || "Cliente";
+  const primeiroNome = String(nome || "Tutor").trim().split(" ")[0] || "Tutor";
 
   switch (statusRetorno) {
     case "atrasado":
-      return `Oi, ${primeiroNome}! Já passou do período em que você costuma retornar. Quer agendar seu próximo horário?`;
+      return `Oi, ${primeiroNome}! Já passou do período em que seu pet costuma retornar. Quer agendar o próximo atendimento?`;
     case "hoje":
-      return `Oi, ${primeiroNome}! Hoje é um ótimo momento para seu retorno. Quer marcar seu próximo atendimento?`;
+      return `Oi, ${primeiroNome}! Hoje é um ótimo momento para o retorno do seu pet. Quer marcar o próximo atendimento?`;
     case "em_breve":
-      return `Oi, ${primeiroNome}! Seu período de retorno está chegando. Quer adiantar seu próximo agendamento?`;
+      return `Oi, ${primeiroNome}! O período de retorno do seu pet está chegando. Quer adiantar o próximo agendamento?`;
     case "futuro":
-      return `Oi, ${primeiroNome}! Estamos te avisando com antecedência para facilitar seu próximo agendamento. Quando quiser, é só marcar seu horário.`;
+      return `Oi, ${primeiroNome}! Estamos avisando com antecedência para facilitar o próximo atendimento do seu pet. Quando quiser, é só agendar.`;
     default:
-      return `Oi, ${primeiroNome}! Quer agendar seu próximo horário?`;
+      return `Oi, ${primeiroNome}! Quer agendar o próximo atendimento do seu pet?`;
   }
 }
 
@@ -33,7 +32,6 @@ async function buscarTokenDoCliente(clienteId) {
   if (!clienteId) return null;
 
   try {
-    // Mesmo lugar usado no restante do sistema
     const tokenSnap = await db.collection("mensagensTokens").doc(clienteId).get();
 
     if (!tokenSnap.exists) return null;
@@ -45,7 +43,7 @@ async function buscarTokenDoCliente(clienteId) {
 
     return dados.fcmToken;
   } catch (error) {
-    console.error(`Erro ao buscar token do cliente ${clienteId}:`, error);
+    console.error(`Erro ao buscar token do tutor ${clienteId}:`, error);
     return null;
   }
 }
@@ -97,7 +95,7 @@ const avisarClienteRetorno = onCall(
         await fcm.send({
           token,
           notification: {
-            title: "Pronti • Aviso de retorno",
+            title: "Pronti Pet • Aviso de retorno",
             body: mensagem
           },
           data: {
@@ -141,7 +139,7 @@ const avisarClienteRetorno = onCall(
         motivo = error?.code || "erro_ao_enviar_push";
       }
     } else {
-      motivo = "cliente_sem_token";
+      motivo = "tutor_sem_token";
     }
 
     await historicoRef.set({
