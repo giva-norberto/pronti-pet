@@ -13,11 +13,9 @@
     :root {
       --primary: #4f46e5;
       --primary-dark: #4338ca;
-      --primary-soft: #eef2ff;
       --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%);
       --sidebar-width: 240px;
       --danger: #dc2626;
-      --danger-dark: #b91c1c;
     }
 
     * {
@@ -48,20 +46,12 @@
 
     .form-card {
       background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
       border-radius: 22px;
       padding: 34px;
       width: 100%;
       max-width: 920px;
       box-shadow: 0 12px 36px rgba(15, 23, 42, 0.24);
-      animation: fadeUp 0.35s ease-out;
       border: 1px solid rgba(255,255,255,0.55);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .page-title {
@@ -88,7 +78,6 @@
       font-weight: 900;
       color: #1e1b4b;
       margin: 0;
-      letter-spacing: -0.5px;
     }
 
     .page-title p {
@@ -119,10 +108,10 @@
       background: #ffffff;
       border-radius: 12px;
       font-size: 1rem;
-      transition: all 0.22s;
       outline: none;
       color: #1e293b;
       font-family: 'Inter', sans-serif;
+      width: 100%;
     }
 
     .form-group input:focus,
@@ -149,7 +138,6 @@
       font-size: 1.08rem;
       font-weight: 900;
       cursor: pointer;
-      transition: 0.22s;
       font-family: 'Inter', sans-serif;
       display: inline-flex;
       align-items: center;
@@ -163,31 +151,25 @@
       box-shadow: 0 8px 20px rgba(99,102,241,0.25);
     }
 
-    .btn-submit:hover {
-      background: linear-gradient(135deg, #4f46e5, #4338ca);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(99,102,241,0.35);
-    }
-
     .btn-delete {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       display: none;
       box-shadow: 0 8px 20px rgba(220,38,38,0.22);
     }
 
-    .btn-delete:hover {
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      transform: translateY(-2px);
-    }
-
     @media (max-width: 900px) {
       .main-content {
         margin-left: 0;
-        padding: 20px;
+        padding: 16px;
       }
 
       .form-card {
-        padding: 24px;
+        padding: 22px;
+        border-radius: 18px;
+      }
+
+      .page-title h1 {
+        font-size: 1.7rem;
       }
 
       .actions {
@@ -250,10 +232,7 @@
         }
 
         const response = await fetch('menu-lateral.html');
-
-        if (!response.ok) {
-          throw new Error('menu-lateral.html não encontrado');
-        }
+        if (!response.ok) throw new Error('menu-lateral.html não encontrado');
 
         document.getElementById('menu-container').innerHTML = await response.text();
 
