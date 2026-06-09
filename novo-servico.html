@@ -12,7 +12,6 @@
   <style>
     :root {
       --primary: #4f46e5;
-      --primary-dark: #4338ca;
       --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%);
       --sidebar-width: 240px;
     }
@@ -251,7 +250,11 @@
     async function carregarMenuEPagina() {
       try {
         const sessao = await verificarAcesso();
-        if (!sessao || !sessao.user) return;
+
+        if (!sessao || !sessao.user) {
+          document.body.classList.add('loaded');
+          return;
+        }
 
         let papelUsuario = sessao.papeis || [];
 
@@ -262,7 +265,10 @@
         }
 
         const response = await fetch('menu-lateral.html');
-        if (!response.ok) throw new Error('menu-lateral.html não encontrado');
+
+        if (!response.ok) {
+          throw new Error('menu-lateral.html não encontrado');
+        }
 
         document.getElementById('menu-container').innerHTML = await response.text();
 
@@ -272,6 +278,27 @@
           await menuModule.ativarMenuLateral(papelUsuario);
         }
 
-        await import('./novo-servico.js');
+        try {
+          await import('./novo-servico.js');
+        } catch (erroJs) {
+          console.error("Erro ao carregar novo-servico.js:", erroJs);
+        }
 
-        document.body.classList
+        document.body.classList.add('loaded');
+
+      } catch (error) {
+        console.error("Erro crítico ao inicializar novo-servico.html:", error);
+
+        document.querySelector('.form-card').innerHTML = `
+          <h1>Ocorreu um erro</h1>
+          <p>Não foi possível carregar a página. Tente novamente.</p>
+        `;
+
+        document.body.classList.add('loaded');
+      }
+    }
+
+    carregarMenuEPagina();
+  </script>
+</body>
+</html>
