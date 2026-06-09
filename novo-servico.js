@@ -1,12 +1,29 @@
-import { 
-    doc, getDoc, updateDoc, deleteDoc, 
-    collection, query, where, getDocs, addDoc 
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    deleteDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    addDoc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { db, auth } from "./firebase-config.js"; 
+
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+
+import { db, auth, storage } from "./firebase-config.js";
 
 const form = document.getElementById('form-servico');
-const btnExcluir = document.getElementById('btn-excluir-servico'); 
+const btnExcluir = document.getElementById('btn-excluir-servico');
+
 let empresaId = null;
 let servicoId = null;
 let servicoEditando = null;
@@ -14,8 +31,10 @@ let isDono = false;
 let isAdmin = false;
 let userUid = null;
 let tipoEmpresa = null;
+let imagemAtualUrl = "";
 
-const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+// ADMIN MASTER DO PRONTI PET
+const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
 
 // ===== MODAL PRONTI =====
 function prontiAlert(msg, callback) {
@@ -31,47 +50,110 @@ function prontiConfirm(msg, onOk, onCancel) {
 
 function showProntiModal(msg, actions) {
     let modal = document.getElementById('pronti-modal');
+
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'pronti-modal';
         modal.className = 'pronti-modal';
         modal.style.display = 'none';
+
         modal.innerHTML = `
-          <div class="pronti-modal-content">
-            <span id="pronti-modal-close" class="pronti-modal-close">&times;</span>
-            <div id="pronti-modal-message"></div>
-            <div id="pronti-modal-actions"></div>
-          </div>
+            <div class="pronti-modal-content">
+                <span id="pronti-modal-close" class="pronti-modal-close">&times;</span>
+                <div id="pronti-modal-message"></div>
+                <div id="pronti-modal-actions"></div>
+            </div>
         `;
+
         document.body.appendChild(modal);
+
         const style = document.createElement('style');
         style.textContent = `
-.pronti-modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(44,54,80,0.25); display:flex; align-items:center; justify-content:center; z-index:9999; }
-.pronti-modal-content { background:#fff; border-radius:10px; padding:32px; text-align:center; max-width:350px; box-shadow:0 6px 24px #0002; position:relative; }
-.pronti-modal-close { position:absolute; right:16px; top:12px; font-size:22px; cursor:pointer; color:#666;}
-.pronti-modal-actions { margin-top:28px; display:flex; gap:16px; justify-content:center; }
-.pronti-btn { border:none; border-radius:6px; padding:9px 22px; font-weight:bold; cursor:pointer; font-size:16px;}
-.pronti-btn-ok { background:#4f46e5; color:#fff; }
-.pronti-btn-cancel { background:#e53e3e; color:#fff; }
+            .pronti-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(44,54,80,0.25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            }
+
+            .pronti-modal-content {
+                background: #fff;
+                border-radius: 10px;
+                padding: 32px;
+                text-align: center;
+                max-width: 350px;
+                box-shadow: 0 6px 24px #0002;
+                position: relative;
+            }
+
+            .pronti-modal-close {
+                position: absolute;
+                right: 16px;
+                top: 12px;
+                font-size: 22px;
+                cursor: pointer;
+                color: #666;
+            }
+
+            .pronti-modal-actions {
+                margin-top: 28px;
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+            }
+
+            .pronti-btn {
+                border: none;
+                border-radius: 6px;
+                padding: 9px 22px;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+            .pronti-btn-ok {
+                background: #4f46e5;
+                color: #fff;
+            }
+
+            .pronti-btn-cancel {
+                background: #e53e3e;
+                color: #fff;
+            }
         `;
         document.head.appendChild(style);
     }
+
     const msgDiv = modal.querySelector('#pronti-modal-message');
     const actionsDiv = modal.querySelector('#pronti-modal-actions');
+
     msgDiv.innerHTML = msg;
     actionsDiv.innerHTML = '';
+
     actions.forEach(act => {
         const btn = document.createElement('button');
         btn.textContent = act.text;
         btn.className = act.className;
         btn.onclick = () => {
             modal.style.display = 'none';
-            setTimeout(() => { if (act.onClick) act.onClick(); }, 100);
+            setTimeout(() => {
+                if (act.onClick) act.onClick();
+            }, 100);
         };
         actionsDiv.appendChild(btn);
     });
+
     modal.style.display = 'flex';
-    modal.querySelector('#pronti-modal-close').onclick = () => { modal.style.display = 'none'; };
+
+    modal.querySelector('#pronti-modal-close').onclick = () => {
+        modal.style.display = 'none';
+    };
 }
 
 // =================== Funções utilitárias ===================
@@ -100,10 +182,174 @@ function usuarioEDono(empresa, uid) {
 
 function redirecionaSeSemEmpresa() {
     prontiAlert("Atenção: Nenhuma empresa ativa selecionada. Complete seu cadastro ou selecione uma empresa.", () => {
-        if(form) form.querySelector('button[type="submit"]').disabled = true;
-        if(btnExcluir) btnExcluir.style.display = 'none';
+        if (form) form.querySelector('button[type="submit"]').disabled = true;
+        if (btnExcluir) btnExcluir.style.display = 'none';
         window.location.href = 'selecionar-empresa.html';
     });
+}
+
+function numeroInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return NaN;
+    return parseFloat(String(el.value).replace(",", "."));
+}
+
+function inteiroInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return NaN;
+    return parseInt(el.value, 10);
+}
+
+function arredondarMoeda(valor) {
+    return Math.round((Number(valor) || 0) * 100) / 100;
+}
+
+function arredondarDuracao(valor) {
+    return Math.round(Number(valor) || 0);
+}
+
+function obterPrecoPorPorte(servico, porte) {
+    if (!servico || !Array.isArray(servico.precos)) return {};
+    return servico.precos.find(p => p.porte === porte) || {};
+}
+
+function setValor(id, valor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    if (valor !== undefined && valor !== null && valor !== "") {
+        el.value = valor;
+    } else {
+        el.value = "";
+    }
+}
+
+function setChecked(id, valorPadrao) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.checked = valorPadrao;
+}
+
+// =================== Upload da imagem ===================
+async function uploadImagemServico(servicoDocId) {
+    const inputImagem = document.getElementById('imagem-servico');
+
+    if (!inputImagem || !inputImagem.files || inputImagem.files.length === 0) {
+        return imagemAtualUrl || "";
+    }
+
+    const arquivo = inputImagem.files[0];
+
+    if (!arquivo.type.startsWith("image/")) {
+        throw new Error("Envie apenas arquivo de imagem.");
+    }
+
+    const caminho = `empresarios/${empresaId}/servicos/${servicoDocId}/${Date.now()}-${arquivo.name}`;
+    const storageRef = ref(storage, caminho);
+
+    await uploadBytes(storageRef, arquivo);
+    return await getDownloadURL(storageRef);
+}
+
+function configurarPreviewImagem() {
+    const inputImagem = document.getElementById('imagem-servico');
+    const preview = document.getElementById('preview-imagem-servico');
+
+    if (!inputImagem || !preview) return;
+
+    inputImagem.addEventListener('change', () => {
+        const file = inputImagem.files && inputImagem.files[0];
+
+        if (!file) {
+            preview.style.display = imagemAtualUrl ? 'block' : 'none';
+            preview.src = imagemAtualUrl || "";
+            return;
+        }
+
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    });
+}
+
+// =================== Cálculo automático PET ===================
+function calcularValoresPorPercentual() {
+    const modoAuto = document.getElementById('modo-automatico');
+    if (!modoAuto || !modoAuto.checked) return;
+
+    const precoPequeno = numeroInput('preco-pequeno');
+    const duracaoPequeno = inteiroInput('duracao-pequeno');
+
+    const percentualMedio = numeroInput('percentual-medio');
+    const percentualGrande = numeroInput('percentual-grande');
+    const percentualGigante = numeroInput('percentual-gigante');
+
+    if (!isNaN(precoPequeno)) {
+        if (!isNaN(percentualMedio)) {
+            setValor('preco-medio', arredondarMoeda(precoPequeno * (1 + percentualMedio / 100)));
+        }
+
+        if (!isNaN(percentualGrande)) {
+            setValor('preco-grande', arredondarMoeda(precoPequeno * (1 + percentualGrande / 100)));
+        }
+
+        if (!isNaN(percentualGigante)) {
+            setValor('preco-gigante', arredondarMoeda(precoPequeno * (1 + percentualGigante / 100)));
+        }
+    }
+
+    if (!isNaN(duracaoPequeno)) {
+        if (!isNaN(percentualMedio)) {
+            setValor('duracao-medio', arredondarDuracao(duracaoPequeno * (1 + percentualMedio / 100)));
+        }
+
+        if (!isNaN(percentualGrande)) {
+            setValor('duracao-grande', arredondarDuracao(duracaoPequeno * (1 + percentualGrande / 100)));
+        }
+
+        if (!isNaN(percentualGigante)) {
+            setValor('duracao-gigante', arredondarDuracao(duracaoPequeno * (1 + percentualGigante / 100)));
+        }
+    }
+}
+
+function atualizarVisualModoCalculo() {
+    const modoAuto = document.getElementById('modo-automatico');
+    const blocoPercentuais = document.getElementById('bloco-percentuais');
+
+    if (!modoAuto || !blocoPercentuais) return;
+
+    blocoPercentuais.style.display = modoAuto.checked ? 'block' : 'none';
+
+    if (modoAuto.checked) {
+        calcularValoresPorPercentual();
+    }
+}
+
+function configurarCalculoAutomaticoPet() {
+    const campos = [
+        'modo-automatico',
+        'modo-manual',
+        'preco-pequeno',
+        'duracao-pequeno',
+        'percentual-medio',
+        'percentual-grande',
+        'percentual-gigante'
+    ];
+
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.addEventListener('input', () => {
+            atualizarVisualModoCalculo();
+        });
+
+        el.addEventListener('change', () => {
+            atualizarVisualModoCalculo();
+        });
+    });
+
+    atualizarVisualModoCalculo();
 }
 
 // =================== Preencher Formulário Dinâmico ===================
@@ -112,27 +358,58 @@ function preencherFormulario(servico) {
         document.getElementById('nome-servico').value = servico.nome || '';
         document.getElementById('descricao-servico').value = servico.descricao || '';
 
-        // Preencher campos de cada porte
-        if (servico.precos) {
-            const pequeno = servico.precos.find(p => p.porte === "pequeno") || {};
-            const medio = servico.precos.find(p => p.porte === "medio") || {};
-            const grande = servico.precos.find(p => p.porte === "grande") || {};
-            document.getElementById('preco-pequeno').value = pequeno.preco || '';
-            document.getElementById('duracao-pequeno').value = pequeno.duracao || '';
-            document.getElementById('preco-medio').value = medio.preco || '';
-            document.getElementById('duracao-medio').value = medio.duracao || '';
-            document.getElementById('preco-grande').value = grande.preco || '';
-            document.getElementById('duracao-grande').value = grande.duracao || '';
-        }
-
-        // Categoria opcional
         const categoriaInput = document.getElementById('categoria-servico');
         if (categoriaInput) categoriaInput.value = servico.categoria || '';
+
+        imagemAtualUrl = servico.imagemUrl || "";
+
+        const preview = document.getElementById('preview-imagem-servico');
+        if (preview && imagemAtualUrl) {
+            preview.src = imagemAtualUrl;
+            preview.style.display = 'block';
+        }
+
+        const pequeno = obterPrecoPorPorte(servico, "pequeno");
+        const medio = obterPrecoPorPorte(servico, "medio");
+        const grande = obterPrecoPorPorte(servico, "grande");
+        const gigante = obterPrecoPorPorte(servico, "gigante");
+
+        setValor('preco-pequeno', pequeno.preco);
+        setValor('duracao-pequeno', pequeno.duracao);
+
+        setValor('preco-medio', medio.preco);
+        setValor('duracao-medio', medio.duracao);
+
+        setValor('preco-grande', grande.preco);
+        setValor('duracao-grande', grande.duracao);
+
+        setValor('preco-gigante', gigante.preco);
+        setValor('duracao-gigante', gigante.duracao);
+
+        const modoCalculo = servico.modoCalculo || "manual";
+        const radioAuto = document.getElementById('modo-automatico');
+        const radioManual = document.getElementById('modo-manual');
+
+        if (radioAuto && radioManual) {
+            radioAuto.checked = modoCalculo === "automatico";
+            radioManual.checked = modoCalculo !== "automatico";
+        }
+
+        const percentuais = servico.percentuais || {};
+        setValor('percentual-medio', percentuais.medio ?? 20);
+        setValor('percentual-grande', percentuais.grande ?? 40);
+        setValor('percentual-gigante', percentuais.gigante ?? 70);
+
+        setChecked('visivel-vitrine', servico.visivelNaVitrine !== false);
+        setChecked('permite-agendamento', servico.permiteAgendamento !== false);
+
+        atualizarVisualModoCalculo();
     } else {
         document.getElementById('nome-servico').value = servico.nome || '';
         document.getElementById('descricao-servico').value = servico.descricao || '';
         document.getElementById('preco-servico').value = servico.preco !== undefined ? servico.preco : '';
         document.getElementById('duracao-servico').value = servico.duracao !== undefined ? servico.duracao : '';
+
         const categoriaInput = document.getElementById('categoria-servico');
         if (categoriaInput) categoriaInput.value = servico.categoria || '';
     }
@@ -141,51 +418,263 @@ function preencherFormulario(servico) {
 // =================== Montar Formulário Dinâmico ===================
 function montarFormularioPorTipo() {
     const container = document.getElementById('campos-dinamicos');
+
+    if (!container) {
+        console.error("Container #campos-dinamicos não encontrado.");
+        return;
+    }
+
     container.innerHTML = '';
 
     if (tipoEmpresa === "pets") {
         container.innerHTML = `
-            <div class="form-group">
-                <label for="nome-servico">Nome do Serviço</label>
-                <input type="text" id="nome-servico" required>
-            </div>
-            <div class="form-group">
-                <label for="descricao-servico">Descrição</label>
-                <textarea id="descricao-servico" rows="3"></textarea>
+            <style>
+                .pet-section {
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 14px;
+                    padding: 18px;
+                    margin-bottom: 18px;
+                    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+                }
+
+                .pet-section h3 {
+                    margin: 0 0 14px 0;
+                    color: #1e293b;
+                    font-size: 1.1rem;
+                    font-weight: 900;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .pet-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 14px;
+                }
+
+                .pet-grid-3 {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 14px;
+                }
+
+                .pet-porte-card {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 14px;
+                }
+
+                .pet-porte-card h4 {
+                    margin: 0 0 12px 0;
+                    color: #4f46e5;
+                    font-size: 1rem;
+                    font-weight: 900;
+                }
+
+                .modo-calculo {
+                    display: flex;
+                    gap: 14px;
+                    flex-wrap: wrap;
+                    margin-top: 8px;
+                }
+
+                .modo-calculo label {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 12px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: 700;
+                }
+
+                .check-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-top: 10px;
+                    font-weight: 700;
+                    color: #334155;
+                }
+
+                .check-row input {
+                    width: 18px;
+                    height: 18px;
+                }
+
+                .preview-servico {
+                    width: 150px;
+                    height: 110px;
+                    object-fit: cover;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    margin-top: 10px;
+                    display: none;
+                }
+
+                .help-text {
+                    color: #64748b;
+                    font-size: 0.88rem;
+                    margin-top: 6px;
+                    line-height: 1.4;
+                }
+
+                @media (max-width: 780px) {
+                    .pet-grid,
+                    .pet-grid-3 {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+
+            <div class="pet-section">
+                <h3>🐾 Dados do Serviço</h3>
+
+                <div class="form-group">
+                    <label for="nome-servico">Nome do Serviço *</label>
+                    <input type="text" id="nome-servico" placeholder="Ex: Banho Completo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria-servico">Categoria *</label>
+                    <input type="text" id="categoria-servico" placeholder="Ex: Banho, Tosa, Veterinário, Hospedagem" required>
+                    <div class="help-text">A categoria é criada manualmente e será usada para separar os serviços na tela e na vitrine.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao-servico">Descrição</label>
+                    <textarea id="descricao-servico" rows="3" placeholder="Descreva o que está incluso no serviço."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="imagem-servico">Foto do Serviço</label>
+                    <input type="file" id="imagem-servico" accept="image/*">
+                    <img id="preview-imagem-servico" class="preview-servico" alt="Prévia da foto do serviço">
+                    <div class="help-text">Opcional. Se não enviar foto, a vitrine poderá usar um ícone padrão.</div>
+                </div>
             </div>
 
-            <h3>Preço e Duração por Porte</h3>
+            <div class="pet-section">
+                <h3>⚙️ Forma de Precificação</h3>
 
-            <div class="form-group">
-                <label for="preco-pequeno">Preço (Pequeno)</label>
-                <input type="number" id="preco-pequeno" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label for="duracao-pequeno">Duração (minutos - Pequeno)</label>
-                <input type="number" id="duracao-pequeno" step="1" required>
-            </div>
+                <div class="modo-calculo">
+                    <label>
+                        <input type="radio" name="modo-calculo" id="modo-automatico" value="automatico" checked>
+                        Automático por percentual
+                    </label>
 
-            <div class="form-group">
-                <label for="preco-medio">Preço (Médio)</label>
-                <input type="number" id="preco-medio" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label for="duracao-medio">Duração (minutos - Médio)</label>
-                <input type="number" id="duracao-medio" step="1" required>
-            </div>
+                    <label>
+                        <input type="radio" name="modo-calculo" id="modo-manual" value="manual">
+                        Manual
+                    </label>
+                </div>
 
-            <div class="form-group">
-                <label for="preco-grande">Preço (Grande)</label>
-                <input type="number" id="preco-grande" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label for="duracao-grande">Duração (minutos - Grande)</label>
-                <input type="number" id="duracao-grande" step="1" required>
+                <div class="help-text">
+                    No modo automático, o sistema calcula médio, grande e gigante com base no preço pequeno.
+                    Depois do cálculo, todos os valores continuam editáveis manualmente.
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="categoria-servico">Categoria (opcional)</label>
-                <input type="text" id="categoria-servico">
+            <div class="pet-section" id="bloco-percentuais">
+                <h3>📊 Percentuais sobre o Pequeno</h3>
+
+                <div class="pet-grid-3">
+                    <div class="form-group">
+                        <label for="percentual-medio">Médio +%</label>
+                        <input type="number" id="percentual-medio" step="0.01" value="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="percentual-grande">Grande +%</label>
+                        <input type="number" id="percentual-grande" step="0.01" value="40">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="percentual-gigante">Gigante +%</label>
+                        <input type="number" id="percentual-gigante" step="0.01" value="70">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pet-section">
+                <h3>💰 Preço e Duração por Porte</h3>
+
+                <div class="pet-grid">
+                    <div class="pet-porte-card">
+                        <h4>Pequeno</h4>
+
+                        <div class="form-group">
+                            <label for="preco-pequeno">Preço *</label>
+                            <input type="number" id="preco-pequeno" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duracao-pequeno">Duração em minutos *</label>
+                            <input type="number" id="duracao-pequeno" step="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="pet-porte-card">
+                        <h4>Médio</h4>
+
+                        <div class="form-group">
+                            <label for="preco-medio">Preço *</label>
+                            <input type="number" id="preco-medio" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duracao-medio">Duração em minutos *</label>
+                            <input type="number" id="duracao-medio" step="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="pet-porte-card">
+                        <h4>Grande</h4>
+
+                        <div class="form-group">
+                            <label for="preco-grande">Preço *</label>
+                            <input type="number" id="preco-grande" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duracao-grande">Duração em minutos *</label>
+                            <input type="number" id="duracao-grande" step="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="pet-porte-card">
+                        <h4>Gigante</h4>
+
+                        <div class="form-group">
+                            <label for="preco-gigante">Preço *</label>
+                            <input type="number" id="preco-gigante" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duracao-gigante">Duração em minutos *</label>
+                            <input type="number" id="duracao-gigante" step="1" min="1" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pet-section">
+                <h3>🛒 Exibição</h3>
+
+                <label class="check-row">
+                    <input type="checkbox" id="visivel-vitrine" checked>
+                    Exibir na vitrine
+                </label>
+
+                <label class="check-row">
+                    <input type="checkbox" id="permite-agendamento" checked>
+                    Permitir agendamento online
+                </label>
             </div>
         `;
     } else {
@@ -194,23 +683,33 @@ function montarFormularioPorTipo() {
                 <label for="nome-servico">Nome do Serviço</label>
                 <input type="text" id="nome-servico" required>
             </div>
+
             <div class="form-group">
                 <label for="descricao-servico">Descrição</label>
                 <textarea id="descricao-servico" rows="3"></textarea>
             </div>
+
             <div class="form-group">
                 <label for="preco-servico">Preço</label>
                 <input type="number" id="preco-servico" step="0.01" required>
             </div>
+
             <div class="form-group">
                 <label for="duracao-servico">Duração (minutos)</label>
                 <input type="number" id="duracao-servico" step="1" required>
             </div>
+
             <div class="form-group">
                 <label for="categoria-servico">Categoria</label>
                 <input type="text" id="categoria-servico">
             </div>
         `;
+    }
+
+    configurarPreviewImagem();
+
+    if (tipoEmpresa === "pets") {
+        configurarCalculoAutomaticoPet();
     }
 
     if (servicoEditando) preencherFormulario(servicoEditando);
@@ -222,6 +721,7 @@ onAuthStateChanged(auth, async (user) => {
         window.location.href = 'login.html';
         return;
     }
+
     userUid = user.uid;
     isAdmin = userUid === ADMIN_UID;
 
@@ -229,12 +729,14 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!empresaId) {
         const empresas = await buscaEmpresasDoUsuario(userUid);
+
         if (empresas.length === 0) {
             prontiAlert("Você ainda não possui nenhuma empresa cadastrada. Cadastre uma empresa para continuar.", () => {
                 window.location.href = 'cadastro-empresa.html';
             });
             return;
         }
+
         if (empresas.length === 1) {
             localStorage.setItem("empresaAtivaId", empresas[0].id);
             empresaId = empresas[0].id;
@@ -245,6 +747,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     const empresaSnap = await getDoc(doc(db, "empresarios", empresaId));
+
     if (empresaSnap.exists()) {
         const empresa = { id: empresaSnap.id, ...empresaSnap.data() };
         tipoEmpresa = empresa.tipoEmpresa;
@@ -257,22 +760,24 @@ onAuthStateChanged(auth, async (user) => {
         return;
     }
 
-    montarFormularioPorTipo();
-
     servicoId = getIdFromUrl();
+
     if (servicoId) {
         const servicoSnap = await getDoc(doc(db, "empresarios", empresaId, "servicos", servicoId));
+
         if (servicoSnap.exists()) {
             servicoEditando = { id: servicoSnap.id, ...servicoSnap.data() };
-            preencherFormulario(servicoEditando);
+            imagemAtualUrl = servicoEditando.imagemUrl || "";
         } else {
             prontiAlert("Serviço não encontrado!");
         }
     }
 
+    montarFormularioPorTipo();
+
     if (!isDono && !isAdmin && !servicoId) {
         prontiAlert("Acesso Negado: Apenas o dono da empresa ou o admin podem criar novos serviços.", () => {
-            if(form) form.querySelector('button[type="submit"]').disabled = true;
+            if (form) form.querySelector('button[type="submit"]').disabled = true;
         });
     }
 
@@ -298,6 +803,11 @@ async function handleFormSubmit(e) {
         return;
     }
 
+    if (!isDono && !isAdmin) {
+        prontiAlert("Acesso Negado: Apenas o dono da empresa ou o admin podem salvar serviços.");
+        return;
+    }
+
     const btnSalvar = form.querySelector('button[type="submit"]');
     btnSalvar.disabled = true;
     btnSalvar.textContent = "Salvando...";
@@ -306,61 +816,118 @@ async function handleFormSubmit(e) {
         let dadosServico = {};
 
         if (tipoEmpresa === "pets") {
+            const nome = document.getElementById('nome-servico').value.trim();
+            const categoria = document.getElementById('categoria-servico').value.trim();
+            const descricao = document.getElementById('descricao-servico').value.trim();
+
+            const modoCalculo = document.getElementById('modo-automatico')?.checked ? "automatico" : "manual";
+
+            const precoPequeno = numeroInput('preco-pequeno');
+            const duracaoPequeno = inteiroInput('duracao-pequeno');
+
+            const precoMedio = numeroInput('preco-medio');
+            const duracaoMedio = inteiroInput('duracao-medio');
+
+            const precoGrande = numeroInput('preco-grande');
+            const duracaoGrande = inteiroInput('duracao-grande');
+
+            const precoGigante = numeroInput('preco-gigante');
+            const duracaoGigante = inteiroInput('duracao-gigante');
+
+            const percentualMedio = numeroInput('percentual-medio');
+            const percentualGrande = numeroInput('percentual-grande');
+            const percentualGigante = numeroInput('percentual-gigante');
+
             dadosServico = {
-                nome: document.getElementById('nome-servico').value.trim(),
-                descricao: document.getElementById('descricao-servico').value.trim(),
+                nome,
+                categoria,
+                descricao,
                 tipo: "pets",
-                visivelNaVitrine: true,
+                visivelNaVitrine: document.getElementById('visivel-vitrine')?.checked !== false,
+                permiteAgendamento: document.getElementById('permite-agendamento')?.checked !== false,
+                modoCalculo,
+                percentuais: {
+                    medio: isNaN(percentualMedio) ? 20 : percentualMedio,
+                    grande: isNaN(percentualGrande) ? 40 : percentualGrande,
+                    gigante: isNaN(percentualGigante) ? 70 : percentualGigante
+                },
                 precos: [
-                    { 
-                        porte: "pequeno", 
-                        preco: parseFloat(document.getElementById('preco-pequeno').value),
-                        duracao: parseInt(document.getElementById('duracao-pequeno').value, 10)
+                    {
+                        porte: "pequeno",
+                        preco: arredondarMoeda(precoPequeno),
+                        duracao: arredondarDuracao(duracaoPequeno)
                     },
-                    { 
-                        porte: "medio", 
-                        preco: parseFloat(document.getElementById('preco-medio').value),
-                        duracao: parseInt(document.getElementById('duracao-medio').value, 10)
+                    {
+                        porte: "medio",
+                        preco: arredondarMoeda(precoMedio),
+                        duracao: arredondarDuracao(duracaoMedio)
                     },
-                    { 
-                        porte: "grande", 
-                        preco: parseFloat(document.getElementById('preco-grande').value),
-                        duracao: parseInt(document.getElementById('duracao-grande').value, 10)
+                    {
+                        porte: "grande",
+                        preco: arredondarMoeda(precoGrande),
+                        duracao: arredondarDuracao(duracaoGrande)
+                    },
+                    {
+                        porte: "gigante",
+                        preco: arredondarMoeda(precoGigante),
+                        duracao: arredondarDuracao(duracaoGigante)
                     }
-                ]
+                ],
+                atualizadoEm: new Date()
             };
 
-            // Categoria opcional
-            const categoriaInput = document.getElementById('categoria-servico');
-            if (categoriaInput && categoriaInput.value.trim() !== '') {
-                dadosServico.categoria = categoriaInput.value.trim();
+            if (!dadosServico.nome) {
+                throw new Error("Informe o nome do serviço.");
             }
 
-            // Validação obrigatória
-            if (!dadosServico.nome || dadosServico.precos.some(p => isNaN(p.preco) || isNaN(p.duracao))) {
-                throw new Error("Preencha todos os campos obrigatórios corretamente.");
+            if (!dadosServico.categoria) {
+                throw new Error("Informe a categoria do serviço.");
+            }
+
+            if (dadosServico.precos.some(p => isNaN(p.preco) || p.preco < 0 || isNaN(p.duracao) || p.duracao <= 0)) {
+                throw new Error("Preencha corretamente preço e duração de todos os portes.");
+            }
+
+            if (servicoEditando) {
+                const imagemUrl = await uploadImagemServico(servicoId);
+                dadosServico.imagemUrl = imagemUrl;
+
+                await updateDoc(doc(db, "empresarios", empresaId, "servicos", servicoId), dadosServico);
+            } else {
+                const novoRef = doc(collection(db, "empresarios", empresaId, "servicos"));
+                const imagemUrl = await uploadImagemServico(novoRef.id);
+
+                dadosServico.imagemUrl = imagemUrl;
+                dadosServico.criadoEm = new Date();
+
+                await setDoc(novoRef, dadosServico);
             }
         } else {
             const categoriaInput = document.getElementById('categoria-servico');
+
             dadosServico = {
                 nome: document.getElementById('nome-servico').value.trim(),
                 descricao: document.getElementById('descricao-servico').value.trim(),
                 preco: parseFloat(document.getElementById('preco-servico').value),
                 duracao: parseInt(document.getElementById('duracao-servico').value, 10),
-                visivelNaVitrine: true
+                visivelNaVitrine: true,
+                atualizadoEm: new Date()
             };
+
             if (categoriaInput && categoriaInput.value.trim() !== '') {
                 dadosServico.categoria = categoriaInput.value.trim();
             }
+
             if (!dadosServico.nome || isNaN(dadosServico.preco) || isNaN(dadosServico.duracao)) {
                 throw new Error("Preencha todos os campos obrigatórios corretamente.");
             }
-        }
 
-        if (servicoEditando) {
-            await updateDoc(doc(db, "empresarios", empresaId, "servicos", servicoId), dadosServico);
-        } else {
-            await addDoc(collection(db, "empresarios", empresaId, "servicos"), dadosServico);
+            if (servicoEditando) {
+                await updateDoc(doc(db, "empresarios", empresaId, "servicos", servicoId), dadosServico);
+            } else {
+                dadosServico.criadoEm = new Date();
+                await addDoc(collection(db, "empresarios", empresaId, "servicos"), dadosServico);
+            }
         }
 
         prontiAlert(servicoEditando ? "Serviço atualizado com sucesso!" : "Serviço salvo com sucesso!", () => {
@@ -379,16 +946,19 @@ async function handleFormSubmit(e) {
 // =================== Excluir ===================
 async function handleServicoExcluir(e) {
     e.preventDefault();
+
     if ((!isDono && !isAdmin) || !servicoEditando) return;
-    
+
     prontiConfirm(
         "Tem certeza que deseja excluir este serviço? Esta ação é permanente.",
         async () => {
             try {
                 await deleteDoc(doc(db, "empresarios", empresaId, "servicos", servicoId));
+
                 prontiAlert("Serviço excluído com sucesso.", () => {
                     window.location.href = 'servicos.html';
                 });
+
             } catch (err) {
                 prontiAlert(`Ocorreu um erro ao excluir o serviço: ${err.message}`);
                 console.error(err);
