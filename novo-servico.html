@@ -15,19 +15,42 @@
       --primary-dark: #4338ca;
       --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%);
       --sidebar-width: 240px;
-      --danger: #dc2626;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
+    body.novo-servico-body {
       margin: 0;
       background: var(--gradient-primary);
       font-family: 'Inter', sans-serif;
       color: #1e293b;
       min-height: 100vh;
+    }
+
+    body.novo-servico-body:not(.loaded) .main-content {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    body.novo-servico-body.loaded .main-content {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.25s ease;
+    }
+
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    body.loaded #page-loader {
+      display: none;
     }
 
     #menu-container {
@@ -42,6 +65,9 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
+      width: auto;
+      background: transparent;
+      box-sizing: border-box;
     }
 
     .form-card {
@@ -161,6 +187,8 @@
       .main-content {
         margin-left: 0;
         padding: 16px;
+        padding-top: 76px;
+        width: 100%;
       }
 
       .form-card {
@@ -184,7 +212,9 @@
   </style>
 </head>
 
-<body>
+<body class="novo-servico-body">
+  <div id="page-loader">Carregando serviço...</div>
+
   <div id="menu-container"></div>
 
   <main class="main-content">
@@ -244,17 +274,4 @@
 
         await import('./novo-servico.js');
 
-      } catch (error) {
-        console.error("Erro crítico ao inicializar novo-servico.html:", error);
-
-        document.querySelector('.form-card').innerHTML = `
-          <h1>Ocorreu um erro</h1>
-          <p>Não foi possível carregar a página. Tente novamente.</p>
-        `;
-      }
-    }
-
-    carregarMenuEPagina();
-  </script>
-</body>
-</html>
+        document.body.classList
