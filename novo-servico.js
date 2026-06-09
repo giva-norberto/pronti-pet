@@ -340,6 +340,25 @@ function atualizarVisualModoCalculo() {
     }
 }
 
+function limitarCampoPercentual(el) {
+    if (!el) return;
+
+    let valor = String(el.value || "").replace(",", ".").replace(/[^0-9.]/g, "");
+
+    if (valor.includes(".")) {
+        const partes = valor.split(".");
+        valor = `${partes[0]}.${partes.slice(1).join("").slice(0, 2)}`;
+    }
+
+    const numero = parseFloat(valor);
+
+    if (!isNaN(numero) && numero > 999) {
+        valor = "999";
+    }
+
+    el.value = valor;
+}
+
 function configurarCalculoAutomaticoPet() {
     const campos = [
         "modo-automatico",
@@ -351,12 +370,31 @@ function configurarCalculoAutomaticoPet() {
         "percentual-gigante"
     ];
 
+    const camposPercentuais = [
+        "percentual-medio",
+        "percentual-grande",
+        "percentual-gigante"
+    ];
+
     campos.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
 
-        el.addEventListener("input", atualizarVisualModoCalculo);
-        el.addEventListener("change", atualizarVisualModoCalculo);
+        el.addEventListener("input", () => {
+            if (camposPercentuais.includes(id)) {
+                limitarCampoPercentual(el);
+            }
+
+            atualizarVisualModoCalculo();
+        });
+
+        el.addEventListener("change", () => {
+            if (camposPercentuais.includes(id)) {
+                limitarCampoPercentual(el);
+            }
+
+            atualizarVisualModoCalculo();
+        });
     });
 
     atualizarVisualModoCalculo();
@@ -428,105 +466,255 @@ function montarFormularioPet() {
 
     container.innerHTML = `
         <style>
+            /* ===== AJUSTE VISUAL PRONTI PET =====
+               Objetivo: evitar campos atropelando, reduzir espaços e melhorar no celular.
+            */
+            #campos-dinamicos,
+            #campos-dinamicos * {
+                box-sizing: border-box;
+            }
+
+            #campos-dinamicos {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            #campos-dinamicos .form-group {
+                width: 100%;
+                min-width: 0;
+                margin-bottom: 10px;
+            }
+
+            #campos-dinamicos label {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 0.88rem;
+                font-weight: 800;
+                color: #334155;
+                line-height: 1.2;
+            }
+
+            #campos-dinamicos input,
+            #campos-dinamicos textarea,
+            #campos-dinamicos select {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                height: auto;
+                border-radius: 10px;
+                border: 1px solid #cbd5e1;
+                padding: 10px 11px;
+                font-size: 0.95rem;
+                line-height: 1.2;
+                background: #ffffff;
+                outline: none;
+            }
+
+            #campos-dinamicos textarea {
+                min-height: 76px;
+                resize: vertical;
+            }
+
+            #campos-dinamicos input:focus,
+            #campos-dinamicos textarea:focus,
+            #campos-dinamicos select:focus {
+                border-color: #4f46e5;
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            }
+
             .pet-section {
+                width: 100%;
+                max-width: 100%;
                 background: #ffffff;
                 border: 1px solid #e5e7eb;
                 border-radius: 14px;
-                padding: 18px;
-                margin-bottom: 18px;
-                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+                padding: 14px;
+                margin-bottom: 14px;
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+                overflow: hidden;
             }
 
             .pet-section h3 {
-                margin: 0 0 14px 0;
+                margin: 0 0 12px 0;
                 color: #1e293b;
-                font-size: 1.1rem;
+                font-size: 1rem;
                 font-weight: 900;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 7px;
+                line-height: 1.2;
             }
 
             .pet-grid {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 14px;
+                gap: 12px;
+                width: 100%;
             }
 
             .pet-grid-3 {
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 14px;
+                gap: 10px;
+                width: 100%;
             }
 
             .pet-porte-card {
+                min-width: 0;
                 background: #f8fafc;
                 border: 1px solid #e2e8f0;
                 border-radius: 12px;
-                padding: 14px;
+                padding: 12px;
+                overflow: hidden;
             }
 
             .pet-porte-card h4 {
-                margin: 0 0 12px 0;
+                margin: 0 0 10px 0;
                 color: #4f46e5;
-                font-size: 1rem;
+                font-size: 0.98rem;
                 font-weight: 900;
+                line-height: 1.2;
             }
 
             .modo-calculo {
-                display: flex;
-                gap: 14px;
-                flex-wrap: wrap;
-                margin-top: 8px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 6px;
+                width: 100%;
             }
 
             .modo-calculo label {
-                display: flex;
+                display: flex !important;
                 align-items: center;
                 gap: 8px;
-                padding: 10px 12px;
+                width: 100%;
+                min-width: 0;
+                margin: 0;
+                padding: 10px 11px;
                 background: #f8fafc;
                 border: 1px solid #e2e8f0;
                 border-radius: 10px;
                 cursor: pointer;
-                font-weight: 700;
-            }
-
-            .check-row {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-top: 10px;
-                font-weight: 700;
+                font-size: 0.9rem;
+                font-weight: 800;
+                line-height: 1.2;
                 color: #334155;
             }
 
+            .modo-calculo input {
+                width: 17px !important;
+                height: 17px !important;
+                min-width: 17px !important;
+                padding: 0 !important;
+                margin: 0;
+            }
+
+            .check-row {
+                display: flex !important;
+                align-items: center;
+                gap: 9px;
+                width: 100%;
+                margin: 8px 0 0 0;
+                padding: 10px 11px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                font-size: 0.92rem;
+                font-weight: 800;
+                color: #334155;
+                line-height: 1.2;
+            }
+
             .check-row input {
-                width: 18px;
-                height: 18px;
+                width: 18px !important;
+                height: 18px !important;
+                min-width: 18px !important;
+                padding: 0 !important;
+                margin: 0;
             }
 
             .preview-servico {
-                width: 150px;
-                height: 110px;
+                width: 132px;
+                height: 96px;
                 object-fit: cover;
                 border-radius: 12px;
                 border: 1px solid #e2e8f0;
-                margin-top: 10px;
+                margin-top: 8px;
                 display: none;
             }
 
             .help-text {
                 color: #64748b;
-                font-size: 0.88rem;
-                margin-top: 6px;
-                line-height: 1.4;
+                font-size: 0.8rem;
+                margin-top: 5px;
+                line-height: 1.32;
             }
 
-            @media (max-width: 780px) {
+            .percentual-input {
+                max-width: 100%;
+            }
+
+            @media (max-width: 900px) {
+                .pet-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 10px;
+                }
+
+                .pet-section {
+                    padding: 12px;
+                }
+            }
+
+            @media (max-width: 640px) {
+                .pet-section {
+                    padding: 11px;
+                    margin-bottom: 12px;
+                    border-radius: 12px;
+                }
+
+                .pet-section h3 {
+                    font-size: 0.96rem;
+                    margin-bottom: 10px;
+                }
+
                 .pet-grid,
-                .pet-grid-3 {
+                .pet-grid-3,
+                .modo-calculo {
                     grid-template-columns: 1fr;
+                    gap: 9px;
+                }
+
+                .pet-porte-card {
+                    padding: 10px;
+                }
+
+                #campos-dinamicos input,
+                #campos-dinamicos textarea,
+                #campos-dinamicos select {
+                    padding: 9px 10px;
+                    font-size: 0.92rem;
+                }
+
+                #campos-dinamicos label {
+                    font-size: 0.84rem;
+                }
+
+                .help-text {
+                    font-size: 0.78rem;
+                }
+            }
+
+            @media (max-width: 380px) {
+                .pet-section {
+                    padding: 10px;
+                }
+
+                .modo-calculo label,
+                .check-row {
+                    font-size: 0.85rem;
+                    padding: 9px 10px;
                 }
             }
         </style>
@@ -598,17 +786,17 @@ function montarFormularioPet() {
             <div class="pet-grid-3">
                 <div class="form-group">
                     <label for="percentual-medio">Médio +%</label>
-                    <input type="number" id="percentual-medio" step="0.01" value="20">
+                    <input type="number" id="percentual-medio" class="percentual-input" step="1" min="0" max="999" inputmode="numeric" value="20">
                 </div>
 
                 <div class="form-group">
                     <label for="percentual-grande">Grande +%</label>
-                    <input type="number" id="percentual-grande" step="0.01" value="40">
+                    <input type="number" id="percentual-grande" class="percentual-input" step="1" min="0" max="999" inputmode="numeric" value="40">
                 </div>
 
                 <div class="form-group">
                     <label for="percentual-gigante">Gigante +%</label>
-                    <input type="number" id="percentual-gigante" step="0.01" value="70">
+                    <input type="number" id="percentual-gigante" class="percentual-input" step="1" min="0" max="999" inputmode="numeric" value="70">
                 </div>
             </div>
         </div>
