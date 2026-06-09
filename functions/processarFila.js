@@ -29,7 +29,7 @@ const STATUS_OFERTA_EXPIRADA = "expirada";
 // Compatibilidade com registros antigos
 const STATUS_ANTIGO_FILA = "fila";
 
-// ============================================================================
+// ===========================================================================
 // UTILITÁRIOS DE TEMPO — MESMA BASE DA VITRINE
 // ============================================================================
 
