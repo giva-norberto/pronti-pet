@@ -3,83 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pronti - Serviços</title>
+    <title>Pronti Pet - Serviços</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <style>
         :root {
             --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             --primary-color: #4f46e5;
-            --special-color: #16a34a; 
+            --primary-hover: #4338ca;
+            --special-color: #16a34a;
+            --special-hover: #15803d;
+            --sidebar-width: 230px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', Arial, sans-serif;
             background: var(--gradient-primary);
             color: #333;
-            display: flex;
-        }
-        .main-content { 
-            margin-left: 270px; 
-            padding: 32px; 
             min-height: 100vh;
-            flex-grow: 1;
         }
+
+        #menu-container {
+            position: relative;
+            z-index: 20;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 32px 28px;
+            min-height: 100vh;
+        }
+
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 18px;
             background-color: #fff;
-            padding: 16px 24px;
-            border-radius: 14px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 18px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-bottom: 24px;
         }
-        .header-actions { display: flex; gap: 12px; }
-        .page-header h1 { font-size: 1.9rem; font-weight: 800; color: #1e293b; }
-        .btn-new, .btn-special {
-            color: white; 
-            padding: 12px 20px; 
-            border-radius: 8px; 
-            text-decoration: none; 
-            font-weight: bold; 
+
+        .title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .page-header h1 {
+            font-size: 1.95rem;
+            font-weight: 900;
+            color: #1e293b;
+            line-height: 1.1;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn-new,
+        .btn-special {
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 800;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.2s;
+            transition: transform 0.15s ease, background-color 0.2s ease;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
         }
-        .btn-new { background-color: var(--primary-color); }
-        .btn-new:hover { background-color: #4338ca; }
-        .btn-special { background-color: var(--special-color); }
-        .btn-special:hover { background-color: #15803d; }
-        .categoria-titulo { font-size: 1.6rem; font-weight: 800; color: #FFFFFF; margin-top: 24px; margin-bottom: 16px; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
-        .servico-card { background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
-        .servico-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
-        .servico-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .servico-titulo { font-size: 1.3em; font-weight: bold; color: #333; margin: 0; }
-        .servico-descricao { color: #666; margin: 10px 0; line-height: 1.4; }
-        .servico-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
-        .servico-preco { font-size: 1.2em; font-weight: bold; color: #28a745; }
-        .servico-duracao { color: #666; font-size: 0.9em; }
-        .servico-acoes { display: flex; gap: 10px; }
-        .btn-acao { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: all 0.2s; }
-        .btn-editar { background-color: #ffc107; color: #333; }
-        .btn-editar:hover { background-color: #e0a800; }
-        .btn-excluir { background-color: #dc3545; color: white; }
-        .btn-excluir:hover { background-color: #c82333; }
-        @media (max-width: 900px) { 
-            body { flex-direction: column; }
-            .main-content { margin-left: 0; padding: 16px; }
-            .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+
+        .btn-new {
+            background-color: var(--primary-color);
         }
-        .modal-overlay { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; }
-        .modal-overlay.ativo { display: flex; opacity: 1; }
-        .modal-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25); text-align: center; max-width: 420px; width: 90%; }
-        .modal-botoes { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        #modal-btn-confirmar { background-color: #d9534f; color: white; }
-        #modal-btn-cancelar { background-color: #f0f0f0; color: #333; }
-        #loader { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 1.2em; backdrop-filter: blur(2px); }
+
+        .btn-new:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-special {
+            background-color: var(--special-color);
+        }
+
+        .btn-special:hover {
+            background-color: var(--special-hover);
+            transform: translateY(-1px);
+        }
+
+        .empty-message {
+            color: #fff;
+            font-weight: 600;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 18px 20px;
+            border-radius: 14px;
+            max-width: 720px;
+        }
+
+        .categoria-titulo {
+            font-size: 1.55rem;
+            font-weight: 900;
+            color: #fff;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .servico-card {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .servico-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .servico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .servico-titulo {
+            font-size: 1.3em;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .servico-descricao {
+            color: #64748b;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+
+        .servico-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eef2ff;
+        }
+
+        .servico-preco {
+            font-size: 1.2em;
+            font-weight: 900;
+            color: #16a34a;
+        }
+
+        .servico-duracao {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .servico-acoes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-acao {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .btn-editar {
+            background-color: #facc15;
+            color: #1e293b;
+        }
+
+        .btn-editar:hover {
+            background-color: #eab308;
+        }
+
+        .btn-excluir {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-excluir:hover {
+            background-color: #dc2626;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.ativo {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .modal-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        #modal-btn-confirmar {
+            background-color: #d9534f;
+            color: white;
+        }
+
+        #modal-btn-cancelar {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        #loader {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-size: 1.2em;
+            backdrop-filter: blur(2px);
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                margin-left: 0;
+                padding: 18px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                justify-content: stretch;
+            }
+
+            .btn-new,
+            .btn-special {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .servico-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 <div id="loader" style="display: none;">Carregando...</div>
@@ -87,17 +320,26 @@
 
 <main class="main-content">
     <div class="page-header">
-        <h1>Nossos Serviços</h1>
+        <div class="title-area">
+            <h1>Serviços do Pet Shop</h1>
+            <p class="page-subtitle">Cadastre os serviços que aparecerão na vitrine do Pronti Pet.</p>
+        </div>
+
         <div class="header-actions">
-            <a href="novo-servico.html" class="btn-new">Adicionar Novo Serviço</a>
+            <a href="novo-servico.html" class="btn-new">
+                <i class="fas fa-paw"></i>
+                Adicionar Serviço
+            </a>
+
             <a href="promocoes.html" id="btnPromocoes" class="btn-special">
-                <i class="fas fa-tags"></i> Preços Especiais
+                <i class="fas fa-tags"></i>
+                Preços Especiais
             </a>
         </div>
     </div>
-    
+
     <div id="lista-servicos">
-        <p style="color:#fff;">Carregando serviços...</p>
+        <p class="empty-message">Carregando serviços...</p>
     </div>
 </main>
 
@@ -121,33 +363,40 @@
             if (!sessao || !sessao.user) return;
 
             let papelUsuario = sessao.papeis || [];
+
             if (papelUsuario.length === 0) {
-                if(sessao.isAdmin) papelUsuario.push('admin');
-                if(sessao.isOwner) papelUsuario.push('dono');
-                if(papelUsuario.length === 0) papelUsuario.push('funcionario');
+                if (sessao.isAdmin) papelUsuario.push('admin');
+                if (sessao.isOwner) papelUsuario.push('dono');
+                if (papelUsuario.length === 0) papelUsuario.push('funcionario');
             }
 
-            // Carrega menu
             const response = await fetch('menu-lateral.html');
-            if (!response.ok) throw new Error('menu-lateral.html não encontrado');
-            document.getElementById('menu-container').innerHTML = await response.text();
-            const menuModule = await import('./menu-lateral.js');
-            if (menuModule.ativarMenuLateral) await menuModule.ativarMenuLateral(papelUsuario);
 
-            // Agora os scripts de serviços podem inicializar normalmente
+            if (!response.ok) {
+                throw new Error('menu-lateral.html não encontrado');
+            }
+
+            document.getElementById('menu-container').innerHTML = await response.text();
+
+            const menuModule = await import('./menu-lateral.js');
+
+            if (menuModule.ativarMenuLateral) {
+                await menuModule.ativarMenuLateral(papelUsuario);
+            }
         } catch (error) {
             console.error("Erro crítico ao inicializar a página de serviços:", error);
-            document.querySelector('.main-content').innerHTML = '<h1>Ocorreu um erro</h1><p>Não foi possível carregar a página. Tente novamente.</p>';
+
+            document.querySelector('.main-content').innerHTML =
+                '<h1>Ocorreu um erro</h1><p>Não foi possível carregar a página. Tente novamente.</p>';
         }
     }
 
-    // Inicia carregamento seguro
     carregarMenuEPainel();
 </script>
 
 <script src="./firebase-config.js" type="module"></script>
 <script src="./vitrini-utils.js" type="module"></script>
-<script src="./servicos.js" type="module"></script> 
+<script src="./servicos.js" type="module"></script>
 
 </body>
 </html>
