@@ -8,7 +8,7 @@ if (!admin.apps.length) {
 }
 
 // Banco nomeado oficial do Pronti
-const db = getFirestore("pronti-app");
+const db = getFirestore();
 const fcm = admin.messaging();
 
 // Região oficial das callable functions
@@ -207,8 +207,10 @@ async function buscarTokenDoCliente(item) {
   }
 }
 
+const APP_URL = "https://pronti-pet.web.app";
+
 function construirLinkConfirmacao(filaId, empresaId) {
-  return `https://prontiapp.com.br/vitrine.html?empresa=${encodeURIComponent(
+  return `${APP_URL}/vitrine.html?empresa=${encodeURIComponent(
     String(empresaId || "")
   )}&filaId=${encodeURIComponent(String(filaId || ""))}&modo=fila`;
 }
