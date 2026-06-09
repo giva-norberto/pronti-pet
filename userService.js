@@ -236,7 +236,7 @@ export async function verificarAcesso() {
                 
                 // passar user explicitamente
                 await ensureUserAndTrialDoc(user);
-                const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+                const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
                 const isAdmin = user.uid === ADMIN_UID;
                 let empresaAtivaId = localStorage.getItem('empresaAtivaId');
                 let empresaDocSnap = null;
