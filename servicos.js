@@ -35,7 +35,7 @@ onAuthStateChanged(auth, async (user) => {
             const empresaRef = doc(db, "empresarios", empresaId);
             const empresaSnap = await getDoc(empresaRef);
             if (empresaSnap.exists()) {
-                const adminUID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+               const adminUID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
                 isDono = (empresaSnap.data().donoId === user.uid) || (user.uid === adminUID);
             }
 
