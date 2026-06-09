@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Novo Serviço - Pronti Pet</title>
 
-  <link rel="stylesheet" href="style.css?v=pet-final">
+  <link rel="stylesheet" href="style.css?v=pet-final-ajustado">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
@@ -20,13 +20,19 @@
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body.novo-servico-body {
       margin: 0;
       background: var(--gradient-primary);
       font-family: 'Inter', sans-serif;
       color: #1e293b;
       min-height: 100vh;
-      overflow-x: hidden;
     }
 
     body.novo-servico-body:not(.loaded) .main-content {
@@ -198,7 +204,7 @@
       box-shadow: 0 8px 20px rgba(220,38,38,0.22);
     }
 
-    /* CORREÇÃO FORTE PARA OS CAMPOS GERADOS PELO novo-servico.js */
+    /* AJUSTE DOS CAMPOS GERADOS PELO novo-servico.js */
     #campos-dinamicos,
     #campos-dinamicos * {
       box-sizing: border-box;
@@ -246,29 +252,30 @@
       font-size: 0.95rem !important;
     }
 
-    #campos-dinamicos .modo-calculo {
-      gap: 10px !important;
-    }
-
-    #campos-dinamicos .modo-calculo label {
-      min-width: 0;
-      max-width: 100%;
-      padding: 9px 10px !important;
-      font-size: 0.9rem;
-    }
-
     #campos-dinamicos .help-text {
       font-size: 0.8rem !important;
       line-height: 1.3 !important;
       margin-top: 4px !important;
     }
 
-    #campos-dinamicos input,
+    #campos-dinamicos input:not([type="radio"]):not([type="checkbox"]),
     #campos-dinamicos textarea,
     #campos-dinamicos select {
       width: 100% !important;
       max-width: 100% !important;
       min-width: 0 !important;
+    }
+
+    #campos-dinamicos input[type="radio"],
+    #campos-dinamicos input[type="checkbox"] {
+      width: 16px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      max-width: 16px !important;
+      flex: 0 0 16px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      accent-color: var(--primary);
     }
 
     #campos-dinamicos input[type="number"] {
@@ -279,6 +286,42 @@
     #percentual-grande,
     #percentual-gigante {
       max-width: 100% !important;
+    }
+
+    #campos-dinamicos .modo-calculo {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 10px !important;
+      width: 100% !important;
+      align-items: stretch !important;
+    }
+
+    #campos-dinamicos .modo-calculo label {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+      flex: 1 1 180px !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      padding: 9px 10px !important;
+      font-size: 0.9rem !important;
+      line-height: 1.15 !important;
+      text-align: left !important;
+    }
+
+    #campos-dinamicos .check-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      text-align: left !important;
+      font-size: 0.9rem !important;
+      line-height: 1.2 !important;
+      margin-top: 8px !important;
     }
 
     @media (max-width: 900px) {
@@ -351,16 +394,22 @@
       }
 
       #campos-dinamicos .modo-calculo {
-        flex-direction: column !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
       }
 
       #campos-dinamicos .modo-calculo label {
         width: 100% !important;
+        min-height: 56px !important;
+        padding: 8px !important;
+        font-size: 0.82rem !important;
+        line-height: 1.12 !important;
       }
 
       #campos-dinamicos .check-row {
         font-size: 0.88rem !important;
-        align-items: flex-start !important;
+        align-items: center !important;
       }
 
       #campos-dinamicos .preview-servico {
@@ -401,6 +450,17 @@
 
       #campos-dinamicos .pet-porte-card {
         padding: 9px !important;
+      }
+
+      #campos-dinamicos .modo-calculo {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      #campos-dinamicos .modo-calculo label {
+        min-height: 54px !important;
+        font-size: 0.78rem !important;
+        padding: 7px !important;
+        gap: 6px !important;
       }
 
       .form-group input,
