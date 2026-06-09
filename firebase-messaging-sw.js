@@ -1,54 +1,59 @@
-// =====================================================================
-// firebase-messaging-sw.js  (Firebase v10.x)
-// PRONTI APP - Push Notifications + Cache Offline (PWA)
-// ✅ UNIFICADO: Junta o antigo service-worker.js (cache) com o firebase-messaging-sw.js (push)
-//    Agora é UM ÚNICO service worker que faz tudo.
 // ======================================================================
-// Firebase compat para Service Worker
+// firebase-messaging-sw.js
+// PRONTI PET - Push Notifications + Cache Offline (PWA)
+// ======================================================================
+
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
+
 // --------------------------------------------------
-// CONFIG FIREBASE (mesma do firebase-config.js)
+// CONFIG FIREBASE - PRONTI PET
 // --------------------------------------------------
 firebase.initializeApp({
-  apiKey: "AIzaSyCkJt49sM3n_hIQOyEwzgOmzzdPlsF9PW4",
-  authDomain: "pronti-app-37c6e.firebaseapp.com",
-  projectId: "pronti-app-37c6e",
-  storageBucket: "pronti-app-37c6e.firebasestorage.app",
-  messagingSenderId: "736700619274",
-  appId: "1:736700619274:web:557aa247905e56fa7e5df3"
+  apiKey: "AIzaSyDxbb2_onT2gbQahqogcddCOjNTWbwjb0k",
+  authDomain: "pronti-pet.firebaseapp.com",
+  projectId: "pronti-pet",
+  storageBucket: "pronti-pet.firebasestorage.app",
+  messagingSenderId: "970443692765",
+  appId: "1:970443692765:web:21b8e61ff165f36e46d934"
 });
+
 // --------------------------------------------------
 // MESSAGING
 // --------------------------------------------------
 const messaging = firebase.messaging();
-// URLs padrão (fallback) — mantém comportamento antigo
-const DEFAULT_VIEW_URL = "https://prontiapp.com.br/agendamentos";
-const DEFAULT_FALLBACK_URL = "https://prontiapp.com.br/";
+
+// URLs padrão do Pronti Pet
+const DEFAULT_VIEW_URL = "/agenda.html";
+const DEFAULT_FALLBACK_URL = "/";
+
 // --------------------------------------------------
 // RECEBE PUSH COM APP FECHADO
 // --------------------------------------------------
 messaging.onBackgroundMessage(function (payload) {
   try {
-    console.log("[Firebase SW] Push recebido:", payload);
+    console.log("[Pronti Pet SW] Push recebido:", payload);
+
     const data = payload?.data || {};
     const notification = payload?.notification || {};
+
     const title =
       notification.title ||
       data.title ||
-      "Novo Agendamento";
+      "Novo agendamento pet";
+
     const options = {
       body:
         notification.body ||
         data.body ||
-        "Você tem um novo agendamento!",
+        "Você tem um novo agendamento no Pronti Pet!",
       icon: notification.icon || data.icon || "/icon.png",
       image: notification.image || data.image,
       badge: "/badge.png",
       tag: `agendamento-${data.bilheteId || data.lembreteId || Date.now()}`,
       requireInteraction: true,
       actions: [
-        { action: "view", title: "Ver Agendamento" },
+        { action: "view", title: "Ver agenda" },
         { action: "dismiss", title: "Dispensar" }
       ],
       data: {
@@ -56,38 +61,54 @@ messaging.onBackgroundMessage(function (payload) {
         link: data.link || data.url || ""
       }
     };
+
     self.registration.showNotification(title, options);
+
   } catch (err) {
-    console.warn("[Firebase SW] Erro ao processar push em background:", err);
+    console.warn("[Pronti Pet SW] Erro ao processar push em background:", err);
   }
 });
+
 // --------------------------------------------------
 // CLICK NA NOTIFICAÇÃO
 // --------------------------------------------------
 self.addEventListener("notificationclick", function (event) {
   try {
-    console.log("[Firebase SW] Clique na notificação:", event.action);
+    console.log("[Pronti Pet SW] Clique na notificação:", event.action);
+
     const data = event.notification?.data || {};
-    const linkFromPayload = (data && (data.link || data.url)) ? String(data.link || data.url) : "";
+    const linkFromPayload =
+      data && (data.link || data.url)
+        ? String(data.link || data.url)
+        : "";
+
     event.notification.close();
+
     if (event.action === "dismiss") return;
+
     let targetUrl = DEFAULT_FALLBACK_URL;
+
     if (event.action === "view") {
       targetUrl = DEFAULT_VIEW_URL;
     }
+
     if (linkFromPayload) {
       targetUrl = linkFromPayload;
     }
+
     event.waitUntil(clients.openWindow(targetUrl));
+
   } catch (err) {
-    console.warn("[Firebase SW] Erro no notificationclick:", err);
+    console.warn("[Pronti Pet SW] Erro no notificationclick:", err);
     event.waitUntil(clients.openWindow(DEFAULT_FALLBACK_URL));
   }
 });
+
 // ======================================================
-// CACHE OFFLINE - PRONTI APP (antigo service-worker.js)
+// CACHE OFFLINE - PRONTI PET
 // ======================================================
-const CACHE_NAME = "pronti-painel-v2";
+const CACHE_NAME = "pronti-pet-painel-v1";
+
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
@@ -96,27 +117,34 @@ const FILES_TO_CACHE = [
   "/menu-lateral.html",
   "/menu-lateral.js",
   "/dashboard.html",
-  "/perfil.html"
+  "/perfil.html",
+  "/agenda.html",
+  "/servicos.html",
+  "/clientes.html"
 ];
+
 // --------------------------------------------------
 // INSTALL
 // --------------------------------------------------
 self.addEventListener("install", function (event) {
-  console.log("[ServiceWorker] Install (unificado: push + cache)");
+  console.log("[Pronti Pet SW] Install");
+
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      console.log("[ServiceWorker] Caching app shell");
+      console.log("[Pronti Pet SW] Cacheando app shell");
       return cache.addAll(FILES_TO_CACHE);
     })
   );
+
   self.skipWaiting();
 });
+
 // --------------------------------------------------
-// FETCH (cache offline)
+// FETCH
 // --------------------------------------------------
 self.addEventListener("fetch", function (event) {
   const url = event.request.url;
-  // NÃO interferir com Firebase / APIs externas
+
   if (
     url.includes("firebase") ||
     url.includes("googleapis") ||
@@ -125,46 +153,55 @@ self.addEventListener("fetch", function (event) {
   ) {
     return;
   }
+
   event.respondWith(
-    caches.match(event.request).then(function (response) {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).then(function (fetchResponse) {
-        // cacheia apenas GET do mesmo domínio
-        if (
-          event.request.method === "GET" &&
-          fetchResponse &&
-          fetchResponse.type === "basic"
-        ) {
-          const responseClone = fetchResponse.clone();
-          caches.open(CACHE_NAME).then(function (cache) {
-            cache.put(event.request, responseClone);
-          });
+    caches.match(event.request)
+      .then(function (response) {
+        if (response) return response;
+
+        return fetch(event.request).then(function (fetchResponse) {
+          if (
+            event.request.method === "GET" &&
+            fetchResponse &&
+            fetchResponse.type === "basic"
+          ) {
+            const responseClone = fetchResponse.clone();
+
+            caches.open(CACHE_NAME).then(function (cache) {
+              cache.put(event.request, responseClone);
+            });
+          }
+
+          return fetchResponse;
+        });
+      })
+      .catch(function () {
+        if (event.request.destination === "document") {
+          return caches.match("/index.html");
         }
-        return fetchResponse;
-      });
-    }).catch(function () {
-      // fallback se estiver offline
-      if (event.request.destination === "document") {
-        return caches.match("/index.html");
-      }
-    })
+      })
   );
 });
+
 // --------------------------------------------------
 // ACTIVATE
 // --------------------------------------------------
 self.addEventListener("activate", function (event) {
-  console.log("[ServiceWorker] Activate (unificado: push + cache)");
+  console.log("[Pronti Pet SW] Activate");
+
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
         keys
-          .filter(function (key) { return key !== CACHE_NAME; })
-          .map(function (key) { return caches.delete(key); })
+          .filter(function (key) {
+            return key !== CACHE_NAME;
+          })
+          .map(function (key) {
+            return caches.delete(key);
+          })
       );
     })
   );
+
   self.clients.claim();
 });
