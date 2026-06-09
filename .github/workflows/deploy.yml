@@ -10,55 +10,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout do código
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. Instalar dependências das functions de forma limpa
       - name: Install functions dependencies
         working-directory: ./functions
         run: |
           rm -rf node_modules
           npm install
 
-      # 4. Deploy Hosting
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_APP_37C6E }}
-          projectId: pronti-app-37c6e
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET }}
+          projectId: pronti-pet
           channelId: live
 
-      # 5. Instalar Firebase CLI
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # 6. Setup Firebase credentials
       - name: Setup Firebase credentials
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_APP_37C6E }}' > $HOME/firebase-credentials.json
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET }}' > $HOME/firebase-credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
-      # 7. Validar carregamento das Functions antes do deploy
       - name: Validate Functions code
         working-directory: ./functions
         run: node index.js
 
-      # 8. Deploy Functions
       - name: Deploy Cloud Functions
         env:
           FIRESTORE_EMULATOR_HOST: ""
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: firebase deploy --only functions --project pronti-app-37c6e --non-interactive --force
+        run: firebase deploy --only functions --project pronti-pet --non-interactive --force
 
-      # 9. Cleanup credentials
       - name: Cleanup credentials
         if: always()
         run: rm -f $HOME/firebase-credentials.json
