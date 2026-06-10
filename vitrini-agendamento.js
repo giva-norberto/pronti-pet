@@ -1,20 +1,6 @@
-// ======================================================================
-// vitrini-agendamento.js (REVISADO PARA RESPEITAR AUSÊNCIAS DO PROFISSIONAL)
-// ======================================================================
-
-/*
-  Alterações mínimas:
-  - adicionada função profissionalTemAusencia(empresaId, profissionalId, data)
-  - encontrarPrimeiraDataComSlots agora pula datas em que o profissional tem ausência
-  - sem alterar a lógica de cálculo de slots (calcularSlotsDisponiveis)
-  - ✅ Adicionado: verificação da assinatura do cliente APENAS para ajuste do preço cobrado do serviço (não bloqueia agendamento)
-  - ✅ Adicionada função enviarEmailViaPHP(...) como utilitário; chamada ao envio foi alterada para usá-la em background,
-    mantendo todo o restante da lógica exatamente igual.
-  - ✅ Adicionado: Chamada ao serviço de notificações no ato do salvamento para geração do token FCM.
-*/
-
 import { db } from './vitrini-firebase.js';
 import { ofertarVagaParaFila } from './filaInteligenteEngine.js';
+
 import {
     collection,
     query,
@@ -27,9 +13,9 @@ import {
     getDoc,
     Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
 import { limparUIAgendamento } from './vitrini-ui.js';
 
-// --- Funções Auxiliares de Tempo (LÓGICA 100% PRESERVADA) ---
 function timeStringToMinutes(timeStr) {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
@@ -41,7 +27,6 @@ function minutesToTimeString(totalMinutes) {
     return `${hours}:${minutes}`;
 }
 
-// --- Função utilitária pequena e segura para gerar 'YYYY-MM-DD' no fuso LOCAL ---
 function getLocalYYYYMMDD(dateObj = new Date()) {
     const y = dateObj.getFullYear();
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -49,15 +34,14 @@ function getLocalYYYYMMDD(dateObj = new Date()) {
     return `${y}-${m}-${d}`;
 }
 
-// -------------------------------------------------------------------------
-// Nova função: verifica se há ausência registrada para o profissional numa data
-// -------------------------------------------------------------------------
 export async function profissionalTemAusencia(empresaId, profissionalId, dataYYYYMMDD) {
     try {
         if (!empresaId || !profissionalId || !dataYYYYMMDD) return false;
+
         const ausRef = collection(db, 'empresarios', empresaId, 'profissionais', profissionalId, 'ausencias');
         const q = query(ausRef, where('data', '==', dataYYYYMMDD));
         const snap = await getDocs(q);
+
         return !snap.empty;
     } catch (err) {
         console.warn('Erro ao verificar ausência do profissional:', err);
@@ -65,20 +49,22 @@ export async function profissionalTemAusencia(empresaId, profissionalId, dataYYY
     }
 }
 
-// --- NOVA FUNÇÃO: Verifica se o cliente tem assinatura válida
 async function clienteTemAssinaturaValida(empresaId, clienteId) {
     try {
         const assinaturasRef = collection(db, "empresarios", empresaId, "clientes", clienteId, "assinaturas");
         const q = query(assinaturasRef, where("status", "==", "ativo"));
         const snap = await getDocs(q);
         const agora = new Date();
+
         for (const docSnap of snap.docs) {
             const assinatura = docSnap.data();
-            const dataFim = assinatura.dataFim?.toDate ? assinatura.dataFim.toDate() : new Date(assinatura.dataFim);
-            if (dataFim > agora) {
-                return true;
-            }
+            const dataFim = assinatura.dataFim?.toDate
+                ? assinatura.dataFim.toDate()
+                : new Date(assinatura.dataFim);
+
+            if (dataFim > agora) return true;
         }
+
         return false;
     } catch (err) {
         console.warn('Erro ao verificar assinatura válida do cliente:', err);
@@ -86,9 +72,6 @@ async function clienteTemAssinaturaValida(empresaId, clienteId) {
     }
 }
 
-// ======================================================================
-// 🆕 NOVA FUNÇÃO: Criar lembrete automático (1 hora antes do agendamento)
-// ======================================================================
 async function criarLembreteAutomatico(empresaId, agendamento, currentUser) {
     try {
         const [ano, mes, dia] = agendamento.data.split('-').map(Number);
@@ -102,9 +85,7 @@ async function criarLembreteAutomatico(empresaId, agendamento, currentUser) {
             return;
         }
 
-        const lembreteRef = collection(db, 'lembretesPendentes');
-
-        await addDoc(lembreteRef, {
+        await addDoc(collection(db, 'lembretesPendentes'), {
             clienteId: currentUser.uid,
             empresaId: empresaId,
             servicoNome: agendamento.servico.nome,
@@ -118,21 +99,26 @@ async function criarLembreteAutomatico(empresaId, agendamento, currentUser) {
 
         console.log('✅ Lembrete automático criado para:', dataLembrete);
     } catch (error) {
-        console.error('❌ Erro ao criar lembrete automático (não bloqueia agendamento):', error);
+        console.error('❌ Erro ao criar lembrete automático:', error);
     }
 }
 
-// --- Funções Principais de Agendamento ---
 export async function buscarAgendamentosDoDia(empresaId, data) {
     try {
         const agendamentosRef = collection(db, 'empresarios', empresaId, 'agendamentos');
+
         const q = query(
             agendamentosRef,
             where("data", "==", data),
             where("status", "==", "ativo")
         );
+
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
     } catch (error) {
         console.error("Erro ao buscar agendamentos do dia:", error);
         throw new Error("Não foi possível buscar os agendamentos do dia.");
@@ -141,10 +127,11 @@ export async function buscarAgendamentosDoDia(empresaId, data) {
 
 export function calcularSlotsDisponiveis(data, agendamentosDoDia, horariosTrabalho, duracaoServico) {
     const diaDaSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+
     const dataObj = new Date(`${data}T12:00:00Z`);
     const nomeDia = diaDaSemana[dataObj.getUTCDay()];
-
     const diaDeTrabalho = horariosTrabalho?.[nomeDia];
+
     if (!diaDeTrabalho || !diaDeTrabalho.ativo || !diaDeTrabalho.blocos || diaDeTrabalho.blocos.length === 0) {
         return [];
     }
@@ -160,6 +147,7 @@ export function calcularSlotsDisponiveis(data, agendamentosDoDia, horariosTrabal
 
     const hoje = new Date();
     const ehHoje = getLocalYYYYMMDD(hoje) === data;
+
     const minutosAgora = timeStringToMinutes(
         `${hoje.getHours().toString().padStart(2, '0')}:${hoje.getMinutes().toString().padStart(2, '0')}`
     );
@@ -170,24 +158,30 @@ export function calcularSlotsDisponiveis(data, agendamentosDoDia, horariosTrabal
 
         while (slotAtualEmMinutos + duracaoServico <= fimDoBlocoEmMinutos) {
             const fimDoSlotProposto = slotAtualEmMinutos + duracaoServico;
-            let temConflito = horariosOcupados.some(ocupado =>
-                slotAtualEmMinutos < ocupado.fim && fimDoSlotProposto > ocupado.inicio
+
+            const temConflito = horariosOcupados.some(ocupado =>
+                slotAtualEmMinutos < ocupado.fim &&
+                fimDoSlotProposto > ocupado.inicio
             );
 
             if (!temConflito && (!ehHoje || slotAtualEmMinutos > minutosAgora)) {
                 slotsDisponiveis.push(minutesToTimeString(slotAtualEmMinutos));
             }
+
             slotAtualEmMinutos += intervaloEntreSessoes || duracaoServico;
         }
     }
+
     return slotsDisponiveis;
 }
 
 export async function encontrarPrimeiraDataComSlots(empresaId, profissional, duracaoServico) {
     const hoje = new Date();
+
     for (let i = 0; i < 90; i++) {
         const dataAtual = new Date(hoje);
         dataAtual.setDate(hoje.getDate() + i);
+
         const dataString = getLocalYYYYMMDD(dataAtual);
 
         const estaAusente = await profissionalTemAusencia(empresaId, profissional.id, dataString);
@@ -203,56 +197,16 @@ export async function encontrarPrimeiraDataComSlots(empresaId, profissional, dur
             duracaoServico
         );
 
-        if (slots.length > 0) {
-            return dataString;
-        }
+        if (slots.length > 0) return dataString;
     }
+
     return null;
 }
 
-// ======================================================================
-// 🔔 Função de envio de e-mail (fila "mail")
-// ======================================================================
-async function enviarEmailNotificacao(agendamento, currentUser) {
-    console.log("Tentando enviar e-mail...");
-
-    try {
-        const emailDoDono = agendamento?.empresa?.emailDeNotificacao;
-
-        if (!emailDoDono) {
-            console.warn("⚠️ E-mail do dono (emailDeNotificacao) não encontrado no documento da empresa. E-mail não enviado.");
-            return;
-        }
-
-        await addDoc(collection(db, "mail"), {
-            to: emailDoDono,
-            template: {
-                name: 'novoAgendamento',
-                data: {
-                    nomeCliente: currentUser.displayName || currentUser.email,
-                    servicoNome: agendamento.servico.nome,
-                    dataAgendamento: agendamento.data,
-                    horarioAgendamento: agendamento.horario,
-                    profissionalNome: agendamento.profissional.nome,
-                    nomeEmpresa: agendamento.empresa.nomeFantasia
-                }
-            }
-        });
-
-        console.log("✅ E-mail para o dono adicionado à fila.");
-
-    } catch (error) {
-        console.error("❌ Erro no processo de envio de e-mail:", error);
-    }
-}
-
-// ======================================================================
-// 🔔 Função opcional: envio direto via seu endpoint PHP (NÃO chamada por padrão)
-// ======================================================================
 async function enviarEmailViaPHP(agendamento, currentUser) {
     try {
-        // Envia para o cliente (se disponível)
         const emailCliente = currentUser?.email;
+
         if (emailCliente) {
             try {
                 await fetch('/enviar-email.php', {
@@ -263,20 +217,23 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
                         subject: "Seu Agendamento foi Confirmado",
                         message: `
                             <h2>Agendamento Confirmado!</h2>
+                            <p>Pet: ${agendamento.pet?.nome || ''}</p>
+                            <p>Porte: ${agendamento.pet?.porte || ''}</p>
                             <p>Serviço: ${agendamento.servico?.nome || ''}</p>
                             <p>Profissional: ${agendamento.profissional?.nome || ''}</p>
                             <p>Data: ${agendamento.data || ''} às ${agendamento.horario || ''}</p>
                         `
                     })
                 });
-                console.log('✅ Solicitação de envio (PHP) para o cliente feita.');
+
+                console.log('✅ Solicitação de envio PHP para o cliente feita.');
             } catch (err) {
-                console.warn('Falha ao solicitar envio (PHP) para o cliente:', err);
+                console.warn('Falha ao solicitar envio PHP para o cliente:', err);
             }
         }
 
-        // Envia para o dono/empresa (se disponível)
         const emailDoDono = agendamento?.empresa?.emailDeNotificacao;
+
         if (emailDoDono) {
             try {
                 await fetch('/enviar-email.php', {
@@ -288,14 +245,18 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
                         message: `
                             <h2>Novo Agendamento!</h2>
                             <p>Cliente: ${currentUser?.displayName || currentUser?.email || ''}</p>
+                            <p>Pet: ${agendamento.pet?.nome || ''}</p>
+                            <p>Porte: ${agendamento.pet?.porte || ''}</p>
                             <p>Serviço: ${agendamento.servico?.nome || ''}</p>
+                            <p>Profissional: ${agendamento.profissional?.nome || ''}</p>
                             <p>Data: ${agendamento.data || ''} às ${agendamento.horario || ''}</p>
                         `
                     })
                 });
-                console.log('✅ Solicitação de envio (PHP) para o dono feita.');
+
+                console.log('✅ Solicitação de envio PHP para o dono feita.');
             } catch (err) {
-                console.warn('Falha ao solicitar envio (PHP) para o dono:', err);
+                console.warn('Falha ao solicitar envio PHP para o dono:', err);
             }
         }
     } catch (err) {
@@ -303,18 +264,16 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
     }
 }
 
-// ======================================================================
-// 🔧 Lógica principal de salvamento de agendamento (COM NOTIFICAÇÕES)
-// ======================================================================
 export async function salvarAgendamento(empresaId, currentUser, agendamento) {
     try {
         if (window.solicitarPermissaoParaNotificacoes) {
-            console.log("🔔 Solicitando/Atualizando token de notificação antes de salvar (em background)...");
+            console.log("🔔 Solicitando/Atualizando token de notificação antes de salvar...");
+
             (async () => {
                 try {
                     await window.solicitarPermissaoParaNotificacoes(currentUser.uid, empresaId);
                 } catch (e) {
-                    console.warn("⚠️ Falha ao solicitar token (não bloqueia agendamento):", e);
+                    console.warn("⚠️ Falha ao solicitar token:", e);
                 }
             })();
         }
@@ -323,7 +282,9 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
 
         const precoOriginal = agendamento?.servico?.precoOriginal != null
             ? Number(agendamento.servico.precoOriginal)
-            : (agendamento?.servico?.preco != null ? Number(agendamento.servico.preco) : 0);
+            : agendamento?.servico?.preco != null
+                ? Number(agendamento.servico.preco)
+                : 0;
 
         let precoCobrado = precoOriginal;
 
@@ -332,8 +293,6 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
 
         if (temAssinaturaValida && servicoInclusoViaAssinatura) {
             precoCobrado = 0;
-        } else {
-            precoCobrado = precoOriginal;
         }
 
         const payload = {
@@ -341,15 +300,24 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
             clienteId: currentUser.uid,
             clienteNome: currentUser.displayName,
             clienteFoto: currentUser.photoURL,
+
             profissionalId: agendamento.profissional.id,
             profissionalNome: agendamento.profissional.nome,
+
             servicoId: agendamento.servico.id,
             servicoNome: agendamento.servico.nome,
             servicoDuracao: agendamento.servico.duracao,
+
             servicoPrecoOriginal: precoOriginal,
             servicoPrecoCobrado: precoCobrado,
+
+            petId: agendamento.pet?.id || null,
+            petNome: agendamento.pet?.nome || "",
+            petPorte: agendamento.pet?.porte || "",
+
             data: agendamento.data,
             horario: agendamento.horario,
+
             status: 'ativo',
             criadoEm: serverTimestamp()
         };
@@ -361,58 +329,52 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
 
         await addDoc(agendamentosRef, payload);
 
-        // ✨ NOVO: Criar lembrete automático
         await criarLembreteAutomatico(empresaId, agendamento, currentUser);
 
         if (agendamento.empresa && agendamento.empresa.donoId) {
             try {
                 const filaRef = collection(db, "filaDeNotificacoes");
 
-                // Apenas o dono recebe a notificação instantânea agora!
                 await addDoc(filaRef, {
                     donoId: agendamento.empresa.donoId,
                     titulo: "🎉 Novo Agendamento!",
-                    mensagem: `${currentUser.displayName} agendou ${agendamento.servico.nome} com ${agendamento.profissional.nome} às ${agendamento.horario}.`,
+                    mensagem: `${currentUser.displayName} agendou ${agendamento.servico.nome}${agendamento.pet?.nome ? ` para ${agendamento.pet.nome}` : ""} com ${agendamento.profissional.nome} às ${agendamento.horario}.`,
                     criadoEm: serverTimestamp(),
                     status: "pendente"
                 });
-
-                // REMOVIDO: notificação duplicada para o cliente (o push do cliente vai pelo lembrete)
-                // (Nada além disso foi alterado.)
-
             } catch (error) {
-                console.error("❌ Erro ao adicionar notificações à fila:", error);
+                console.error("❌ Erro ao adicionar notificação à fila:", error);
             }
         } else {
-            console.warn("AVISO: 'donoId' não foi passado para salvarAgendamento. O bilhete de notificação não foi criado.");
+            console.warn("AVISO: donoId não foi passado para salvarAgendamento.");
         }
 
         (async () => {
             try {
                 await enviarEmailViaPHP(agendamento, currentUser);
             } catch (e) {
-                console.warn('Falha no envio via PHP em background:', e);
+                console.warn('Falha no envio via PHP:', e);
             }
         })();
 
         if (typeof limparUIAgendamento === "function") {
             limparUIAgendamento();
         }
-
     } catch (error) {
         console.error("Erro principal ao salvar agendamento:", error);
         throw new Error('Ocorreu um erro ao confirmar seu agendamento.');
     }
 }
 
-// --- Funções de busca e cancelamento ---
 export async function buscarAgendamentosDoCliente(empresaId, currentUser, modo) {
     if (!currentUser) return [];
+
     try {
         const agendamentosRef = collection(db, 'empresarios', empresaId, 'agendamentos');
         const hoje = getLocalYYYYMMDD();
 
         let q;
+
         if (modo === 'ativos') {
             q = query(
                 agendamentosRef,
@@ -429,12 +391,21 @@ export async function buscarAgendamentosDoCliente(empresaId, currentUser, modo) 
         }
 
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
     } catch (error) {
         console.error("Erro ao buscar agendamentos do cliente:", error);
-        if (error.code === 'failed-precondition' && error.message.includes("The query requires an index")) {
-            throw new Error("Ocorreu um erro ao buscar seus agendamentos. A configuração do banco de dados pode estar incompleta (índice composto).");
+
+        if (
+            error.code === 'failed-precondition' &&
+            error.message.includes("The query requires an index")
+        ) {
+            throw new Error("Ocorreu um erro ao buscar seus agendamentos. A configuração do banco de dados pode estar incompleta.");
         }
+
         throw error;
     }
 }
