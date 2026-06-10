@@ -1,6 +1,7 @@
 // ======================================================================
 // ARQUIVO: servicos.js
-// VERSÃO REVISADA - COMPATÍVEL COM PRONTI NORMAL + PRONTI PET
+// VERSÃO REVISADA - CARD COMPACTO + PORTES DINÂMICOS
+// COMPATÍVEL COM PRONTI NORMAL + PRONTI PET
 // ======================================================================
 
 import {
@@ -16,17 +17,15 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/f
 import { db, auth } from "./firebase-config.js";
 import { showAlert } from "./vitrini-utils.js";
 
-// --- Elementos do DOM ---
 const listaServicosDiv = document.getElementById("lista-servicos");
 const btnAddServico = document.querySelector(".btn-new");
 const btnPromocoes = document.getElementById("btnPromocoes");
 
-// --- Estado ---
 let empresaId = null;
 let isDono = false;
 
 // ======================================================================
-// CSS extra seguro para cards PET
+// CSS DOS CARDS PET - COMPACTO
 // ======================================================================
 function aplicarEstiloServicosPet() {
     if (document.getElementById("style-servicos-pet-js")) return;
@@ -37,15 +36,17 @@ function aplicarEstiloServicosPet() {
     style.textContent = `
         .servico-card-pet {
             display: grid;
-            grid-template-columns: 150px 1fr;
-            gap: 18px;
-            align-items: stretch;
+            grid-template-columns: 120px 1fr;
+            gap: 14px;
+            align-items: start;
+            padding: 14px !important;
         }
 
         .servico-imagem-box {
-            width: 150px;
-            min-height: 135px;
-            border-radius: 14px;
+            width: 120px;
+            height: 120px;
+            min-height: 120px;
+            border-radius: 12px;
             overflow: hidden;
             background: linear-gradient(135deg, #eef2ff, #f8fafc);
             border: 1px solid #e0e7ff;
@@ -53,7 +54,7 @@ function aplicarEstiloServicosPet() {
             align-items: center;
             justify-content: center;
             color: #4f46e5;
-            font-size: 2.4rem;
+            font-size: 2rem;
         }
 
         .servico-imagem-box img {
@@ -69,88 +70,141 @@ function aplicarEstiloServicosPet() {
             flex-direction: column;
         }
 
+        .servico-card-pet .servico-header {
+            margin-bottom: 4px;
+        }
+
+        .servico-card-pet .servico-titulo {
+            font-size: 1.15rem;
+            line-height: 1.2;
+        }
+
+        .servico-card-pet .servico-descricao {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin: 5px 0 8px !important;
+            font-size: 0.9rem;
+            line-height: 1.35;
+        }
+
         .servico-precos-pet {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 14px;
-            padding-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 6px;
+            padding-top: 9px;
             border-top: 1px solid #eef2ff;
         }
 
         .porte-preco-card {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 10px;
-            min-width: 0;
-        }
-
-        .porte-nome {
-            font-size: 0.82rem;
-            font-weight: 900;
-            color: #4f46e5;
-            margin-bottom: 4px;
-        }
-
-        .porte-valor {
-            font-size: 1rem;
-            font-weight: 900;
-            color: #16a34a;
+            border-radius: 999px;
+            padding: 6px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-width: auto;
             white-space: nowrap;
         }
 
+        .porte-nome {
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: #4f46e5;
+        }
+
+        .porte-valor {
+            font-size: 0.85rem;
+            font-weight: 900;
+            color: #16a34a;
+        }
+
         .porte-tempo {
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #64748b;
-            margin-top: 2px;
         }
 
         .servico-footer-pet {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 10px;
-            margin-top: 14px;
-            padding-top: 14px;
+            gap: 8px;
+            margin-top: 9px;
+            padding-top: 9px;
             border-top: 1px solid #eef2ff;
+        }
+
+        .servico-footer-pet .btn-acao {
+            padding: 7px 10px;
+            font-size: 0.82rem;
         }
 
         @media (max-width: 900px) {
             .servico-card-pet {
-                grid-template-columns: 1fr;
-                gap: 12px;
+                grid-template-columns: 92px 1fr;
+                gap: 10px;
+                padding: 12px !important;
             }
 
             .servico-imagem-box {
-                width: 100%;
-                height: 170px;
-                min-height: 170px;
+                width: 92px;
+                height: 92px;
+                min-height: 92px;
+                border-radius: 10px;
+            }
+
+            .servico-card-pet .servico-titulo {
+                font-size: 1rem;
+            }
+
+            .servico-card-pet .servico-descricao {
+                font-size: 0.84rem;
+                margin: 4px 0 6px !important;
             }
 
             .servico-precos-pet {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 8px;
+                gap: 5px;
+                padding-top: 7px;
+                margin-top: 5px;
+            }
+
+            .porte-preco-card {
+                padding: 5px 8px;
+                gap: 4px;
+            }
+
+            .porte-nome {
+                font-size: 0.7rem;
+            }
+
+            .porte-valor {
+                font-size: 0.78rem;
+            }
+
+            .porte-tempo {
+                font-size: 0.68rem;
             }
 
             .servico-footer-pet {
-                justify-content: stretch;
-            }
-
-            .servico-footer-pet .btn-acao {
-                flex: 1;
+                justify-content: flex-start;
+                margin-top: 7px;
+                padding-top: 7px;
             }
         }
 
         @media (max-width: 430px) {
-            .servico-precos-pet {
+            .servico-card-pet {
                 grid-template-columns: 1fr;
             }
 
             .servico-imagem-box {
-                height: 150px;
-                min-height: 150px;
+                width: 100%;
+                height: 145px;
+                min-height: 145px;
             }
         }
     `;
@@ -159,14 +213,14 @@ function aplicarEstiloServicosPet() {
 }
 
 // ======================================================================
-// Empresa ativa
+// EMPRESA ATIVA
 // ======================================================================
 function getEmpresaIdAtiva() {
     return localStorage.getItem("empresaAtivaId") || null;
 }
 
 // ======================================================================
-// Inicialização
+// INICIALIZAÇÃO
 // ======================================================================
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -214,7 +268,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ======================================================================
-// Listener em tempo real
+// LISTENER EM TEMPO REAL
 // ======================================================================
 function iniciarListenerDeServicos() {
     if (!empresaId) return;
@@ -244,7 +298,7 @@ function iniciarListenerDeServicos() {
 }
 
 // ======================================================================
-// Renderização
+// RENDERIZAÇÃO
 // ======================================================================
 function renderizarServicos(servicos) {
     if (!listaServicosDiv) return;
@@ -289,7 +343,7 @@ function renderizarServicos(servicos) {
 }
 
 // ======================================================================
-// Card individual
+// CARD INDIVIDUAL
 // ======================================================================
 function renderizarCardServico(servico) {
     const ehPet = Array.isArray(servico.precos) && servico.precos.length > 0;
@@ -302,12 +356,14 @@ function renderizarCardServico(servico) {
 }
 
 // ======================================================================
-// Card PET com imagem e preço por porte
+// CARD PET
 // ======================================================================
 function renderizarCardPet(servico) {
     const imagemHtml = servico.imagemUrl
         ? `<img src="${sanitizeAttribute(servico.imagemUrl)}" alt="${sanitizeAttribute(servico.nome || "Serviço")}">`
         : `<i class="fas fa-paw"></i>`;
+
+    const precosHtml = renderizarPrecosPorPorte(servico.precos);
 
     return `
         <div class="servico-card servico-card-pet">
@@ -324,9 +380,11 @@ function renderizarCardPet(servico) {
                     <p class="servico-descricao">${sanitizeHTML(servico.descricao)}</p>
                 ` : ""}
 
-                <div class="servico-precos-pet">
-                    ${renderizarPrecosPorPorte(servico.precos)}
-                </div>
+                ${precosHtml ? `
+                    <div class="servico-precos-pet">
+                        ${precosHtml}
+                    </div>
+                ` : ""}
 
                 <div class="servico-footer-pet">
                     <div class="servico-acoes">
@@ -340,7 +398,7 @@ function renderizarCardPet(servico) {
 }
 
 // ======================================================================
-// Card padrão antigo do Pronti
+// CARD PADRÃO ANTIGO
 // ======================================================================
 function renderizarCardPadrao(servico) {
     return `
@@ -369,33 +427,57 @@ function renderizarCardPadrao(servico) {
 }
 
 // ======================================================================
-// Preços por porte
+// PREÇOS POR PORTE - DINÂMICO
+// Só mostra porte com preço maior que 0 e duração maior que 0.
 // ======================================================================
 function renderizarPrecosPorPorte(precos) {
+    if (!Array.isArray(precos)) return "";
+
     const ordem = ["pequeno", "medio", "grande", "gigante"];
 
     const nomes = {
-        pequeno: "Pequeno",
-        medio: "Médio",
-        grande: "Grande",
-        gigante: "Gigante"
+        pequeno: "Peq.",
+        medio: "Méd.",
+        grande: "Grd.",
+        gigante: "Gig."
     };
 
-    return ordem.map((porte) => {
-        const item = precos.find((p) => p.porte === porte) || {};
+    const itensValidos = ordem
+        .map((porte) => {
+            const item = precos.find((p) => p.porte === porte);
 
-        return `
-            <div class="porte-preco-card">
-                <div class="porte-nome">${nomes[porte]}</div>
-                <div class="porte-valor">${formatarPreco(item.preco)}</div>
-                <div class="porte-tempo">${Number(item.duracao || 0)} min</div>
-            </div>
-        `;
-    }).join("");
+            if (!item) return null;
+
+            const preco = Number(item.preco || 0);
+            const duracao = Number(item.duracao || 0);
+
+            if (isNaN(preco) || isNaN(duracao)) return null;
+            if (preco <= 0 || duracao <= 0) return null;
+
+            return {
+                porte,
+                nome: nomes[porte],
+                preco,
+                duracao
+            };
+        })
+        .filter(Boolean);
+
+    if (itensValidos.length === 0) {
+        return "";
+    }
+
+    return itensValidos.map((item) => `
+        <div class="porte-preco-card">
+            <span class="porte-nome">${item.nome}</span>
+            <span class="porte-valor">${formatarPreco(item.preco)}</span>
+            <span class="porte-tempo">${item.duracao}min</span>
+        </div>
+    `).join("");
 }
 
 // ======================================================================
-// Excluir serviço
+// EXCLUIR SERVIÇO
 // ======================================================================
 async function excluirServico(servicoId) {
     if (!isDono) {
@@ -418,7 +500,7 @@ async function excluirServico(servicoId) {
 }
 
 // ======================================================================
-// Utilitários
+// UTILITÁRIOS
 // ======================================================================
 function formatarPreco(preco) {
     return new Intl.NumberFormat("pt-BR", {
@@ -443,7 +525,7 @@ function sanitizeAttribute(str) {
 }
 
 // ======================================================================
-// Eventos
+// EVENTOS
 // ======================================================================
 if (listaServicosDiv) {
     listaServicosDiv.addEventListener("click", function (e) {
