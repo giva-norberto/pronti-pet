@@ -1,6 +1,7 @@
 // ======================================================================
 // ARQUIVO: vitrini-firebase.js
-// VITRINE - VERSÃO REVISADA SEM ALTERAR A LÓGICA
+// VITRINE - PRONTI PET
+// Mesma configuração do firebase-config.js do painel
 // ======================================================================
 
 import {
@@ -24,33 +25,21 @@ import {
   getStorage
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
-// ======================================================================
-// CONFIGURAÇÃO FIREBASE DA VITRINE
-// ======================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCkJt49sM3n_hIQOyEwzgOmzzdPlsF9PW4",
-  authDomain: "pronti-app-37c6e.firebaseapp.com",
-  projectId: "pronti-app-37c6e",
-  storageBucket: "pronti-app-37c6e.firebasestorage.app",
-  messagingSenderId: "736700619274",
-  appId: "1:736700619274:web:557aa247905e56fa7e5df3"
+  apiKey: "AIzaSyDxbb2_onT2gbQahqogcddCOjNTWbwjb0k",
+  authDomain: "pronti-pet.firebaseapp.com",
+  projectId: "pronti-pet",
+  storageBucket: "pronti-pet.firebasestorage.app",
+  messagingSenderId: "970443692765",
+  appId: "1:970443692765:web:21b8e61ff165f36e46d934"
 };
 
-// ======================================================================
-// SINGLETON FIREBASE APP
-// ======================================================================
 const getFirebaseApp = () => {
   return getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 };
 
 const app = getFirebaseApp();
 
-// ======================================================================
-// SERVIÇOS FIREBASE
-// IMPORTANTE:
-// Antes estava usando banco nomeado: getFirestore(app, "pronti-app")
-// Agora usa o banco padrão do projeto para encontrar o slug corretamente.
-// ======================================================================
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
@@ -62,9 +51,6 @@ provider.setCustomParameters({
 
 setPersistence(auth, browserLocalPersistence);
 
-// ======================================================================
-// EXPORTS
-// ======================================================================
 export {
   app,
   db,
