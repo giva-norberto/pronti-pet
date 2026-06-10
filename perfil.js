@@ -1,6 +1,7 @@
 // =====================================================================
 // PERFIL.JS - PRONTI PET
-// Base mantida: slug automático + manifest dinâmico PWA
+// Revisado: slug sem travar + WhatsApp + Instagram + PIX mantido
+// Segmento/produto fixos: pet / pronti-pet
 // =====================================================================
 
 import {
@@ -86,7 +87,9 @@ function criarSlug(texto) {
     const b = "aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------";
     const p = new RegExp(a.split("").join("|"), "g");
 
-    return texto.toString().toLowerCase()
+    return texto.toString()
+        .toLowerCase()
+        .trim()
         .replace(/\s+/g, "-")
         .replace(p, c => b.charAt(a.indexOf(c)))
         .replace(/&/g, "-e-")
@@ -122,11 +125,83 @@ async function garantirSlugUnico(slugBase, idEmpresaAtual = null) {
     return slugFinal;
 }
 
+function formatarWhatsApp(valor) {
+    return String(valor || "")
+        .replace(/[^\d+]/g, "")
+        .slice(0, 20);
+}
+
+function formatarInstagram(valor) {
+    let texto = String(valor || "").trim().toLowerCase();
+
+    texto = texto
+        .replace("https://www.instagram.com/", "")
+        .replace("https://instagram.com/", "")
+        .replace("www.instagram.com/", "")
+        .replace("instagram.com/", "")
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9._@]/g, "");
+
+    if (texto && !texto.startsWith("@")) {
+        texto = `@${texto}`;
+    }
+
+    return texto.slice(0, 40);
+}
+
+// =====================================================================
+// Cria campos novos no HTML, se ainda não existirem
+// =====================================================================
+
+function garantirCamposContatoPetNoHtml() {
+    const formSection = document.querySelector("#form-perfil .form-section");
+    const campoHorario = document.getElementById("horarioFuncionamento");
+    const campoPix = document.getElementById("chavePix");
+
+    if (!formSection) return;
+
+    if (!document.getElementById("whatsapp")) {
+        const grupoWhats = document.createElement("div");
+        grupoWhats.className = "form-group";
+        grupoWhats.innerHTML = `
+            <label for="whatsapp">WhatsApp Comercial</label>
+            <input type="text" id="whatsapp" placeholder="Ex: 31999999999">
+        `;
+
+        if (campoPix && campoPix.closest(".form-group")) {
+            formSection.insertBefore(grupoWhats, campoPix.closest(".form-group"));
+        } else if (campoHorario && campoHorario.closest(".form-group")) {
+            formSection.insertBefore(grupoWhats, campoHorario.closest(".form-group").nextSibling);
+        } else {
+            formSection.appendChild(grupoWhats);
+        }
+    }
+
+    if (!document.getElementById("instagram")) {
+        const grupoInstagram = document.createElement("div");
+        grupoInstagram.className = "form-group";
+        grupoInstagram.innerHTML = `
+            <label for="instagram">Instagram</label>
+            <input type="text" id="instagram" placeholder="Ex: @petshopamigos">
+        `;
+
+        const campoPixAtual = document.getElementById("chavePix");
+
+        if (campoPixAtual && campoPixAtual.closest(".form-group")) {
+            formSection.insertBefore(grupoInstagram, campoPixAtual.closest(".form-group"));
+        } else {
+            formSection.appendChild(grupoInstagram);
+        }
+    }
+}
+
 // =====================================================================
 // Inicialização
 // =====================================================================
 
 window.addEventListener("DOMContentLoaded", () => {
+    garantirCamposContatoPetNoHtml();
+
     const elements = {
         h1Titulo: document.getElementById("main-title"),
         form: document.getElementById("form-perfil"),
@@ -135,6 +210,8 @@ window.addEventListener("DOMContentLoaded", () => {
         descricaoInput: document.getElementById("descricao"),
         localizacaoInput: document.getElementById("localizacao"),
         horarioFuncionamentoInput: document.getElementById("horarioFuncionamento"),
+        whatsappInput: document.getElementById("whatsapp"),
+        instagramInput: document.getElementById("instagram"),
         chavePixInput: document.getElementById("chavePix"),
         logoInput: document.getElementById("logoNegocio"),
         logoPreview: document.getElementById("logo-preview"),
@@ -155,12 +232,17 @@ window.addEventListener("DOMContentLoaded", () => {
     let empresaId = null;
     let currentUser = null;
     let empresasDoDono = [];
+    let listenersAdicionados = false;
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
             await carregarEmpresasDoUsuario(user.uid);
-            adicionarListenersDeEvento();
+
+            if (!listenersAdicionados) {
+                adicionarListenersDeEvento();
+                listenersAdicionados = true;
+            }
         } else {
             window.location.href = "login.html";
         }
@@ -176,38 +258,44 @@ window.addEventListener("DOMContentLoaded", () => {
             dados: docSnap.data()
         }));
 
-        if (elements.empresaSelectorGroup && elements.selectEmpresa) {
-            if (empresasDoDono.length >= 1) {
-                elements.empresaSelectorGroup.style.display = "block";
-                elements.selectEmpresa.innerHTML = "";
+        if (!elements.empresaSelectorGroup || !elements.selectEmpresa) return;
 
-                empresasDoDono.forEach(empresa => {
-                    const opt = document.createElement("option");
-                    opt.value = empresa.id;
-                    opt.textContent = empresa.nome;
-                    elements.selectEmpresa.appendChild(opt);
-                });
+        if (empresasDoDono.length >= 1) {
+            elements.empresaSelectorGroup.style.display = "block";
+            elements.selectEmpresa.innerHTML = "";
 
-                const primeiraEmpresa = empresasDoDono[0];
-                empresaId = primeiraEmpresa.id;
-                elements.selectEmpresa.value = empresaId;
+            empresasDoDono.forEach(empresa => {
+                const opt = document.createElement("option");
+                opt.value = empresa.id;
+                opt.textContent = empresa.nome;
+                elements.selectEmpresa.appendChild(opt);
+            });
 
-                preencherFormulario(primeiraEmpresa.dados);
-                mostrarCamposExtras();
+            const empresaSalva = localStorage.getItem("empresaAtivaId");
+            const empresaEncontrada = empresasDoDono.find(e => e.id === empresaSalva);
+            const empresaInicial = empresaEncontrada || empresasDoDono[0];
 
-                elements.selectEmpresa.onchange = function () {
-                    empresaId = this.value;
-                    const empresaSel = empresasDoDono.find(e => e.id === empresaId);
+            empresaId = empresaInicial.id;
+            localStorage.setItem("empresaAtivaId", empresaId);
+            elements.selectEmpresa.value = empresaId;
 
-                    if (empresaSel) {
-                        preencherFormulario(empresaSel.dados);
-                        mostrarCamposExtras();
-                    }
-                };
-            } else {
-                empresaId = null;
-                atualizarTelaParaNovoPerfil();
-            }
+            preencherFormulario(empresaInicial.dados);
+            mostrarCamposExtras();
+
+            elements.selectEmpresa.onchange = function () {
+                empresaId = this.value;
+                localStorage.setItem("empresaAtivaId", empresaId);
+
+                const empresaSel = empresasDoDono.find(e => e.id === empresaId);
+
+                if (empresaSel) {
+                    preencherFormulario(empresaSel.dados);
+                    mostrarCamposExtras();
+                }
+            };
+        } else {
+            empresaId = null;
+            atualizarTelaParaNovoPerfil();
         }
     }
 
@@ -261,11 +349,16 @@ window.addEventListener("DOMContentLoaded", () => {
                 descricao: elements.descricaoInput?.value.trim() || "",
                 localizacao: elements.localizacaoInput?.value.trim() || "",
                 horarioFuncionamento: elements.horarioFuncionamentoInput?.value.trim() || "",
+                whatsapp: formatarWhatsApp(elements.whatsappInput?.value || ""),
+                instagram: formatarInstagram(elements.instagramInput?.value || ""),
                 chavePix: elements.chavePixInput?.value.trim() || "",
                 emailDeNotificacao: currentUser.email,
                 donoId: uid,
+
+                // Fixos no Pronti Pet. Não precisa campo Segmento na tela.
                 segmento: "pet",
                 produto: "pronti-pet",
+
                 plano: "free",
                 status: "ativo",
                 updatedAt: serverTimestamp(),
@@ -280,6 +373,11 @@ window.addEventListener("DOMContentLoaded", () => {
             if (slugBase) {
                 const slugFinal = await garantirSlugUnico(slugBase, empresaId);
                 dadosEmpresa.slug = slugFinal;
+
+                if (elements.slugInput) {
+                    elements.slugInput.value = slugFinal;
+                    elements.slugInput.dataset.editadoManualmente = "true";
+                }
             }
 
             const logoFile = elements.logoInput?.files?.[0];
@@ -337,6 +435,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
                     chavePix: dadosEmpresa.chavePix || "",
+                    whatsapp: dadosEmpresa.whatsapp || "",
+                    instagram: dadosEmpresa.instagram || "",
                     logoUrl: dadosEmpresa.logoUrl || "",
                     emailDeNotificacao:
                         dadosEmpresa.emailDeNotificacao ||
@@ -354,6 +454,8 @@ window.addEventListener("DOMContentLoaded", () => {
                 );
 
                 const novoEmpresaId = novaEmpresaRef.id;
+                empresaId = novoEmpresaId;
+                localStorage.setItem("empresaAtivaId", novoEmpresaId);
 
                 const mapaRef = doc(db, "mapaUsuarios", uid);
                 const mapaSnap = await getDoc(mapaRef);
@@ -389,8 +491,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 );
 
                 if (elements.msgCadastroSucesso) {
-                    elements.msgCadastroSucesso.innerHTML =
-                        "Pet Shop criado com sucesso!";
+                    elements.msgCadastroSucesso.innerHTML = "Pet Shop criado com sucesso!";
                     elements.msgCadastroSucesso.style.display = "block";
                 }
 
@@ -409,12 +510,17 @@ window.addEventListener("DOMContentLoaded", () => {
                 );
 
                 if (elements.msgCadastroSucesso) {
-                    elements.msgCadastroSucesso.innerHTML =
-                        "Perfil do Pet Shop atualizado com sucesso!";
+                    elements.msgCadastroSucesso.innerHTML = "Perfil do Pet Shop atualizado com sucesso!";
                     elements.msgCadastroSucesso.style.display = "block";
                 }
 
                 await carregarEmpresasDoUsuario(uid);
+
+                setTimeout(() => {
+                    if (elements.msgCadastroSucesso) {
+                        elements.msgCadastroSucesso.style.display = "none";
+                    }
+                }, 4000);
             }
         } catch (error) {
             console.error("Erro ao salvar perfil:", error);
@@ -432,9 +538,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
         if (elements.form) elements.form.reset();
 
+        if (elements.slugInput) {
+            elements.slugInput.dataset.editadoManualmente = "";
+        }
+
         if (elements.logoPreview) {
-            elements.logoPreview.src =
-                "https://placehold.co/80x80/eef2ff/4f46e5?text=Pet";
+            elements.logoPreview.src = "https://placehold.co/80x80/eef2ff/4f46e5?text=Pet";
         }
 
         [
@@ -463,11 +572,50 @@ window.addEventListener("DOMContentLoaded", () => {
             elements.form.addEventListener("submit", handleFormSubmit);
         }
 
+        // Slug automático sem travar
         if (elements.nomeNegocioInput && elements.slugInput) {
             elements.nomeNegocioInput.addEventListener("input", () => {
-                if (elements.slugInput.value.trim() === "") {
+                const slugFoiEditado = elements.slugInput.dataset.editadoManualmente === "true";
+
+                if (!slugFoiEditado || elements.slugInput.value.trim() === "") {
                     elements.slugInput.value = criarSlug(elements.nomeNegocioInput.value);
+                    elements.slugInput.dataset.editadoManualmente = "";
+                    atualizarLinkPreview();
                 }
+            });
+
+            elements.slugInput.addEventListener("input", () => {
+                const cursorFim = elements.slugInput.selectionStart === elements.slugInput.value.length;
+                const valorNormalizado = criarSlug(elements.slugInput.value);
+
+                elements.slugInput.value = valorNormalizado;
+                elements.slugInput.dataset.editadoManualmente = valorNormalizado ? "true" : "";
+
+                if (cursorFim) {
+                    elements.slugInput.setSelectionRange(
+                        elements.slugInput.value.length,
+                        elements.slugInput.value.length
+                    );
+                }
+
+                atualizarLinkPreview();
+            });
+
+            elements.slugInput.addEventListener("blur", () => {
+                elements.slugInput.value = criarSlug(elements.slugInput.value);
+                atualizarLinkPreview();
+            });
+        }
+
+        if (elements.whatsappInput) {
+            elements.whatsappInput.addEventListener("input", () => {
+                elements.whatsappInput.value = formatarWhatsApp(elements.whatsappInput.value);
+            });
+        }
+
+        if (elements.instagramInput) {
+            elements.instagramInput.addEventListener("input", () => {
+                elements.instagramInput.value = formatarInstagram(elements.instagramInput.value);
             });
         }
 
@@ -525,9 +673,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
         empresaId = null;
 
+        if (elements.slugInput) {
+            elements.slugInput.dataset.editadoManualmente = "";
+        }
+
         if (elements.logoPreview) {
-            elements.logoPreview.src =
-                "https://placehold.co/80x80/eef2ff/4f46e5?text=Pet";
+            elements.logoPreview.src = "https://placehold.co/80x80/eef2ff/4f46e5?text=Pet";
         }
 
         [
@@ -578,6 +729,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
         if (elements.slugInput) {
             elements.slugInput.value = dadosEmpresa.slug || "";
+            elements.slugInput.dataset.editadoManualmente = dadosEmpresa.slug ? "true" : "";
         }
 
         if (elements.descricaoInput) {
@@ -589,8 +741,15 @@ window.addEventListener("DOMContentLoaded", () => {
         }
 
         if (elements.horarioFuncionamentoInput) {
-            elements.horarioFuncionamentoInput.value =
-                dadosEmpresa.horarioFuncionamento || "";
+            elements.horarioFuncionamentoInput.value = dadosEmpresa.horarioFuncionamento || "";
+        }
+
+        if (elements.whatsappInput) {
+            elements.whatsappInput.value = dadosEmpresa.whatsapp || "";
+        }
+
+        if (elements.instagramInput) {
+            elements.instagramInput.value = dadosEmpresa.instagram || "";
         }
 
         if (elements.chavePixInput) {
@@ -603,27 +762,42 @@ window.addEventListener("DOMContentLoaded", () => {
                 "https://placehold.co/80x80/eef2ff/4f46e5?text=Pet";
         }
 
-        if (!empresaId) return;
+        atualizarLinkPreview(dadosEmpresa);
+        atualizarManifestDinamico(dadosEmpresa);
+    }
 
-        const slug = dadosEmpresa.slug;
-        const vitrineBase = "vitrine.html";
+    function montarUrlVitrine(dadosEmpresa = {}) {
+        const slug = elements.slugInput?.value?.trim() || dadosEmpresa.slug || "";
+        const slugNormalizado = criarSlug(slug);
 
-        const urlCompleta = slug
-            ? `${window.location.origin}/r.html?c=${slug}`
-            : `${window.location.origin}/${vitrineBase}?empresa=${empresaId}`;
+        if (slugNormalizado) {
+            return `${window.location.origin}/r.html?c=${slugNormalizado}`;
+        }
+
+        if (empresaId) {
+            return `${window.location.origin}/vitrine.html?empresa=${empresaId}`;
+        }
+
+        return "";
+    }
+
+    function atualizarLinkPreview(dadosEmpresa = {}) {
+        const urlCompleta = montarUrlVitrine(dadosEmpresa);
 
         if (elements.urlVitrineEl) {
             elements.urlVitrineEl.textContent = urlCompleta;
         }
 
         if (elements.btnAbrirVitrine) {
-            elements.btnAbrirVitrine.href = urlCompleta;
+            elements.btnAbrirVitrine.href = urlCompleta || "#";
         }
 
         if (elements.btnAbrirVitrineInline) {
-            elements.btnAbrirVitrineInline.href = urlCompleta;
+            elements.btnAbrirVitrineInline.href = urlCompleta || "#";
         }
+    }
 
+    function atualizarManifestDinamico(dadosEmpresa) {
         const manifest = {
             name: dadosEmpresa.nomeFantasia || "Pronti Pet",
             short_name: dadosEmpresa.nomeFantasia?.substring(0, 12) || "Pet Shop",
