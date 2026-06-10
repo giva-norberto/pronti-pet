@@ -1,5 +1,5 @@
 // =====================================================================
-//           VITRINE.JS - O Maestro da Aplicação (REVISADO E CORRIGIDO)
+//           VITRINE.JS - O Maestro da Aplicação
 // =====================================================================
 
 // --- MÓDULOS IMPORTADOS ---
@@ -38,17 +38,13 @@ import {
 
 import * as UI from './vitrini-ui.js';
 
-// =====================================================================
-// PRONTI PET
-// =====================================================================
+// --- PRONTI PET ---
 import {
     garantirPetParaAgendamento,
     obterPrecoDuracaoPorPet
 } from './vitrine-pets.js';
 
-// =====================================================================
-// PROMOÇÕES E FILA
-// =====================================================================
+// --- FIREBASE / PROMOÇÕES / FILA ---
 import { db, auth } from './vitrini-firebase.js';
 
 import {
@@ -64,17 +60,10 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// =====================================================================
-// ASSINATURAS
-// =====================================================================
+// --- ASSINATURAS ---
 import {
     marcarServicosInclusosParaUsuario
 } from './vitrine-assinatura-integration.js';
-
-// =====================================================================
-// ✅ 1. IMPORTAÇÃO NECESSÁRIA ADICIONADA
-// =====================================================================
-import { marcarServicosInclusosParaUsuario } from './vitrine-assinatura-integration.js';
 
 
 // --- Função utilitária para corrigir data no formato brasileiro ou ISO ---
