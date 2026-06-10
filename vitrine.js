@@ -1,6 +1,3 @@
-Sim. Refiz o `vitrine.js` completo em cima do original que você mandou. 
-
-```javascript
 // =====================================================================
 //           VITRINE.JS - O Maestro da Aplicação
 //           PRONTI PET - Revisado com Pets, Fila, Assinaturas e Agendamento
@@ -1279,4 +1276,4 @@ window.salvarSalaoPronti = async function () {
         window.open(src, "_blank");
     }
 };
-```
+
