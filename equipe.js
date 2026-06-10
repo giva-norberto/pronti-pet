@@ -26,6 +26,7 @@ let intervaloBase = 30;
 let agendaEspecial = [];
 
 const elementos = {};
+
 function mapearElementos() {
     elementos.btnCancelarEquipe = document.getElementById('btn-cancelar-equipe');
     elementos.modalAddProfissional = document.getElementById('modal-add-profissional');
@@ -41,8 +42,10 @@ function mapearElementos() {
     elementos.horariosLista = document.getElementById('horarios-lista');
     elementos.btnCancelarPerfil = document.getElementById('btn-cancelar-perfil');
     elementos.btnSalvarPerfil = document.getElementById('btn-salvar-perfil');
+
     elementos.tabAgendaEspecial = document.getElementById('tab-agenda-especial');
     elementos.tabContentAgendaEspecial = document.getElementById('tab-content-agenda-especial');
+
     elementos.agendaTipo = document.getElementById('agenda-tipo');
     elementos.agendaMesArea = document.getElementById('agenda-mes-area');
     elementos.agendaIntervaloArea = document.getElementById('agenda-intervalo-area');
@@ -51,22 +54,46 @@ function mapearElementos() {
     elementos.agendaFim = document.getElementById('agenda-fim');
     elementos.btnAgendaEspecial = document.getElementById('btn-agenda-especial');
     elementos.agendaEspecialLista = document.getElementById('agenda-especial-lista');
+
     elementos.inputIntervalo = document.getElementById('intervalo-atendimento');
     elementos.btnConvite = document.getElementById('btn-convite');
+
+    // CAMPOS DE CAPACIDADE / AGENDAMENTO PET
     elementos.permitirAgendamentoMultiplo = document.getElementById('permitir-agendamento-multiplo');
+    elementos.capacidadePetsPorHorario = document.getElementById('capacidade-pets-horario');
+
     // NOVOS CAMPOS ABA COMISSÃO
     elementos.comissaoPadrao = document.getElementById('comissao-padrao');
-    elementos.comissaoServicosLista = document.getElementById('comissao-servicos-lista'); // campo container da lista de comissões por serviço
+    elementos.comissaoServicosLista = document.getElementById('comissao-servicos-lista');
 
     // --- Adição: garantir binding do select de agenda especial assim que os elementos estiverem mapeados ---
     // Função definida abaixo (atualizarAreasAgendaEspecial)
     if (elementos.agendaTipo) {
         elementos.agendaTipo.addEventListener('change', atualizarAreasAgendaEspecial);
-        // inicializa o estado das áreas (mes / intervalo) com base no valor atual do select
         atualizarAreasAgendaEspecial();
     }
-}
 
+    // --- Controle visual seguro da capacidade de pets ---
+    if (elementos.permitirAgendamentoMultiplo && elementos.capacidadePetsPorHorario) {
+        const atualizarCapacidadePets = () => {
+            const marcado = elementos.permitirAgendamentoMultiplo.checked;
+
+            elementos.capacidadePetsPorHorario.disabled = !marcado;
+
+            if (!marcado) {
+                elementos.capacidadePetsPorHorario.value = 1;
+            } else {
+                const valorAtual = parseInt(elementos.capacidadePetsPorHorario.value, 10) || 1;
+                if (valorAtual < 2) {
+                    elementos.capacidadePetsPorHorario.value = 2;
+                }
+            }
+        };
+
+        elementos.permitirAgendamentoMultiplo.addEventListener('change', atualizarCapacidadePets);
+        atualizarCapacidadePets();
+    }
+}
 // Função isolada para mostrar/ocultar as áreas da aba "Agenda Especial"
 function atualizarAreasAgendaEspecial() {
     if (!elementos.agendaTipo) return;
