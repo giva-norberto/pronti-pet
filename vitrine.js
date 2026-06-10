@@ -1,17 +1,75 @@
 // =====================================================================
 //           VITRINE.JS - O Maestro da Aplicação (REVISADO E CORRIGIDO)
-// ====================================================================
+// =====================================================================
 
-// --- MÓDulos IMPORTADOS ---
-import { state, setEmpresa, setProfissionais, setTodosOsServicos, setAgendamento, resetarAgendamento, setCurrentUser } from './vitrini-state.js';
-import { getEmpresaIdFromURL, getDadosEmpresa, getProfissionaisDaEmpresa, getHorariosDoProfissional, getTodosServicosDaEmpresa } from './vitrini-profissionais.js';
-import { buscarAgendamentosDoDia, calcularSlotsDisponiveis, salvarAgendamento, buscarAgendamentosDoCliente, cancelarAgendamento, encontrarPrimeiraDataComSlots } from './vitrini-agendamento.js';
-import { setupAuthListener, fazerLogin, fazerLogout } from './vitrini-auth.js';
+// --- MÓDULOS IMPORTADOS ---
+import {
+    state,
+    setEmpresa,
+    setProfissionais,
+    setTodosOsServicos,
+    setAgendamento,
+    resetarAgendamento,
+    setCurrentUser
+} from './vitrini-state.js';
+
+import {
+    getEmpresaIdFromURL,
+    getDadosEmpresa,
+    getProfissionaisDaEmpresa,
+    getHorariosDoProfissional,
+    getTodosServicosDaEmpresa
+} from './vitrini-profissionais.js';
+
+import {
+    buscarAgendamentosDoDia,
+    calcularSlotsDisponiveis,
+    salvarAgendamento,
+    buscarAgendamentosDoCliente,
+    cancelarAgendamento,
+    encontrarPrimeiraDataComSlots
+} from './vitrini-agendamento.js';
+
+import {
+    setupAuthListener,
+    fazerLogin,
+    fazerLogout
+} from './vitrini-auth.js';
+
 import * as UI from './vitrini-ui.js';
 
-// --- IMPORTS PARA PROMOÇÕES E FILA ---
+// =====================================================================
+// PRONTI PET
+// =====================================================================
+import {
+    garantirPetParaAgendamento,
+    obterPrecoDuracaoPorPet
+} from './vitrine-pets.js';
+
+// =====================================================================
+// PROMOÇÕES E FILA
+// =====================================================================
 import { db, auth } from './vitrini-firebase.js';
-import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    limit,
+    addDoc,
+    serverTimestamp,
+    doc,
+    getDoc,
+    setDoc
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// =====================================================================
+// ASSINATURAS
+// =====================================================================
+import {
+    marcarServicosInclusosParaUsuario
+} from './vitrine-assinatura-integration.js';
 
 // =====================================================================
 // ✅ 1. IMPORTAÇÃO NECESSÁRIA ADICIONADA
@@ -355,7 +413,7 @@ async function handleProfissionalClick(e) {
     }
 }
 
-// --- FUNÇÃO DE CLIQUE NO SERVIÇO ---
+// --- FUNÇÃO DE CLIQUE NO SERVIÇO - PRONTI PET ---
 async function handleServicoClick(e) {
     const card = e.target.closest('.card-servico');
     if (!card) return;
@@ -365,35 +423,78 @@ async function handleServicoClick(e) {
         return;
     }
 
+    if (!state.currentUser) {
+        await UI.mostrarAlerta("Login Necessário", "Você precisa fazer login para escolher um serviço.");
+        if (UI.abrirModalLogin) UI.abrirModalLogin();
+        return;
+    }
+
+    const pet = await garantirPetParaAgendamento(state.empresaId, state.currentUser);
+
+    if (!pet) {
+        await UI.mostrarAlerta("Atenção", "Cadastre ou selecione um pet para continuar.");
+        return;
+    }
+
     const permiteMultiplos = state.agendamento.profissional.horarios?.permitirAgendamentoMultiplo || false;
     const servicoId = card.dataset.id;
-    const servicoSelecionado = state.todosOsServicos.find(s => s.id === servicoId);
+    const servicoOriginal = state.todosOsServicos.find(s => s.id === servicoId);
 
-    let servicosAtuais = [...state.agendamento.servicos]; 
+    if (!servicoOriginal) {
+        await UI.mostrarAlerta("Erro", "Serviço não encontrado.");
+        return;
+    }
+
+    const precoDuracao = obterPrecoDuracaoPorPet(servicoOriginal, pet);
+
+    const servicoSelecionado = {
+        ...servicoOriginal,
+        petId: pet.id,
+        petNome: pet.nome,
+        petPorte: pet.porte,
+        preco: precoDuracao.preco,
+        duracao: precoDuracao.duracao,
+        precoCobrado: precoDuracao.preco
+    };
+
+    if (!servicoSelecionado.duracao || servicoSelecionado.duracao <= 0) {
+        await UI.mostrarAlerta(
+            "Atenção",
+            "Este serviço ainda não possui duração cadastrada para o porte do pet selecionado."
+        );
+        return;
+    }
+
+    let servicosAtuais = [...state.agendamento.servicos];
 
     if (permiteMultiplos) {
         const index = servicosAtuais.findIndex(s => s.id === servicoId);
+
         if (index > -1) {
-            servicosAtuais.splice(index, 1); 
+            servicosAtuais.splice(index, 1);
         } else {
-            servicosAtuais.push(servicoSelecionado); 
+            servicosAtuais.push(servicoSelecionado);
         }
-        card.classList.toggle('selecionado'); 
+
+        card.classList.toggle('selecionado');
     } else {
-        servicosAtuais = [servicoSelecionado]; 
-        UI.selecionarCard('servico', servicoId); 
+        servicosAtuais = [servicoSelecionado];
+        UI.selecionarCard('servico', servicoId);
     }
 
-    setAgendamento('servicos', servicosAtuais); 
-    setAgendamento('data', null); 
+    setAgendamento('pet', pet);
+    setAgendamento('servicos', servicosAtuais);
+    setAgendamento('data', null);
     setAgendamento('horario', null);
+
     UI.limparSelecao('horario');
     UI.desabilitarBotaoConfirmar();
 
     if (permiteMultiplos) {
-        UI.atualizarResumoAgendamento(servicosAtuais); 
+        UI.atualizarResumoAgendamento(servicosAtuais);
     } else {
         document.getElementById('data-e-horario-container').style.display = 'block';
+
         if (servicosAtuais.length > 0) {
             await buscarPrimeiraDataDisponivel();
         }
