@@ -1,6 +1,6 @@
 // ======================================================================
 // ARQUIVO: servicos.js
-// VERSÃO REVISADA - CARD COMPACTO + PORTES DINÂMICOS
+// VERSÃO REVISADA - CARD COMPACTO + SETA AJUSTADA + PORTES DINÂMICOS
 // COMPATÍVEL COM PRONTI NORMAL + PRONTI PET
 // ======================================================================
 
@@ -34,18 +34,56 @@ function aplicarEstiloServicosPet() {
     style.id = "style-servicos-pet-js";
 
     style.textContent = `
+        /* AJUSTE DA SETA FLUTUANTE / BOTÃO VOLTAR */
+        .btn-voltar,
+        .btn-back,
+        .back-button,
+        .voltar-btn,
+        .floating-back,
+        .botao-voltar,
+        .menu-back-button {
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px !important;
+            min-height: 44px !important;
+            max-width: 44px !important;
+            max-height: 44px !important;
+            border-radius: 50% !important;
+            z-index: 12 !important;
+        }
+
+        @media (max-width: 900px) {
+            .btn-voltar,
+            .btn-back,
+            .back-button,
+            .voltar-btn,
+            .floating-back,
+            .botao-voltar,
+            .menu-back-button {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                min-height: 38px !important;
+                max-width: 38px !important;
+                max-height: 38px !important;
+                top: 14px !important;
+                left: 14px !important;
+                z-index: 8 !important;
+            }
+        }
+
         .servico-card-pet {
             display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 14px;
+            grid-template-columns: 112px 1fr;
+            gap: 12px;
             align-items: start;
-            padding: 14px !important;
+            padding: 12px !important;
         }
 
         .servico-imagem-box {
-            width: 120px;
-            height: 120px;
-            min-height: 120px;
+            width: 112px;
+            height: 112px;
+            min-height: 112px;
             border-radius: 12px;
             overflow: hidden;
             background: linear-gradient(135deg, #eef2ff, #f8fafc);
@@ -71,11 +109,11 @@ function aplicarEstiloServicosPet() {
         }
 
         .servico-card-pet .servico-header {
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
         .servico-card-pet .servico-titulo {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             line-height: 1.2;
         }
 
@@ -84,17 +122,17 @@ function aplicarEstiloServicosPet() {
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin: 5px 0 8px !important;
-            font-size: 0.9rem;
-            line-height: 1.35;
+            margin: 4px 0 7px !important;
+            font-size: 0.88rem;
+            line-height: 1.3;
         }
 
         .servico-precos-pet {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
-            margin-top: 6px;
-            padding-top: 9px;
+            gap: 5px;
+            margin-top: 5px;
+            padding-top: 7px;
             border-top: 1px solid #eef2ff;
         }
 
@@ -102,28 +140,28 @@ function aplicarEstiloServicosPet() {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 999px;
-            padding: 6px 10px;
+            padding: 4px 8px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             min-width: auto;
             white-space: nowrap;
         }
 
         .porte-nome {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 900;
             color: #4f46e5;
         }
 
         .porte-valor {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: 900;
             color: #16a34a;
         }
 
         .porte-tempo {
-            font-size: 0.72rem;
+            font-size: 0.66rem;
             font-weight: 700;
             color: #64748b;
         }
@@ -132,10 +170,16 @@ function aplicarEstiloServicosPet() {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 8px;
-            margin-top: 9px;
-            padding-top: 9px;
+            gap: 7px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px solid #eef2ff;
+        }
+
+        .servico-footer-pet .servico-acoes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .servico-footer-pet .btn-acao {
@@ -145,48 +189,49 @@ function aplicarEstiloServicosPet() {
 
         @media (max-width: 900px) {
             .servico-card-pet {
-                grid-template-columns: 92px 1fr;
-                gap: 10px;
-                padding: 12px !important;
+                grid-template-columns: 86px 1fr;
+                gap: 9px;
+                padding: 10px !important;
             }
 
             .servico-imagem-box {
-                width: 92px;
-                height: 92px;
-                min-height: 92px;
+                width: 86px;
+                height: 86px;
+                min-height: 86px;
                 border-radius: 10px;
             }
 
             .servico-card-pet .servico-titulo {
-                font-size: 1rem;
+                font-size: 0.98rem;
             }
 
             .servico-card-pet .servico-descricao {
-                font-size: 0.84rem;
-                margin: 4px 0 6px !important;
+                font-size: 0.82rem;
+                margin: 3px 0 5px !important;
+                -webkit-line-clamp: 2;
             }
 
             .servico-precos-pet {
-                gap: 5px;
-                padding-top: 7px;
-                margin-top: 5px;
+                gap: 4px;
+                padding-top: 6px;
+                margin-top: 4px;
             }
 
             .porte-preco-card {
-                padding: 5px 8px;
-                gap: 4px;
+                padding: 4px 7px;
+                gap: 3px;
             }
 
             .porte-nome {
-                font-size: 0.7rem;
+                font-size: 0.68rem;
             }
 
             .porte-valor {
-                font-size: 0.78rem;
+                font-size: 0.75rem;
             }
 
             .porte-tempo {
-                font-size: 0.68rem;
+                font-size: 0.64rem;
             }
 
             .servico-footer-pet {
@@ -194,17 +239,47 @@ function aplicarEstiloServicosPet() {
                 margin-top: 7px;
                 padding-top: 7px;
             }
+
+            .servico-footer-pet .servico-acoes {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .servico-footer-pet .btn-acao {
+                width: 100%;
+                padding: 9px 10px;
+                font-size: 0.86rem;
+            }
         }
 
         @media (max-width: 430px) {
             .servico-card-pet {
                 grid-template-columns: 1fr;
+                padding: 10px !important;
             }
 
             .servico-imagem-box {
                 width: 100%;
-                height: 145px;
-                min-height: 145px;
+                height: 120px;
+                min-height: 120px;
+            }
+
+            .servico-card-pet .servico-titulo {
+                font-size: 1rem;
+            }
+
+            .servico-card-pet .servico-descricao {
+                font-size: 0.82rem;
+            }
+
+            .servico-precos-pet {
+                gap: 5px;
+            }
+
+            .porte-preco-card {
+                padding: 4px 7px;
             }
         }
     `;
