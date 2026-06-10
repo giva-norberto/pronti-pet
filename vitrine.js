@@ -38,14 +38,21 @@ import {
 
 import * as UI from './vitrini-ui.js';
 
-// --- PRONTI PET ---
+// =====================================================================
+// PRONTI PET
+// =====================================================================
 import {
     garantirPetParaAgendamento,
     obterPrecoDuracaoPorPet
 } from './vitrine-pets.js';
 
-// --- FIREBASE / PROMOÇÕES / FILA ---
-import { db, auth } from './vitrini-firebase.js';
+// =====================================================================
+// PROMOÇÕES, FILA E FIREBASE
+// =====================================================================
+import {
+    db,
+    auth
+} from './vitrini-firebase.js';
 
 import {
     collection,
@@ -60,7 +67,9 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// --- ASSINATURAS ---
+// =====================================================================
+// ASSINATURAS
+// =====================================================================
 import {
     marcarServicosInclusosParaUsuario
 } from './vitrine-assinatura-integration.js';
