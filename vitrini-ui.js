@@ -34,44 +34,97 @@ export function renderizarDadosIniciaisEmpresa(dadosEmpresa, todosOsServicos) {
     // A lógica para preencher a descrição e o resto da função permanece 100% idêntica.
     document.getElementById('info-negocio').innerHTML = `<p>${dadosEmpresa.descricao || "Descrição não informada."}</p>`;
 
-    // ----------- SERVIÇOS AGRUPADOS POR CATEGORIA (LÓGICA 100% PRESERVADA) -----------
-    const servicosContainer = document.getElementById('info-servicos');
-    if (todosOsServicos && todosOsServicos.length > 0) {
-        const agrupados = {};
-        todosOsServicos.forEach(s => {
-            const cat = (s.categoria && s.categoria.trim()) ? s.categoria.trim() : "Sem Categoria";
-            if (!agrupados[cat]) agrupados[cat] = [];
-            agrupados[cat].push(s);
-        });
-        const categoriasOrdenadas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-        servicosContainer.innerHTML = categoriasOrdenadas.map(cat =>
-            `<div class="info-categoria-bloco">
-                <div class="info-categoria-titulo">${cat}</div>
-                <div class="info-categoria-servicos">
-                    ${agrupados[cat].map(s => {
-                        let precoHtml = '';
-                        if (s.promocao) {
-                            precoHtml = `
-                                <span class="preco-original" style="text-decoration:line-through; color:#ef4444; margin-right:8px;">R$ ${s.promocao.precoOriginal.toFixed(2)}</span>
-                                <span class="preco-promocional" style="color:#059669; font-weight:bold;">R$ ${s.promocao.precoComDesconto.toFixed(2)}</span>
-                                <span class="badge-promocao" style="background:#facc15; color:#92400e; border-radius:8px; padding:2px 8px; margin-left:8px; font-size:0.86em;">PROMO</span>
-                            `;
-                        } else {
-                            precoHtml = `<span class="preco-promocional">R$ ${s.preco.toFixed(2)}</span>`;
-                        }
-                        return `
-                            <div class="servico-info-item">
-                                <strong>${s.nome}</strong>
-                                <span>${precoHtml} (${s.duracao} min)</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>`
-        ).join('');
-    } else {
-        servicosContainer.innerHTML = '<p>Nenhum serviço cadastrado.</p>';
+// ----------- SERVIÇOS AGRUPADOS POR CATEGORIA (COMPATÍVEL COM PRONTI NORMAL + PRONTI PET) -----------
+const servicosContainer = document.getElementById('info-servicos');
+
+if (todosOsServicos && todosOsServicos.length > 0) {
+    const agrupados = {};
+
+    todosOsServicos.forEach(s => {
+        const cat = (s.categoria && s.categoria.trim()) ? s.categoria.trim() : "Sem Categoria";
+        if (!agrupados[cat]) agrupados[cat] = [];
+        agrupados[cat].push(s);
+    });
+
+    const categoriasOrdenadas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    function obterPrecoEDuracaoBase(servico) {
+        if (Array.isArray(servico.precos) && servico.precos.length > 0) {
+            const validos = servico.precos
+                .map(p => ({
+                    preco: Number(p.preco || 0),
+                    duracao: Number(p.duracao || 0)
+                }))
+                .filter(p => p.preco > 0 && p.duracao > 0)
+                .sort((a, b) => a.preco - b.preco);
+
+            if (validos.length > 0) {
+                return {
+                    preco: validos[0].preco,
+                    duracao: validos[0].duracao,
+                    prefixo: 'A partir de '
+                };
+            }
+        }
+
+        const precoAntigo = Number(servico.preco || 0);
+        const duracaoAntiga = Number(servico.duracao || 0);
+
+        return {
+            preco: precoAntigo,
+            duracao: duracaoAntiga,
+            prefixo: ''
+        };
     }
+
+    servicosContainer.innerHTML = categoriasOrdenadas.map(cat =>
+        `<div class="info-categoria-bloco">
+            <div class="info-categoria-titulo">${cat}</div>
+            <div class="info-categoria-servicos">
+                ${agrupados[cat].map(s => {
+                    const base = obterPrecoEDuracaoBase(s);
+
+                    let precoHtml = '';
+
+                    if (s.promocao && !Array.isArray(s.precos)) {
+                        const precoOriginal = Number(s.promocao.precoOriginal || 0);
+                        const precoComDesconto = Number(s.promocao.precoComDesconto || 0);
+
+                        precoHtml = `
+                            <span class="preco-original" style="text-decoration:line-through; color:#ef4444; margin-right:8px;">
+                                ${precoOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                            <span class="preco-promocional" style="color:#059669; font-weight:bold;">
+                                ${precoComDesconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                            <span class="badge-promocao" style="background:#facc15; color:#92400e; border-radius:8px; padding:2px 8px; margin-left:8px; font-size:0.86em;">
+                                PROMO
+                            </span>
+                        `;
+                    } else {
+                        precoHtml = `
+                            <span class="preco-promocional">
+                                ${base.prefixo}${base.preco.toLocaleString('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                })}
+                            </span>
+                        `;
+                    }
+
+                    return `
+                        <div class="servico-info-item">
+                            <strong>${s.nome || 'Serviço sem nome'}</strong>
+                            <span>${precoHtml}${base.duracao > 0 ? ` (${base.duracao} min)` : ''}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>`
+    ).join('');
+} else {
+    servicosContainer.innerHTML = '<p>Nenhum serviço cadastrado.</p>';
+}
     // ------------------------------------------------------------------------
 
     const contatoContainer = document.getElementById('info-contato');
