@@ -1,179 +1,573 @@
 // ======================================================================
-//        VITRINI-UI.JS - UI da Vitrine com suporte Multiempresa (REVISADO E CORRIGIDO)
+//        VITRINI-UI.JS - UI da Vitrine com suporte Multiempresa
+//        PRONTI PET - Revisado com foto, preço por porte e cards menores
 // ======================================================================
 
-/**
- * Mostra ou esconde o loader inicial da página.
- */
-export function toggleLoader(mostrar, mensagem = 'A carregar informações do negócio...') {
-    const loader = document.getElementById('vitrine-loader');
-    if (loader && loader.querySelector('p')) loader.querySelector('p').textContent = mensagem;
-    if (loader) loader.style.display = mostrar ? 'block' : 'none';
-    const content = document.getElementById('vitrine-content');
-   if(content) content.style.display = mostrar ? 'none' : ''; // Apenas remove o 'display: none'
+// ======================================================================
+// HELPERS
+// ======================================================================
 
+function dinheiro(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
 }
 
-/**
- * Preenche os dados iniciais da empresa.
- * ALTERAÇÃO: Serviços agrupados por categoria, visual centralizado, sem botões.
- */
-export function renderizarDadosIniciaisEmpresa(dadosEmpresa, todosOsServicos) {
-    // ✅ CORREÇÃO: Preenche diretamente os elementos do cabeçalho mobile, que sabemos que existem.
-    // As referências aos IDs 'logo-publico' e 'nome-negocio-publico' foram removidas para evitar o erro.
-    const logoMobile = document.getElementById('logo-publico-mobile');
-    if (logoMobile) {
-        logoMobile.src = dadosEmpresa.logoUrl || "https://placehold.co/100x100/e0e7ff/6366f1?text=Logo";
+function escapeHTML(valor) {
+    const div = document.createElement('div');
+    div.textContent = valor || '';
+    return div.innerHTML;
+}
+
+function obterFotoServico(servico) {
+    return (
+        servico?.fotoUrl ||
+        servico?.imagemUrl ||
+        servico?.fotoServicoUrl ||
+        servico?.urlFoto ||
+        servico?.imagem ||
+        ''
+    );
+}
+
+function obterPrecoDuracaoBase(servico) {
+    if (Array.isArray(servico?.precos) && servico.precos.length > 0) {
+        const validos = servico.precos
+            .map(p => ({
+                porte: p.porte || '',
+                preco: Number(p.preco || 0),
+                duracao: Number(p.duracao || 0)
+            }))
+            .filter(p => p.preco > 0 && p.duracao > 0)
+            .sort((a, b) => a.preco - b.preco);
+
+        if (validos.length > 0) {
+            return {
+                preco: validos[0].preco,
+                duracao: validos[0].duracao,
+                prefixo: 'A partir de '
+            };
+        }
     }
 
-    const nomeMobile = document.getElementById('nome-negocio-publico-mobile' );
+    return {
+        preco: Number(servico?.preco || 0),
+        duracao: Number(servico?.duracao || 0),
+        prefixo: ''
+    };
+}
+
+function calcularPrecoServico(servico) {
+    if (!servico) return 0;
+
+    if (servico.precoCobrado === 0) return 0;
+
+    if (servico.promocao) {
+        return Number(servico.promocao.precoComDesconto || 0);
+    }
+
+    return Number(servico.preco || 0);
+}
+
+function calcularDuracaoServico(servico) {
+    return Number(servico?.duracao || 0);
+}
+
+function montarPrecoHtmlServico(servico) {
+    const base = obterPrecoDuracaoBase(servico);
+
+    if (servico?.precoCobrado === 0) {
+        return `
+            <span class="preco-promocional">${dinheiro(0)}</span>
+            <span class="badge-incluso">Incluso no plano</span>
+        `;
+    }
+
+    if (servico?.promocao && !Array.isArray(servico?.precos)) {
+        const precoOriginal = Number(servico.promocao.precoOriginal || 0);
+        const precoComDesconto = Number(servico.promocao.precoComDesconto || 0);
+
+        return `
+            <span class="preco-original" style="text-decoration:line-through; color:#ef4444; margin-right:8px;">
+                ${dinheiro(precoOriginal)}
+            </span>
+            <span class="preco-promocional" style="color:#059669; font-weight:bold;">
+                ${dinheiro(precoComDesconto)}
+            </span>
+            <span class="badge-promocao" style="background:#facc15; color:#92400e; border-radius:8px; padding:2px 8px; margin-left:8px; font-size:0.78em;">
+                PROMO
+            </span>
+        `;
+    }
+
+    return `
+        <span class="preco-promocional">
+            ${base.prefixo}${dinheiro(base.preco)}
+        </span>
+    `;
+}
+
+function obterDuracaoBaseServico(servico) {
+    return obterPrecoDuracaoBase(servico).duracao;
+}
+
+function injetarEstilosPetCards() {
+    if (document.getElementById('style-vitrini-pet-cards')) return;
+
+    const style = document.createElement('style');
+    style.id = 'style-vitrini-pet-cards';
+    style.textContent = `
+        .servicos-container-cards {
+            width: 100%;
+        }
+
+        .categorias-lista {
+            margin-bottom: 14px !important;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .categoria-btn {
+            padding: 7px 14px !important;
+            border-radius: 999px !important;
+            border: none !important;
+            font-weight: 800 !important;
+            cursor: pointer !important;
+            font-size: 0.86rem !important;
+        }
+
+        #servicos-por-categoria {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
+        }
+
+        .card-servico {
+            background: #ffffff;
+            border: 1px solid #e0e7ff;
+            border-radius: 16px;
+            padding: 10px;
+            display: flex;
+            gap: 11px;
+            align-items: center;
+            min-height: auto;
+            cursor: pointer;
+            box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+            transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+            color: #1e293b;
+        }
+
+        .card-servico:hover {
+            transform: translateY(-1px);
+            border-color: #6366f1;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.12);
+        }
+
+        .card-servico.selecionado {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            background: #f8faff;
+        }
+
+        .card-servico.card-checkbox {
+            position: relative;
+            padding-right: 36px;
+        }
+
+        .servico-foto {
+            width: 62px;
+            height: 62px;
+            min-width: 62px;
+            border-radius: 14px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+            border: 1px solid #e0e7ff;
+        }
+
+        .servico-foto-placeholder {
+            width: 62px;
+            height: 62px;
+            min-width: 62px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.55rem;
+            border: 1px solid #e0e7ff;
+        }
+
+        .servico-conteudo {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .servico-nome {
+            display: block;
+            font-weight: 900;
+            font-size: 0.95rem;
+            color: #1e293b;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .servico-detalhes {
+            display: block;
+            font-size: 0.86rem;
+            color: #475569;
+            line-height: 1.35;
+        }
+
+        .preco-promocional {
+            color: #059669;
+            font-weight: 900;
+        }
+
+        .servico-tempo {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #64748b;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .badge-incluso {
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 900;
+            border-radius: 999px;
+            padding: 2px 7px;
+            font-size: 0.72rem;
+            margin-left: 5px;
+        }
+
+        .checkmark {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #c7d2fe;
+        }
+
+        .card-servico.selecionado .checkmark {
+            background: #4f46e5;
+            border-color: #4f46e5;
+        }
+
+        .info-categoria-bloco {
+            margin-bottom: 18px;
+        }
+
+        .info-categoria-titulo {
+            font-weight: 900;
+            color: #4f46e5;
+            margin: 12px 0 8px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .info-categoria-servicos {
+            display: grid;
+            gap: 8px;
+        }
+
+        .servico-info-item {
+            background: #fff;
+            border: 1px solid #e0e7ff;
+            border-radius: 14px;
+            padding: 9px 11px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .servico-info-item strong {
+            color: #1e293b;
+        }
+
+        .servico-info-item span {
+            color: #475569;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        @media (max-width: 560px) {
+            #servicos-por-categoria {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .card-servico {
+                padding: 9px;
+                border-radius: 14px;
+            }
+
+            .servico-foto,
+            .servico-foto-placeholder {
+                width: 54px;
+                height: 54px;
+                min-width: 54px;
+                border-radius: 12px;
+            }
+
+            .servico-nome {
+                font-size: 0.9rem;
+            }
+
+            .servico-detalhes {
+                font-size: 0.8rem;
+            }
+
+            .servico-info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .servico-info-item span {
+                text-align: left;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+function montarImagemServicoHtml(servico) {
+    const foto = obterFotoServico(servico);
+
+    if (foto) {
+        return `
+            <img
+                class="servico-foto"
+                src="${foto}"
+                alt="${escapeHTML(servico?.nome || 'Serviço')}"
+                onerror="this.outerHTML='<div class=&quot;servico-foto-placeholder&quot;>🐾</div>'"
+            >
+        `;
+    }
+
+    return `<div class="servico-foto-placeholder">🐾</div>`;
+}
+
+// ======================================================================
+// LOADER
+// ======================================================================
+
+export function toggleLoader(mostrar, mensagem = 'A carregar informações do negócio...') {
+    const loader = document.getElementById('vitrine-loader');
+
+    if (loader && loader.querySelector('p')) {
+        loader.querySelector('p').textContent = mensagem;
+    }
+
+    if (loader) {
+        loader.style.display = mostrar ? 'block' : 'none';
+    }
+
+    const content = document.getElementById('vitrine-content');
+
+    if (content) {
+        content.style.display = mostrar ? 'none' : '';
+    }
+}
+
+// ======================================================================
+// DADOS INICIAIS DA EMPRESA
+// ======================================================================
+
+export function renderizarDadosIniciaisEmpresa(dadosEmpresa = {}, todosOsServicos = []) {
+    injetarEstilosPetCards();
+
+    const logoMobile = document.getElementById('logo-publico-mobile');
+
+    if (logoMobile) {
+        logoMobile.src = dadosEmpresa.logoUrl || "https://placehold.co/100x100/e0e7ff/6366f1?text=Pet";
+    }
+
+    const nomeMobile = document.getElementById('nome-negocio-publico-mobile');
+
     if (nomeMobile) {
         nomeMobile.textContent = dadosEmpresa.nomeFantasia || "Nome do Negócio";
     }
-    
-    // A lógica para preencher a descrição e o resto da função permanece 100% idêntica.
-    document.getElementById('info-negocio').innerHTML = `<p>${dadosEmpresa.descricao || "Descrição não informada."}</p>`;
 
-// ----------- SERVIÇOS AGRUPADOS POR CATEGORIA (COMPATÍVEL COM PRONTI NORMAL + PRONTI PET) -----------
-const servicosContainer = document.getElementById('info-servicos');
+    const infoNegocio = document.getElementById('info-negocio');
 
-if (todosOsServicos && todosOsServicos.length > 0) {
-    const agrupados = {};
-
-    todosOsServicos.forEach(s => {
-        const cat = (s.categoria && s.categoria.trim()) ? s.categoria.trim() : "Sem Categoria";
-        if (!agrupados[cat]) agrupados[cat] = [];
-        agrupados[cat].push(s);
-    });
-
-    const categoriasOrdenadas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-    function obterPrecoEDuracaoBase(servico) {
-        if (Array.isArray(servico.precos) && servico.precos.length > 0) {
-            const validos = servico.precos
-                .map(p => ({
-                    preco: Number(p.preco || 0),
-                    duracao: Number(p.duracao || 0)
-                }))
-                .filter(p => p.preco > 0 && p.duracao > 0)
-                .sort((a, b) => a.preco - b.preco);
-
-            if (validos.length > 0) {
-                return {
-                    preco: validos[0].preco,
-                    duracao: validos[0].duracao,
-                    prefixo: 'A partir de '
-                };
-            }
-        }
-
-        const precoAntigo = Number(servico.preco || 0);
-        const duracaoAntiga = Number(servico.duracao || 0);
-
-        return {
-            preco: precoAntigo,
-            duracao: duracaoAntiga,
-            prefixo: ''
-        };
+    if (infoNegocio) {
+        infoNegocio.innerHTML = `<p>${escapeHTML(dadosEmpresa.descricao || "Descrição não informada.")}</p>`;
     }
 
-    servicosContainer.innerHTML = categoriasOrdenadas.map(cat =>
-        `<div class="info-categoria-bloco">
-            <div class="info-categoria-titulo">${cat}</div>
-            <div class="info-categoria-servicos">
-                ${agrupados[cat].map(s => {
-                    const base = obterPrecoEDuracaoBase(s);
+    const servicosContainer = document.getElementById('info-servicos');
 
-                    let precoHtml = '';
+    if (servicosContainer) {
+        if (todosOsServicos && todosOsServicos.length > 0) {
+            const agrupados = {};
 
-                    if (s.promocao && !Array.isArray(s.precos)) {
-                        const precoOriginal = Number(s.promocao.precoOriginal || 0);
-                        const precoComDesconto = Number(s.promocao.precoComDesconto || 0);
+            todosOsServicos.forEach(s => {
+                const cat = (s.categoria && s.categoria.trim()) ? s.categoria.trim() : "Sem Categoria";
+                if (!agrupados[cat]) agrupados[cat] = [];
+                agrupados[cat].push(s);
+            });
 
-                        precoHtml = `
-                            <span class="preco-original" style="text-decoration:line-through; color:#ef4444; margin-right:8px;">
-                                ${precoOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </span>
-                            <span class="preco-promocional" style="color:#059669; font-weight:bold;">
-                                ${precoComDesconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </span>
-                            <span class="badge-promocao" style="background:#facc15; color:#92400e; border-radius:8px; padding:2px 8px; margin-left:8px; font-size:0.86em;">
-                                PROMO
-                            </span>
-                        `;
-                    } else {
-                        precoHtml = `
-                            <span class="preco-promocional">
-                                ${base.prefixo}${base.preco.toLocaleString('pt-BR', {
-                                    style: 'currency',
-                                    currency: 'BRL'
-                                })}
-                            </span>
-                        `;
-                    }
+            const categoriasOrdenadas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-                    return `
-                        <div class="servico-info-item">
-                            <strong>${s.nome || 'Serviço sem nome'}</strong>
-                            <span>${precoHtml}${base.duracao > 0 ? ` (${base.duracao} min)` : ''}</span>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        </div>`
-    ).join('');
-} else {
-    servicosContainer.innerHTML = '<p>Nenhum serviço cadastrado.</p>';
-}
-    // ------------------------------------------------------------------------
+            servicosContainer.innerHTML = categoriasOrdenadas.map(cat => `
+                <div class="info-categoria-bloco">
+                    <div class="info-categoria-titulo">${escapeHTML(cat)}</div>
+                    <div class="info-categoria-servicos">
+                        ${agrupados[cat].map(s => {
+                            const base = obterPrecoDuracaoBase(s);
+                            const precoHtml = montarPrecoHtmlServico(s);
+
+                            return `
+                                <div class="servico-info-item">
+                                    <strong>${escapeHTML(s.nome || 'Serviço sem nome')}</strong>
+                                    <span>
+                                        ${precoHtml}
+                                        ${base.duracao > 0 ? ` (${base.duracao} min)` : ''}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            servicosContainer.innerHTML = '<p>Nenhum serviço cadastrado.</p>';
+        }
+    }
 
     const contatoContainer = document.getElementById('info-contato');
-    let htmlContato = '';
-    if (dadosEmpresa.localizacao) {
-        htmlContato += `<div class="info-item"><strong>Endereço:</strong><p>${dadosEmpresa.localizacao}</p></div><div class="info-item"><strong>Localização:</strong><div id="map-container" style="width: 100%; height: 250px; border-radius: 12px; background-color: #eef2ff; margin-top: 10px; overflow: hidden; border: 1px solid #e0e7ff;"><iframe src="https://maps.google.com/maps?q=${encodeURIComponent(dadosEmpresa.localizacao )}&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></div>`;
+
+    if (contatoContainer) {
+        let htmlContato = '';
+
+        if (dadosEmpresa.localizacao) {
+            htmlContato += `
+                <div class="info-item">
+                    <strong>Endereço:</strong>
+                    <p>${escapeHTML(dadosEmpresa.localizacao)}</p>
+                </div>
+                <div class="info-item">
+                    <strong>Localização:</strong>
+                    <div id="map-container" style="width:100%;height:250px;border-radius:12px;background-color:#eef2ff;margin-top:10px;overflow:hidden;border:1px solid #e0e7ff;">
+                        <iframe
+                            src="https://maps.google.com/maps?q=${encodeURIComponent(dadosEmpresa.localizacao)}&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                            width="100%"
+                            height="100%"
+                            style="border:0;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (dadosEmpresa.horarioFuncionamento) {
+            htmlContato += `
+                <div class="info-item">
+                    <strong>Horário de Atendimento:</strong>
+                    <p style="white-space:pre-wrap;">${escapeHTML(dadosEmpresa.horarioFuncionamento)}</p>
+                </div>
+            `;
+        }
+
+        if (dadosEmpresa.whatsapp) {
+            htmlContato += `
+                <div class="info-item">
+                    <strong>WhatsApp:</strong>
+                    <p>${escapeHTML(dadosEmpresa.whatsapp)}</p>
+                </div>
+            `;
+        }
+
+        if (dadosEmpresa.instagram) {
+            htmlContato += `
+                <div class="info-item">
+                    <strong>Instagram:</strong>
+                    <p>${escapeHTML(dadosEmpresa.instagram)}</p>
+                </div>
+            `;
+        }
+
+        if (dadosEmpresa.chavePix) {
+            htmlContato += `
+                <div class="info-item">
+                    <strong>PIX para Pagamento:</strong>
+                    <p>${escapeHTML(dadosEmpresa.chavePix)}</p>
+                </div>
+            `;
+        }
+
+        if (htmlContato === '') {
+            htmlContato = '<p>Nenhuma informação de contato adicional foi fornecida.</p>';
+        }
+
+        contatoContainer.innerHTML = htmlContato;
     }
-    if (dadosEmpresa.horarioFuncionamento) {
-        htmlContato += `<div class="info-item"><strong>Horário de Atendimento:</strong><p style="white-space: pre-wrap;">${dadosEmpresa.horarioFuncionamento}</p></div>`;
-    }
-    if (dadosEmpresa.chavePix) {
-        htmlContato += `<div class="info-item"><strong>PIX para Pagamento:</strong><p>${dadosEmpresa.chavePix}</p></div>`;
-    }
-    if (htmlContato === '') {
-        htmlContato = '<p>Nenhuma informação de contato adicional foi fornecida.</p>';
-    }
-    contatoContainer.innerHTML = htmlContato;
 }
 
-/**
- * Renderiza os cards dos profissionais.
- */
+// ======================================================================
+// PROFISSIONAIS
+// ======================================================================
+
 export function renderizarProfissionais(profissionais) {
     const container = document.getElementById('lista-profissionais');
+    if (!container) return;
+
     container.innerHTML = '';
+
     if (!profissionais || profissionais.length === 0) {
         container.innerHTML = '<p>Nenhum profissional encontrado.</p>';
         return;
     }
+
     profissionais.forEach(p => {
-        container.innerHTML += `<div class="card-profissional" data-id="${p.id}"><img src="${p.fotoUrl || 'https://placehold.co/80x80/eef2ff/4f46e5?text=P'}" alt="${p.nome}"><span>${p.nome}</span></div>`;
-    } );
+        container.innerHTML += `
+            <div class="card-profissional" data-id="${p.id}">
+                <img
+                    src="${p.fotoUrl || 'https://placehold.co/80x80/eef2ff/4f46e5?text=P'}"
+                    alt="${escapeHTML(p.nome || 'Profissional')}"
+                >
+                <span>${escapeHTML(p.nome || 'Profissional')}</span>
+            </div>
+        `;
+    });
 }
 
-/**
- * REVISADO: Renderiza os cards de serviços agrupados por categoria, SEMPRE mostrando categoria, adaptando para seleção única ou múltipla.
- */
+// ======================================================================
+// SERVIÇOS - CARDS PET
+// ======================================================================
+
 export function renderizarServicos(servicos, permiteMultiplos = false) {
+    injetarEstilosPetCards();
+
     const container = document.getElementById('lista-servicos');
+    if (!container) return;
+
     container.innerHTML = '';
-    container.className = permiteMultiplos ? 'servicos-container-cards multi-select' : 'servicos-container-cards';
+    container.className = permiteMultiplos
+        ? 'servicos-container-cards multi-select'
+        : 'servicos-container-cards';
 
     if (!servicos || servicos.length === 0) {
         container.innerHTML = '<p>Este profissional não oferece serviços.</p>';
         return;
     }
 
-    // ---- AGRUPAMENTO POR CATEGORIA ----
     const agrupados = {};
+
     servicos.forEach(s => {
         const cat = (s.categoria && s.categoria.trim()) ? s.categoria.trim() : "Sem Categoria";
         if (!agrupados[cat]) agrupados[cat] = [];
@@ -182,69 +576,76 @@ export function renderizarServicos(servicos, permiteMultiplos = false) {
 
     const categoriasOrdenadas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-    let htmlCategorias = `<div class="categorias-lista" style="margin-bottom:22px; display:flex; gap:8px; flex-wrap:wrap;">`;
-    categoriasOrdenadas.forEach((cat, idx) => {
-        htmlCategorias += `
-            <button class="categoria-btn" data-cat="${cat}" style="padding:8px 18px; border-radius:20px; border:none; background:${idx===0 ?'#6366f1':'#e0e7ef'}; color:${idx===0 ?'#fff':'#22223b'}; font-weight:bold; cursor:pointer;">${cat}</button>
-        `;
-    });
-    htmlCategorias += `</div><div id="servicos-por-categoria"></div>`;
+    let htmlCategorias = `
+        <div class="categorias-lista">
+            ${categoriasOrdenadas.map((cat, idx) => `
+                <button
+                    class="categoria-btn"
+                    data-cat="${escapeHTML(cat)}"
+                    style="background:${idx === 0 ? '#6366f1' : '#e0e7ef'}; color:${idx === 0 ? '#fff' : '#22223b'};"
+                >
+                    ${escapeHTML(cat)}
+                </button>
+            `).join('')}
+        </div>
+        <div id="servicos-por-categoria"></div>
+    `;
 
     container.innerHTML = htmlCategorias;
 
     function renderizarServicosDaCategoria(catAtual) {
-        const servicosCat = agrupados[catAtual];
-        document.getElementById('servicos-por-categoria').innerHTML = servicosCat.map(s => {
-            let precoHtml = '';
-            
-            // =====================================================================
-            // ✅ 1. CORREÇÃO APLICADA AQUI (para o card do serviço)
-            // =====================================================================
-            if (s.precoCobrado === 0) { // Se assinatura cobriu o custo
-                const precoZeroFormatado = Number(0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                precoHtml = `<span class="preco-promocional">${precoZeroFormatado}</span> <span class="badge-incluso">Incluso no plano</span>`;
-            } else if (s.promocao) { // Senão, se tem promoção
-                const precoOriginalFmt = (s.promocao.precoOriginal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                const precoPromoFmt = (s.promocao.precoComDesconto || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                precoHtml = `
-                    <span class="preco-original" style="text-decoration:line-through; color:#ef4444; margin-right:8px;">${precoOriginalFmt}</span>
-                    <span class="preco-promocional" style="color:#059669; font-weight:bold;">${precoPromoFmt}</span>
-                    <span class="badge-promocao" style="background:#facc15; color:#92400e; border-radius:8px; padding:2px 8px; margin-left:8px; font-size:0.86em;">PROMO</span>
-                `;
-            } else { // Senão, preço normal
-                const precoNormalFmt = (s.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                precoHtml = `<span class="preco-promocional">${precoNormalFmt}</span>`;
-            }
+        const servicosCat = agrupados[catAtual] || [];
+        const destino = document.getElementById('servicos-por-categoria');
+
+        if (!destino) return;
+
+        destino.innerHTML = servicosCat.map(s => {
+            const base = obterPrecoDuracaoBase(s);
+            const precoHtml = montarPrecoHtmlServico(s);
+            const imagemHtml = montarImagemServicoHtml(s);
+            const duracaoHtml = base.duracao > 0
+                ? `<span class="servico-tempo">⏱ ${base.duracao} min</span>`
+                : `<span class="servico-tempo">⏱ Tempo a confirmar</span>`;
+
+            const conteudo = `
+                ${imagemHtml}
+                <div class="servico-conteudo">
+                    <span class="servico-nome">${escapeHTML(s.nome || 'Serviço sem nome')}</span>
+                    <span class="servico-detalhes">
+                        ${precoHtml}
+                        <br>
+                        ${duracaoHtml}
+                    </span>
+                </div>
+            `;
 
             if (permiteMultiplos) {
                 return `
                     <div class="card-servico card-checkbox" data-id="${s.id}">
-                        <div class="servico-info-multi">
-                            <span class="servico-nome">${s.nome}</span>
-                            <span class="servico-detalhes">${precoHtml} - ${s.duracao} min</span>
-                        </div>
+                        ${conteudo}
                         <span class="checkmark"></span>
                     </div>
                 `;
-            } else {
-                return `
-                    <div class="card-servico" data-id="${s.id}">
-                        <span class="servico-nome">${s.nome}</span>
-                        <span class="servico-detalhes">${precoHtml} - ${s.duracao} min</span>
-                    </div>
-                `;
             }
+
+            return `
+                <div class="card-servico" data-id="${s.id}">
+                    ${conteudo}
+                </div>
+            `;
         }).join('');
     }
 
-    container.querySelectorAll('.categoria-btn').forEach((btn, idx) => {
+    container.querySelectorAll('.categoria-btn').forEach(btn => {
         btn.onclick = () => {
-            container.querySelectorAll('.categoria-btn').forEach((b, i) => {
+            container.querySelectorAll('.categoria-btn').forEach(b => {
                 b.style.background = '#e0e7ef';
                 b.style.color = '#22223b';
             });
+
             btn.style.background = '#6366f1';
             btn.style.color = '#fff';
+
             renderizarServicosDaCategoria(btn.dataset.cat);
         };
     });
@@ -254,28 +655,30 @@ export function renderizarServicos(servicos, permiteMultiplos = false) {
     }
 }
 
-/**
- * Renderiza os horários disponíveis.
- * ADIÇÃO: Gerenciamento automático do botão de Fila de Espera.
- */
+// ======================================================================
+// HORÁRIOS
+// ======================================================================
+
 export function renderizarHorarios(slots, mensagem = '') {
     const container = document.getElementById('grade-horarios');
-    const containerFila = document.getElementById('container-fila-espera'); // Pega o novo container de fila
+    const containerFila = document.getElementById('container-fila-espera');
+
+    if (!container) return;
+
     container.innerHTML = '';
 
     if (mensagem) {
-        container.innerHTML = `<p class="aviso-horarios">${mensagem}</p>`;
-        if (containerFila) containerFila.style.display = 'block'; // Mostra fila se houver erro/mensagem
+        container.innerHTML = `<p class="aviso-horarios">${escapeHTML(mensagem)}</p>`;
+        if (containerFila) containerFila.style.display = 'block';
         return;
     }
 
     if (!slots || slots.length === 0) {
         container.innerHTML = '<p class="aviso-horarios">Nenhum horário disponível para esta data.</p>';
-        if (containerFila) containerFila.style.display = 'block'; // Mostra botão da fila se estiver lotado
+        if (containerFila) containerFila.style.display = 'block';
         return;
     }
 
-    // Se chegou aqui, tem slots, então esconde o botão da fila
     if (containerFila) containerFila.style.display = 'none';
 
     slots.forEach(horario => {
@@ -283,53 +686,74 @@ export function renderizarHorarios(slots, mensagem = '') {
     });
 }
 
-/**
- * Atualiza a UI de autenticação.
- */
+// ======================================================================
+// AUTENTICAÇÃO
+// ======================================================================
+
 export function atualizarUIdeAuth(user) {
     const userInfo = document.getElementById('user-info');
     const loginContainer = document.getElementById('btn-login-container');
     const agendamentosContainer = document.getElementById('botoes-agendamento');
-    
+
     if (user) {
-        if(agendamentosContainer) agendamentosContainer.style.display = 'flex';
-        if(userInfo) userInfo.style.display = 'block';
-        if(loginContainer) loginContainer.style.display = 'none';
-        document.getElementById('user-photo').src = user.photoURL || 'https://placehold.co/80x80/eef2ff/4f46e5?text=User';
-        document.getElementById('user-name' ).textContent = user.displayName || 'Usuário';
+        if (agendamentosContainer) agendamentosContainer.style.display = 'flex';
+        if (userInfo) userInfo.style.display = 'block';
+        if (loginContainer) loginContainer.style.display = 'none';
+
+        const userPhoto = document.getElementById('user-photo');
+        const userName = document.getElementById('user-name');
+
+        if (userPhoto) {
+            userPhoto.src = user.photoURL || 'https://placehold.co/80x80/eef2ff/4f46e5?text=User';
+        }
+
+        if (userName) {
+            userName.textContent = user.displayName || 'Usuário';
+        }
     } else {
-        if(agendamentosContainer) agendamentosContainer.style.display = 'none';
-        if(userInfo) userInfo.style.display = 'none';
-        if(loginContainer) loginContainer.style.display = 'block';
+        if (agendamentosContainer) agendamentosContainer.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        if (loginContainer) loginContainer.style.display = 'block';
+
         const listaAgendamentos = document.getElementById('lista-agendamentos-visualizacao');
-        if(listaAgendamentos) listaAgendamentos.innerHTML = '';
+        if (listaAgendamentos) listaAgendamentos.innerHTML = '';
     }
 }
 
-/**
- * Troca a aba visível.
- */
+// ======================================================================
+// NAVEGAÇÃO / SELEÇÃO
+// ======================================================================
+
 export function trocarAba(idDaAba) {
     const menuKey = idDaAba.replace('menu-', '');
+
     document.querySelectorAll('.menu-content').forEach(el => el.classList.remove('ativo'));
     document.querySelectorAll('[data-menu]').forEach(el => el.classList.remove('ativo'));
-    
-    const tela = document.getElementById(idDaAba);
-    if(tela) tela.classList.add('ativo');
 
-    const botoes = document.querySelectorAll(`.menu-btn[data-menu="${menuKey}"], .bottom-nav-vitrine button[data-menu="${menuKey}"]`);
+    const tela = document.getElementById(idDaAba);
+    if (tela) tela.classList.add('ativo');
+
+    const botoes = document.querySelectorAll(
+        `.menu-btn[data-menu="${menuKey}"], .bottom-nav-vitrine button[data-menu="${menuKey}"]`
+    );
+
     botoes.forEach(btn => btn.classList.add('ativo'));
 }
 
-/**
- * Seleciona um card e opcionalmente mostra um estado de 'loading'.
- */
 export function selecionarCard(tipo, id, isLoading = false) {
-    const seletorMap = { profissional: '.card-profissional', servico: '.card-servico', horario: '.btn-horario' };
+    const seletorMap = {
+        profissional: '.card-profissional',
+        servico: '.card-servico',
+        horario: '.btn-horario'
+    };
+
     const seletor = seletorMap[tipo];
+
     if (!seletor) return;
 
-    const element = document.querySelector(`${seletor}[data-${tipo === 'horario' ? 'horario' : 'id'}="${id}"]`);
+    const attr = tipo === 'horario' ? 'horario' : 'id';
+    const element = document.querySelector(`${seletor}[data-${attr}="${id}"]`);
+
     if (!element) return;
 
     if (tipo === 'servico' && element.closest('.multi-select')) {
@@ -339,126 +763,143 @@ export function selecionarCard(tipo, id, isLoading = false) {
         element.classList.add('selecionado');
     }
 
-    if (isLoading) element.classList.add('loading');
-    else element.classList.remove('loading');
-}
-
-/**
- * Mostra o container do formulário de agendamento.
- */
-export function mostrarContainerForm(mostrar) {
-    const container = document.getElementById('agendamento-form-container');
-    if(container) container.style.display = mostrar ? 'block' : 'none';
-}
-
-/**
- * Renderiza os agendamentos do cliente.
- */
-export function renderizarAgendamentosComoCards(agendamentos, modo) {
-    const container = document.getElementById('lista-agendamentos-visualizacao');
-    if (!container) return;
-    container.innerHTML = '';
-    if (!agendamentos || agendamentos.length === 0) {
-        container.innerHTML = `<p>Você não tem agendamentos ${modo === 'ativos' ? 'futuros' : 'passados'}.</p>`;
-        return;
+    if (isLoading) {
+        element.classList.add('loading');
+    } else {
+        element.classList.remove('loading');
     }
-    agendamentos.sort((a, b) => new Date(`${a.data}T${a.horario}`) - new Date(`${b.data}T${b.horario}`));
-    agendamentos.forEach(ag => {
-        const dataFormatada = new Date(`${ag.data}T12:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        container.innerHTML += `
-            <div class="card-agendamento status-${ag.status || 'ativo'}">
-                <div class="agendamento-info">
-                    <strong>${ag.servicoNome}</strong>
-                    <span>com ${ag.profissionalNome}</span>
-                    <small>${dataFormatada} às ${ag.horario}</small>
-                </div>
-                ${(modo === 'ativos' && ag.status !== 'cancelado_pelo_cliente') ? `<button class="btn-cancelar" data-id="${ag.id}">Cancelar</button>` : ''}
-            </div>
-        `;
-    });
 }
 
-/**
- * Limpa a seleção de um tipo de card.
- */
 export function limparSelecao(tipo) {
-    const seletorMap = { profissional: '.card-profissional', servico: '.card-servico', horario: '.btn-horario' };
+    const seletorMap = {
+        profissional: '.card-profissional',
+        servico: '.card-servico',
+        horario: '.btn-horario'
+    };
+
     const seletor = seletorMap[tipo];
+
     if (seletor) {
         document.querySelectorAll(seletor).forEach(c => c.classList.remove('selecionado'));
     }
 }
 
-/**
- * Atualiza o status do input de data.
- */
+// ======================================================================
+// CONTAINER DE AGENDAMENTO
+// ======================================================================
+
+export function mostrarContainerForm(mostrar) {
+    const container = document.getElementById('agendamento-form-container');
+    if (container) container.style.display = mostrar ? 'block' : 'none';
+}
+
 export function atualizarStatusData(desabilitarInput, mensagemHorarios = '') {
     const dataInput = document.getElementById('data-agendamento');
-    if(dataInput) dataInput.disabled = desabilitarInput;
+    if (dataInput) dataInput.disabled = desabilitarInput;
     renderizarHorarios([], mensagemHorarios);
 }
 
-/**
- * Seleciona o filtro (Ativos/Histórico).
- */
 export function selecionarFiltro(modo) {
     document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('ativo'));
+
     const btnId = modo === 'ativos' ? 'btn-ver-ativos' : 'btn-ver-historico';
     const btn = document.getElementById(btnId);
-    if(btn) btn.classList.add('ativo');
+
+    if (btn) btn.classList.add('ativo');
 }
 
-/**
- * Desabilita o botão de confirmar agendamento.
- */
 export function desabilitarBotaoConfirmar() {
     const btn = document.getElementById('btn-confirmar-agendamento');
     if (btn) btn.disabled = true;
 }
 
-/**
- * Habilita o botão de confirmar agendamento.
- */
 export function habilitarBotaoConfirmar() {
     const btn = document.getElementById('btn-confirmar-agendamento');
     if (btn) btn.disabled = false;
 }
 
-/**
- * Mostra/esconde a mensagem de login na tela de agendamento.
- */
 export function toggleAgendamentoLoginPrompt(mostrar) {
     const prompt = document.getElementById('agendamento-login-prompt');
     if (prompt) prompt.style.display = mostrar ? 'block' : 'none';
 }
 
-/**
- * Mostra a mensagem de login na aba "Meus Agendamentos".
- */
 export function exibirMensagemDeLoginAgendamentos() {
     const promptLogin = document.querySelector('#menu-visualizacao #agendamentos-login-prompt');
     const listaAgendamentos = document.getElementById('lista-agendamentos-visualizacao');
     const botoesFiltro = document.getElementById('botoes-agendamento');
+
     if (promptLogin) promptLogin.style.display = 'block';
     if (listaAgendamentos) listaAgendamentos.innerHTML = '';
     if (botoesFiltro) botoesFiltro.style.display = 'none';
 }
 
-/**
- * Força a abertura do modal de login.
- */
 export function abrirModalLogin() {
     const modal = document.getElementById('modal-auth-janela');
+
     if (modal) {
-        document.getElementById('modal-auth-cadastro').style.display = 'none';
-        document.getElementById('modal-auth-login').style.display = 'block';
+        const cadastro = document.getElementById('modal-auth-cadastro');
+        const login = document.getElementById('modal-auth-login');
+
+        if (cadastro) cadastro.style.display = 'none';
+        if (login) login.style.display = 'block';
+
         modal.style.display = 'flex';
     }
 }
 
-/**
- * Mostra um alerta com uma mensagem, usando o modal customizado.
- */
+// ======================================================================
+// AGENDAMENTOS DO CLIENTE
+// ======================================================================
+
+export function renderizarAgendamentosComoCards(agendamentos, modo) {
+    const container = document.getElementById('lista-agendamentos-visualizacao');
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!agendamentos || agendamentos.length === 0) {
+        container.innerHTML = `<p>Você não tem agendamentos ${modo === 'ativos' ? 'futuros' : 'passados'}.</p>`;
+        return;
+    }
+
+    agendamentos.sort((a, b) => new Date(`${a.data}T${a.horario}`) - new Date(`${b.data}T${b.horario}`));
+
+    agendamentos.forEach(ag => {
+        const dataFormatada = new Date(`${ag.data}T12:00:00Z`).toLocaleDateString('pt-BR', {
+            timeZone: 'UTC',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const petNome = ag.petNome || ag.pet?.nome || '';
+        const petPorte = ag.petPorte || ag.pet?.porte || '';
+
+        container.innerHTML += `
+            <div class="card-agendamento status-${ag.status || 'ativo'}">
+                <div class="agendamento-info">
+                    ${petNome ? `<strong>🐾 ${escapeHTML(petNome)}</strong>` : ''}
+                    <span>${escapeHTML(ag.servicoNome || 'Serviço')}</span>
+                    ${petPorte ? `<small>Porte: ${escapeHTML(petPorte)}</small>` : ''}
+                    <span>com ${escapeHTML(ag.profissionalNome || 'Profissional')}</span>
+                    <small>${dataFormatada} às ${ag.horario}</small>
+                </div>
+
+                ${(modo === 'ativos' && ag.status !== 'cancelado_pelo_cliente')
+                    ? `<button class="btn-cancelar" data-id="${ag.id}">Cancelar</button>`
+                    : ''
+                }
+            </div>
+        `;
+    });
+}
+
+// ======================================================================
+// MODAIS
+// ======================================================================
+
 export async function mostrarAlerta(titulo, mensagem) {
     return new Promise(resolve => {
         const modal = document.getElementById('custom-confirm-modal');
@@ -466,161 +907,173 @@ export async function mostrarAlerta(titulo, mensagem) {
         const mensagemEl = document.getElementById('modal-mensagem');
         const btnConfirmar = document.getElementById('modal-btn-confirmar');
         const btnCancelar = document.getElementById('modal-btn-cancelar');
+
         if (!modal || !tituloEl || !mensagemEl || !btnConfirmar || !btnCancelar) {
-            alert(mensagem); resolve(); return;
+            alert(mensagem);
+            resolve();
+            return;
         }
+
         tituloEl.textContent = titulo;
         mensagemEl.textContent = mensagem;
         btnCancelar.style.display = 'none';
         btnConfirmar.textContent = 'OK';
         modal.style.display = 'flex';
-        const onConfirmar = () => {
-            modal.style.display = 'none';
-            btnCancelar.style.display = 'inline-block';
-            btnConfirmar.textContent = 'Confirmar';
-            resolve();
-        };
+
         const novoBtnConfirmar = btnConfirmar.cloneNode(true);
         btnConfirmar.parentNode.replaceChild(novoBtnConfirmar, btnConfirmar);
-        novoBtnConfirmar.addEventListener('click', onConfirmar, { once: true });
+
+        novoBtnConfirmar.addEventListener('click', () => {
+            modal.style.display = 'none';
+            btnCancelar.style.display = 'inline-block';
+            novoBtnConfirmar.textContent = 'Confirmar';
+            resolve();
+        }, { once: true });
     });
 }
 
-/**
- * Mostra um modal de confirmação customizado (Sim/Não).
- */
 export function mostrarConfirmacao(titulo, mensagem) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const modal = document.getElementById('custom-confirm-modal');
         const tituloEl = document.getElementById('modal-titulo');
         const mensagemEl = document.getElementById('modal-mensagem');
         const btnConfirmar = document.getElementById('modal-btn-confirmar');
         const btnCancelar = document.getElementById('modal-btn-cancelar');
+
         if (!modal || !tituloEl || !mensagemEl || !btnConfirmar || !btnCancelar) {
-            resolve(confirm(mensagem)); return;
+            resolve(confirm(mensagem));
+            return;
         }
+
         tituloEl.textContent = titulo;
         mensagemEl.textContent = mensagem;
         btnCancelar.style.display = 'inline-block';
         btnConfirmar.textContent = 'Confirmar';
         modal.style.display = 'flex';
-        const onConfirmar = () => { modal.style.display = 'none'; resolve(true); };
-        const onCancelar = () => { modal.style.display = 'none'; resolve(false); };
+
         const novoBtnConfirmar = btnConfirmar.cloneNode(true);
         btnConfirmar.parentNode.replaceChild(novoBtnConfirmar, btnConfirmar);
-        novoBtnConfirmar.addEventListener('click', onConfirmar, { once: true });
+
         const novoBtnCancelar = btnCancelar.cloneNode(true);
         btnCancelar.parentNode.replaceChild(novoBtnCancelar, btnCancelar);
-        novoBtnCancelar.addEventListener('click', onCancelar, { once: true });
+
+        novoBtnConfirmar.addEventListener('click', () => {
+            modal.style.display = 'none';
+            resolve(true);
+        }, { once: true });
+
+        novoBtnCancelar.addEventListener('click', () => {
+            modal.style.display = 'none';
+            resolve(false);
+        }, { once: true });
     });
 }
 
-/**
- * Atualiza o resumo do agendamento (total de serviços, duração e preço).
- */
-export function atualizarResumoAgendamento(servicosSelecionados) {
+// ======================================================================
+// RESUMOS
+// ======================================================================
+
+export function atualizarResumoAgendamento(servicosSelecionados = []) {
     const container = document.getElementById('servicos-resumo-container');
     const textoEl = document.getElementById('resumo-texto');
+
     if (!container || !textoEl) return;
 
     if (servicosSelecionados.length > 0) {
-        const duracaoTotal = servicosSelecionados.reduce((acc, s) => acc + s.duracao, 0);
-        
-        // =====================================================================
-        // ✅ 2. CORREÇÃO APLICADA AQUI (para o resumo de múltiplos serviços)
-        // =====================================================================
-        const precoTotal = servicosSelecionados.reduce((acc, s) => {
-            if (s.precoCobrado === 0) {
-                return acc + 0;
-            } else if (s.promocao) {
-                return acc + (s.promocao.precoComDesconto || 0);
-            } else {
-                return acc + (s.preco || 0);
-            }
-        }, 0);
-        
-        textoEl.innerHTML = `<strong>Resumo:</strong> ${servicosSelecionados.length} serviço(s) | <strong>Duração:</strong> ${duracaoTotal} min | <strong>Total:</strong> ${precoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+        const duracaoTotal = servicosSelecionados.reduce(
+            (acc, s) => acc + calcularDuracaoServico(s),
+            0
+        );
+
+        const precoTotal = servicosSelecionados.reduce(
+            (acc, s) => acc + calcularPrecoServico(s),
+            0
+        );
+
+        textoEl.innerHTML = `
+            <strong>Resumo:</strong>
+            ${servicosSelecionados.length} serviço(s)
+            |
+            <strong>Duração:</strong> ${duracaoTotal} min
+            |
+            <strong>Total:</strong> ${dinheiro(precoTotal)}
+        `;
+
         container.style.display = 'block';
     } else {
         container.style.display = 'none';
     }
 }
 
-/**
- * NOVO: Atualiza o resumo final do agendamento (embaixo, antes do botão Confirmar Agendamento)
- */
 export function atualizarResumoAgendamentoFinal() {
     const agendamento = window.state?.agendamento || {};
-    const { servicos, data, horario } = agendamento;
+    const { servicos, data, horario, pet } = agendamento;
+
     const el = document.getElementById('resumo-agendamento-final');
+
     if (!el) return;
+
     if (!servicos || !data || !horario || servicos.length === 0) {
         el.innerHTML = '';
         return;
     }
-    
-    // =====================================================================
-    // ✅ 3. CORREÇÃO APLICADA AQUI (para o resumo final)
-    // =====================================================================
-    const total = servicos.reduce((soma, s) => {
-        if (s.precoCobrado === 0) {
-            return soma + 0;
-        } else if (s.promocao) {
-            return soma + (s.promocao.precoComDesconto || 0);
-        } else {
-            return soma + (s.preco || 0);
-        }
-    }, 0);
-    
-    const duracao = servicos.reduce((soma, s) => soma + (s.duracao || 0), 0);
-    const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+
+    const total = servicos.reduce(
+        (soma, s) => soma + calcularPrecoServico(s),
+        0
+    );
+
+    const duracao = servicos.reduce(
+        (soma, s) => soma + calcularDuracaoServico(s),
+        0
+    );
+
+    const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'UTC'
+    });
 
     el.innerHTML = `
         <div class="resumo-agendamento">
-            <strong>Serviços:</strong> ${servicos.map(s => s.nome).join(" + ")} <br>
+            ${pet?.nome ? `<strong>Pet:</strong> ${escapeHTML(pet.nome)} ${pet.porte ? `(${escapeHTML(pet.porte)})` : ''}<br>` : ''}
+            <strong>Serviços:</strong> ${servicos.map(s => escapeHTML(s.nome)).join(" + ")} <br>
             <strong>Duração:</strong> ${duracao} min <br>
-            <strong>Total:</strong> ${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <br>
+            <strong>Total:</strong> ${dinheiro(total)} <br>
             <strong>Data:</strong> ${dataFormatada} <strong>Horário:</strong> ${horario}
         </div>
         <hr>
     `;
 }
 
-/**
- * NOVO: Configura a UI para o modo de agendamento (único ou múltiplo).
- */
+// ======================================================================
+// MODO AGENDAMENTO
+// ======================================================================
+
 export function configurarModoAgendamento(permiteMultiplos) {
     const dataHorarioContainer = document.getElementById('data-e-horario-container');
     const resumoContainer = document.getElementById('servicos-resumo-container');
     const btnConfirmar = document.getElementById('btn-confirmar-agendamento');
 
-    if (permiteMultiplos) {
-        dataHorarioContainer.style.display = 'none';
-        resumoContainer.style.display = 'none'; // Começa escondido
-        if(btnConfirmar) btnConfirmar.style.display = 'block'; // Deixe SEMPRE display=block
-    } else {
-        dataHorarioContainer.style.display = 'none'; // Começa escondido até um serviço ser selecionado
-        resumoContainer.style.display = 'none';
-        if(btnConfirmar) btnConfirmar.style.display = 'block';
-    }
+    if (dataHorarioContainer) dataHorarioContainer.style.display = 'none';
+    if (resumoContainer) resumoContainer.style.display = 'none';
+    if (btnConfirmar) btnConfirmar.style.display = 'block';
 }
 
-/**
- * NOVO: Limpa toda a UI do agendamento, desmarcando seleções, escondendo containers
- * e limpando resumos. Use após salvar ou resetar agendamento.
- */
 export function limparUIAgendamento() {
     limparSelecao('profissional');
     limparSelecao('servico');
     limparSelecao('horario');
-    // Esconde containers
+
     const dataHorarioContainer = document.getElementById('data-e-horario-container');
     if (dataHorarioContainer) dataHorarioContainer.style.display = 'none';
+
     const resumoContainer = document.getElementById('servicos-resumo-container');
     if (resumoContainer) resumoContainer.style.display = 'none';
-    // Limpa resumo final
+
     const resumoFinal = document.getElementById('resumo-agendamento-final');
     if (resumoFinal) resumoFinal.innerHTML = '';
-    // Desabilita botão
+
     desabilitarBotaoConfirmar();
 }
