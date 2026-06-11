@@ -983,6 +983,15 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     const observacaoPet = escaparHTML(String(ag.observacaoPet || "").trim());
     const observacaoAgendamento = escaparHTML(String(ag.observacaoAgendamento || "").trim());
 
+    const quantidadeObservacoes =
+      (observacaoAgendamento ? 1 : 0) +
+      (observacaoPet ? 1 : 0);
+
+    const classeGridObservacoes =
+      quantidadeObservacoes === 1
+        ? "agenda-pet-alert-grid agenda-pet-alert-grid--full"
+        : "agenda-pet-alert-grid";
+
     const petNome = escaparHTML(ag.petNome || "Pet não informado");
     const petPorte = escaparHTML(ag.petPorte || "");
     const petRaca = escaparHTML(ag.petRaca || ag.racaPet || ag.raca || "");
@@ -1038,7 +1047,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
         ${
           observacaoAgendamento || observacaoPet
             ? `
-              <div class="agenda-pet-alert-grid">
+              <div class="${classeGridObservacoes}">
                 ${
                   observacaoAgendamento
                     ? `
