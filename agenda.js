@@ -534,6 +534,42 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     else if (ag.status === "realizado")
       statusLabel = "<span class='status-label status-realizado'>Realizado</span>";
 
+    const observacaoPet = String(ag.observacaoPet || "").trim();
+    const observacaoAgendamento = String(ag.observacaoAgendamento || "").trim();
+
+    const blocoPet = ag.petNome
+      ? `
+        <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;">
+          <p style="margin:0;"><b>🐾 Pet:</b> ${ag.petNome || "Não informado"}</p>
+          ${ag.petPorte ? `<p style="margin:4px 0 0 0;"><b>Porte:</b> ${ag.petPorte}</p>` : ""}
+        </div>
+      `
+      : "";
+
+    const blocoObservacoes = `
+      ${
+        observacaoAgendamento
+          ? `
+            <div style="margin-top:12px;padding:12px;border-radius:12px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
+              <div style="font-weight:800;margin-bottom:4px;">⚠️ Observação do atendimento</div>
+              <div style="white-space:pre-wrap;line-height:1.4;">${observacaoAgendamento}</div>
+            </div>
+          `
+          : ""
+      }
+
+      ${
+        observacaoPet
+          ? `
+            <div style="margin-top:10px;padding:12px;border-radius:12px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
+              <div style="font-weight:800;margin-bottom:4px;">📌 Cadastro do pet</div>
+              <div style="white-space:pre-wrap;line-height:1.4;">${observacaoPet}</div>
+            </div>
+          `
+          : ""
+      }
+    `;
+
     const cardElement = document.createElement("div");
     cardElement.className = "card card--agenda";
     cardElement.innerHTML = `
@@ -541,6 +577,10 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
             <div class="card-info">
                 <p><b>Cliente:</b> ${ag.clienteNome || "Não informado"}</p>
                 <p><b>Profissional:</b> ${ag.profissionalNome || "Não informado"}</p>
+
+                ${blocoPet}
+                ${blocoObservacoes}
+
                 <p>
                     <i class="fa-solid fa-calendar-day"></i>
                     <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
@@ -591,7 +631,6 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     listaAgendamentosDiv.appendChild(cardPadrao);
   }
 }
-
 // ----------- MODO DIA (INTELIGENTE) -----------
 function carregarAgendamentosDiaAtual() {
   const diaSelecionado = inputDataSemana.value;
