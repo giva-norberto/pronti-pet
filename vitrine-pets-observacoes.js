@@ -1,6 +1,6 @@
 // ======================================================================
 // ARQUIVO: vitrine-pets-observacoes.js
-// PRONTI PET - Observações importantes do pet no agendamento
+// PRONTI PET - Observação do atendimento na vitrine
 // ======================================================================
 
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
@@ -49,19 +49,17 @@ export async function obterObservacaoPetSelecionado(empresaId, user) {
         petSelecionado.id
     );
 
-    const observacao = String(
+    return String(
         petAtualizado?.observacoes ||
         petSelecionado?.observacoes ||
         ""
     ).trim();
-
-    return observacao;
 }
 
 // ======================================================================
-// Modal de alerta de observação do pet
+// Modal: perguntar observação do atendimento
 // ======================================================================
-function garantirModalObservacaoPet() {
+function garantirModalObservacaoAtendimento() {
     if (document.getElementById("modal-observacao-pet-pronti")) return;
 
     const modal = document.createElement("div");
@@ -71,19 +69,35 @@ function garantirModalObservacaoPet() {
     modal.innerHTML = `
         <div class="modal-observacao-pet-overlay">
             <div class="modal-observacao-pet-card">
-                <div class="modal-observacao-pet-icon">⚠️</div>
+                <div class="modal-observacao-pet-icon">🐾</div>
 
-                <h2>Atenção ao Pet</h2>
+                <h2>Algum detalhe importante?</h2>
 
                 <p class="modal-observacao-pet-texto">
-                    Este pet possui uma observação importante cadastrada:
+                    Deseja deixar alguma observação para este atendimento?
                 </p>
 
-                <div id="modal-observacao-pet-conteudo" class="modal-observacao-pet-conteudo"></div>
+                <textarea
+                    id="modal-observacao-atendimento-input"
+                    class="modal-observacao-pet-textarea"
+                    rows="4"
+                    maxlength="500"
+                    placeholder="Ex: Fazer tosa higiênica, limpar em volta dos olhos, não cortar muito curto..."
+                ></textarea>
 
-                <button type="button" id="btn-confirmar-observacao-pet">
-                    Entendi, continuar
-                </button>
+                <div class="modal-observacao-pet-ajuda">
+                    Essa informação será enviada para o pet shop junto com o agendamento.
+                </div>
+
+                <div class="modal-observacao-pet-botoes">
+                    <button type="button" id="btn-continuar-sem-observacao-pet">
+                        Continuar sem observação
+                    </button>
+
+                    <button type="button" id="btn-confirmar-observacao-pet">
+                        Salvar e continuar
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -111,7 +125,7 @@ function garantirModalObservacaoPet() {
 
         .modal-observacao-pet-card {
             width: 100%;
-            max-width: 420px;
+            max-width: 430px;
             background: #ffffff;
             border-radius: 22px;
             padding: 24px;
@@ -128,13 +142,13 @@ function garantirModalObservacaoPet() {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fef3c7;
+            background: #eef2ff;
             font-size: 1.8rem;
         }
 
         .modal-observacao-pet-card h2 {
             margin: 0 0 10px;
-            color: #92400e;
+            color: #4f46e5;
             font-size: 1.35rem;
             font-weight: 900;
         }
@@ -143,20 +157,53 @@ function garantirModalObservacaoPet() {
             color: #64748b;
             font-size: 0.95rem;
             margin-bottom: 14px;
+            line-height: 1.4;
         }
 
-        .modal-observacao-pet-conteudo {
-            background: #fffbeb;
-            border: 1.5px solid #facc15;
-            color: #78350f;
-            padding: 14px;
+        .modal-observacao-pet-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 105px;
+            border: 1.5px solid #dbe3ef;
+            background: #f8fafc;
             border-radius: 14px;
-            font-size: 0.98rem;
-            font-weight: 700;
+            padding: 13px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #1e293b;
+            outline: none;
             line-height: 1.45;
-            white-space: pre-wrap;
-            text-align: left;
-            margin-bottom: 18px;
+            margin-bottom: 10px;
+        }
+
+        .modal-observacao-pet-textarea:focus {
+            border-color: #4f46e5;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        }
+
+        .modal-observacao-pet-ajuda {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+        .modal-observacao-pet-botoes {
+            display: grid;
+            gap: 10px;
+        }
+
+        #btn-continuar-sem-observacao-pet {
+            width: 100%;
+            border: none;
+            border-radius: 13px;
+            padding: 12px 16px;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-weight: 900;
+            font-size: 0.95rem;
+            cursor: pointer;
         }
 
         #btn-confirmar-observacao-pet {
@@ -176,29 +223,32 @@ function garantirModalObservacaoPet() {
 }
 
 // ======================================================================
-// Mostrar modal se existir observação
+// Mostrar modal e retornar observação digitada
 // ======================================================================
-export function mostrarModalObservacaoPet(observacao) {
+export function perguntarObservacaoAtendimento() {
     return new Promise((resolve) => {
-        const texto = String(observacao || "").trim();
-
-        if (!texto) {
-            resolve(true);
-            return;
-        }
-
-        garantirModalObservacaoPet();
+        garantirModalObservacaoAtendimento();
 
         const modal = document.getElementById("modal-observacao-pet-pronti");
-        const conteudo = document.getElementById("modal-observacao-pet-conteudo");
+        const input = document.getElementById("modal-observacao-atendimento-input");
         const btnConfirmar = document.getElementById("btn-confirmar-observacao-pet");
+        const btnSemObservacao = document.getElementById("btn-continuar-sem-observacao-pet");
 
-        conteudo.textContent = texto;
+        input.value = "";
         modal.style.display = "block";
 
+        setTimeout(() => input.focus(), 100);
+
         btnConfirmar.onclick = () => {
+            const observacaoAgendamento = String(input.value || "").trim();
             modal.style.display = "none";
-            resolve(true);
+            resolve(observacaoAgendamento);
+        };
+
+        btnSemObservacao.onclick = () => {
+            input.value = "";
+            modal.style.display = "none";
+            resolve("");
         };
     });
 }
@@ -208,12 +258,10 @@ export function mostrarModalObservacaoPet(observacao) {
 // ======================================================================
 export async function validarObservacaoPetAntesDeAgendar(empresaId, user) {
     const observacaoPet = await obterObservacaoPetSelecionado(empresaId, user);
-
-    if (observacaoPet) {
-        await mostrarModalObservacaoPet(observacaoPet);
-    }
+    const observacaoAgendamento = await perguntarObservacaoAtendimento();
 
     return {
-        observacaoPet
+        observacaoPet,
+        observacaoAgendamento
     };
 }
