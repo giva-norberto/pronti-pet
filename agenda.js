@@ -985,11 +985,16 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
     const petNome = escaparHTML(ag.petNome || "Pet não informado");
     const petPorte = escaparHTML(ag.petPorte || "");
+    const petRaca = escaparHTML(ag.petRaca || ag.racaPet || ag.raca || "");
     const clienteNome = escaparHTML(ag.clienteNome || "Tutor não informado");
     const profissionalNome = escaparHTML(ag.profissionalNome || "Profissional não informado");
     const servicoNome = escaparHTML(ag.servicoNome || "Serviço não informado");
     const horarioTexto = escaparHTML(ag.horario || "Horário não informado");
     const dataTexto = formatarDataBrasileira(ag.data);
+
+    const subtituloPet = petRaca && petPorte
+      ? `${petRaca} • ${petPorte}`
+      : petRaca || petPorte || "Porte não informado";
 
     const petFotoUrl = String(ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || "").trim();
     const petFotoPath = montarCaminhoFotoPet(ag);
@@ -1007,20 +1012,19 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
           <div class="agenda-pet-identidade">
             ${fotoPetHtml}
             <div style="min-width:0;">
-              <div class="agenda-pet-kicker">Atendimento Pet</div>
+              <div class="agenda-pet-kicker">PET</div>
               <div class="agenda-pet-nome">${petNome}</div>
-              <div class="agenda-pet-sub">${petPorte ? `Porte: ${petPorte}` : "Porte não informado"}</div>
+              <div class="agenda-pet-sub">${subtituloPet}</div>
             </div>
           </div>
 
           <div class="agenda-pet-servico-top">
-            <span class="agenda-pet-servico-icone"><i class="fa-solid fa-scissors"></i></span>
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${servicoNome}</span>
-          </div>
-
-          <div class="agenda-pet-badge-status">
-            <span style="width:8px;height:8px;background:#bbf7d0;border-radius:50%;display:inline-block;"></span>
-            ${ag.status === "ativo" ? "ATIVO" : escaparHTML(ag.status || "STATUS")}
+            <span class="agenda-pet-servico-icone">
+              <i class="fa-solid fa-scissors"></i>
+            </span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              ${servicoNome}
+            </span>
           </div>
 
           <div class="agenda-pet-data-hora">
@@ -1066,17 +1070,12 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
         <div class="agenda-pet-pessoa-grid">
           <div class="agenda-pet-pet-tutor">
-            <div class="agenda-pet-mini-label">🐾 Pet <span class="agenda-pet-divider">|</span> 👤 Tutor</div>
-            <div class="agenda-pet-mini-value">
-              ${petNome}
-              ${petPorte ? `<span style="font-weight:800;color:#475569;"> • Porte: ${petPorte}</span>` : ""}
-              <span class="agenda-pet-divider">|</span>
-              ${clienteNome}
-            </div>
+            <div class="agenda-pet-mini-label">👤 Tutor</div>
+            <div class="agenda-pet-mini-value">${clienteNome}</div>
           </div>
 
           <div class="agenda-pet-profissional">
-            <div class="agenda-pet-mini-label" style="color:#15803d;">🧑‍🔧 Profissional</div>
+            <div class="agenda-pet-mini-label" style="color:#15803d;">🧑‍🔧 Banhista/Tosador</div>
             <div class="agenda-pet-mini-value">${profissionalNome}</div>
           </div>
         </div>
@@ -1085,7 +1084,6 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
           <div class="agenda-pet-status-linha">
             <span><i class="fa-solid fa-calendar-day"></i> ${dataTexto}</span>
             <span><i class="fa-solid fa-clock"></i> ${horarioTexto}</span>
-            <span><b>Status:</b> ${statusLabel}</span>
             ${
               ag.horarioFimExpediente
                 ? `<span><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</span>`
@@ -1093,13 +1091,17 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
             }
           </div>
 
-          ${
-            !isHistorico && ag.status === "ativo"
-              ? `<button class="btn-ausencia agenda-pet-botao-ausencia" data-id="${ag.id}" title="Marcar ausência">
-                  <i class="fa-solid fa-user-slash"></i> Marcar ausência
-                </button>`
-              : ""
-          }
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span>${statusLabel}</span>
+
+            ${
+              !isHistorico && ag.status === "ativo"
+                ? `<button class="btn-ausencia agenda-pet-botao-ausencia" data-id="${ag.id}" title="Marcar ausência">
+                    <i class="fa-solid fa-user-slash"></i> Marcar ausência
+                  </button>`
+                : ""
+            }
+          </div>
         </div>
 
         ${
@@ -1137,7 +1139,6 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     listaAgendamentosDiv.appendChild(cardPadrao);
   }
 }
-
 function carregarAgendamentosDiaAtual() {
   const diaSelecionado = inputDataSemana.value;
   atualizarLegendaSemana(diaSelecionado, diaSelecionado);
