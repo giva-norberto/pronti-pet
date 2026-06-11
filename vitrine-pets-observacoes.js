@@ -234,6 +234,11 @@ export function perguntarObservacaoAtendimento() {
         const btnConfirmar = document.getElementById("btn-confirmar-observacao-pet");
         const btnSemObservacao = document.getElementById("btn-continuar-sem-observacao-pet");
 
+        if (!modal || !input || !btnConfirmar || !btnSemObservacao) {
+            resolve("");
+            return;
+        }
+
         input.value = "";
         modal.style.display = "block";
 
@@ -241,13 +246,16 @@ export function perguntarObservacaoAtendimento() {
 
         btnConfirmar.onclick = () => {
             const observacaoAgendamento = String(input.value || "").trim();
+
             modal.style.display = "none";
+
             resolve(observacaoAgendamento);
         };
 
         btnSemObservacao.onclick = () => {
             input.value = "";
             modal.style.display = "none";
+
             resolve("");
         };
     });
@@ -257,11 +265,25 @@ export function perguntarObservacaoAtendimento() {
 // Função principal para usar antes de salvar agendamento
 // ======================================================================
 export async function validarObservacaoPetAntesDeAgendar(empresaId, user) {
-    const observacaoPet = await obterObservacaoPetSelecionado(empresaId, user);
-    const observacaoAgendamento = await perguntarObservacaoAtendimento();
+    let observacaoPet = "";
+    let observacaoAgendamento = "";
+
+    try {
+        observacaoPet = await obterObservacaoPetSelecionado(empresaId, user);
+    } catch (error) {
+        console.warn("⚠️ Não foi possível buscar observação do pet:", error);
+        observacaoPet = "";
+    }
+
+    try {
+        observacaoAgendamento = await perguntarObservacaoAtendimento();
+    } catch (error) {
+        console.warn("⚠️ Não foi possível perguntar observação do atendimento:", error);
+        observacaoAgendamento = "";
+    }
 
     return {
-        observacaoPet,
-        observacaoAgendamento
+        observacaoPet: String(observacaoPet || "").trim(),
+        observacaoAgendamento: String(observacaoAgendamento || "").trim()
     };
 }
