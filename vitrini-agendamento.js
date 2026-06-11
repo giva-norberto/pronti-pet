@@ -1,5 +1,6 @@
 import { db } from './vitrini-firebase.js';
 import { ofertarVagaParaFila } from './filaInteligenteEngine.js';
+import { validarObservacaoPetAntesDeAgendar } from './vitrine-pets-observacoes.js';
 
 import {
     collection,
@@ -206,6 +207,9 @@ export async function encontrarPrimeiraDataComSlots(empresaId, profissional, dur
 async function enviarEmailViaPHP(agendamento, currentUser) {
     try {
         const emailCliente = currentUser?.email;
+        const observacaoPetHtml = agendamento.observacaoPet
+            ? `<p><strong>Observação do Pet:</strong> ${agendamento.observacaoPet}</p>`
+            : "";
 
         if (emailCliente) {
             try {
@@ -219,6 +223,7 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
                             <h2>Agendamento Confirmado!</h2>
                             <p>Pet: ${agendamento.pet?.nome || ''}</p>
                             <p>Porte: ${agendamento.pet?.porte || ''}</p>
+                            ${observacaoPetHtml}
                             <p>Serviço: ${agendamento.servico?.nome || ''}</p>
                             <p>Profissional: ${agendamento.profissional?.nome || ''}</p>
                             <p>Data: ${agendamento.data || ''} às ${agendamento.horario || ''}</p>
@@ -247,6 +252,7 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
                             <p>Cliente: ${currentUser?.displayName || currentUser?.email || ''}</p>
                             <p>Pet: ${agendamento.pet?.nome || ''}</p>
                             <p>Porte: ${agendamento.pet?.porte || ''}</p>
+                            ${observacaoPetHtml}
                             <p>Serviço: ${agendamento.servico?.nome || ''}</p>
                             <p>Profissional: ${agendamento.profissional?.nome || ''}</p>
                             <p>Data: ${agendamento.data || ''} às ${agendamento.horario || ''}</p>
@@ -266,6 +272,30 @@ async function enviarEmailViaPHP(agendamento, currentUser) {
 
 export async function salvarAgendamento(empresaId, currentUser, agendamento) {
     try {
+        if (!empresaId) {
+            throw new Error("Empresa não identificada.");
+        }
+
+        if (!currentUser) {
+            throw new Error("Cliente não identificado.");
+        }
+
+        if (!agendamento) {
+            throw new Error("Dados do agendamento não encontrados.");
+        }
+
+        let observacaoPet = "";
+
+        try {
+            const dadosObservacaoPet = await validarObservacaoPetAntesDeAgendar(empresaId, currentUser);
+            observacaoPet = dadosObservacaoPet?.observacaoPet || "";
+            agendamento.observacaoPet = observacaoPet;
+        } catch (erroObservacaoPet) {
+            console.warn("⚠️ Não foi possível validar observação do pet antes de agendar:", erroObservacaoPet);
+            observacaoPet = agendamento?.pet?.observacoes || "";
+            agendamento.observacaoPet = observacaoPet;
+        }
+
         if (window.solicitarPermissaoParaNotificacoes) {
             console.log("🔔 Solicitando/Atualizando token de notificação antes de salvar...");
 
@@ -314,6 +344,7 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
             petId: agendamento.pet?.id || null,
             petNome: agendamento.pet?.nome || "",
             petPorte: agendamento.pet?.porte || "",
+            observacaoPet: observacaoPet || "",
 
             data: agendamento.data,
             horario: agendamento.horario,
@@ -335,10 +366,14 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
             try {
                 const filaRef = collection(db, "filaDeNotificacoes");
 
+                const mensagemObservacao = observacaoPet
+                    ? ` Observação do pet: ${observacaoPet}`
+                    : "";
+
                 await addDoc(filaRef, {
                     donoId: agendamento.empresa.donoId,
                     titulo: "🎉 Novo Agendamento!",
-                    mensagem: `${currentUser.displayName} agendou ${agendamento.servico.nome}${agendamento.pet?.nome ? ` para ${agendamento.pet.nome}` : ""} com ${agendamento.profissional.nome} às ${agendamento.horario}.`,
+                    mensagem: `${currentUser.displayName} agendou ${agendamento.servico.nome}${agendamento.pet?.nome ? ` para ${agendamento.pet.nome}` : ""} com ${agendamento.profissional.nome} às ${agendamento.horario}.${mensagemObservacao}`,
                     criadoEm: serverTimestamp(),
                     status: "pendente"
                 });
