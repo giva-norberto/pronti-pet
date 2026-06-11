@@ -987,10 +987,10 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
       (observacaoAgendamento ? 1 : 0) +
       (observacaoPet ? 1 : 0);
 
-    const classeGridObservacoes =
+    const estiloGridObservacoes =
       quantidadeObservacoes === 1
-        ? "agenda-pet-alert-grid agenda-pet-alert-grid--full"
-        : "agenda-pet-alert-grid";
+        ? "grid-template-columns:1fr;"
+        : "grid-template-columns:1fr 1fr;";
 
     const petNome = escaparHTML(ag.petNome || "Pet não informado");
     const petPorte = escaparHTML(ag.petPorte || "");
@@ -1001,9 +1001,13 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     const horarioTexto = escaparHTML(ag.horario || "Horário não informado");
     const dataTexto = formatarDataBrasileira(ag.data);
 
-    const subtituloPet = petRaca && petPorte
-      ? `${petRaca} • ${petPorte}`
-      : petRaca || petPorte || "Porte não informado";
+    const porteFormatado = petPorte
+      ? petPorte.charAt(0).toUpperCase() + petPorte.slice(1).toLowerCase()
+      : "";
+
+    const subtituloPet = petRaca && porteFormatado
+      ? `${petRaca} • ${porteFormatado}`
+      : petRaca || porteFormatado || "Porte não informado";
 
     const petFotoUrl = String(ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || "").trim();
     const petFotoPath = montarCaminhoFotoPet(ag);
@@ -1047,7 +1051,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
         ${
           observacaoAgendamento || observacaoPet
             ? `
-              <div class="${classeGridObservacoes}">
+              <div class="agenda-pet-alert-grid" style="${estiloGridObservacoes}">
                 ${
                   observacaoAgendamento
                     ? `
@@ -1091,8 +1095,6 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
         <div class="agenda-pet-footer">
           <div class="agenda-pet-status-linha">
-            <span><i class="fa-solid fa-calendar-day"></i> ${dataTexto}</span>
-            <span><i class="fa-solid fa-clock"></i> ${horarioTexto}</span>
             ${
               ag.horarioFimExpediente
                 ? `<span><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</span>`
