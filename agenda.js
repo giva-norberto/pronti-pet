@@ -3,7 +3,7 @@
  * - Três modos: Dia, Semana, Histórico.
  * - Considera expediente dos profissionais para fechamento e filtro.
  * - Modal "Ausência" só aparece após expediente do dia.
- * - Mostra Pet, Tutor, Profissional e observações no card da agenda.
+ * - Mostra Pet, Tutor, Profissional, foto do pet e observações no card da agenda.
  */
 
 import { db, auth } from "./firebase-config.js";
@@ -78,6 +78,29 @@ function formatarDataBrasileira(dataISO) {
   if (!dataISO || dataISO.length !== 10) return dataISO;
   const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
+}
+
+function escaparHTML(valor) {
+  return String(valor || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function montarCaminhoFotoPet(ag) {
+  if (ag.petFotoPath) return ag.petFotoPath;
+
+  if (ag.empresaId && ag.clienteId && ag.petId) {
+    return `empresarios/${ag.empresaId}/clientes/${ag.clienteId}/pets/${ag.petId}/fotoPet.jpg`;
+  }
+
+  if (empresaId && ag.clienteId && ag.petId) {
+    return `empresarios/${empresaId}/clientes/${ag.clienteId}/pets/${ag.petId}/fotoPet.jpg`;
+  }
+
+  return "";
 }
 
 async function expedienteAcabou(empresaId, dataISO) {
@@ -585,105 +608,197 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
       statusLabel = "<span class='status-label status-realizado'>Realizado</span>";
     }
 
-    const observacaoPet = String(ag.observacaoPet || "").trim();
-    const observacaoAgendamento = String(ag.observacaoAgendamento || "").trim();
+    const observacaoPet = escaparHTML(String(ag.observacaoPet || "").trim());
+    const observacaoAgendamento = escaparHTML(String(ag.observacaoAgendamento || "").trim());
 
-    const petNome = ag.petNome || "Pet não informado";
-    const petPorte = ag.petPorte || "";
-    const clienteNome = ag.clienteNome || "Tutor não informado";
-    const profissionalNome = ag.profissionalNome || "Profissional não informado";
+    const petNome = escaparHTML(ag.petNome || "Pet não informado");
+    const petPorte = escaparHTML(ag.petPorte || "");
+    const clienteNome = escaparHTML(ag.clienteNome || "Tutor não informado");
+    const profissionalNome = escaparHTML(ag.profissionalNome || "Profissional não informado");
+    const servicoNome = escaparHTML(ag.servicoNome || "Serviço não informado");
+    const horarioTexto = escaparHTML(ag.horario || "Horário não informado");
+
+    const petFotoUrl = String(ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || "").trim();
+    const petFotoPath = montarCaminhoFotoPet(ag);
+
+    const fotoPetHtml = petFotoUrl
+      ? `
+        <img
+          src="${escaparHTML(petFotoUrl)}"
+          alt="Foto de ${petNome}"
+          title="${escaparHTML(petFotoPath)}"
+          style="
+            width:70px;
+            height:70px;
+            border-radius:22px;
+            object-fit:cover;
+            border:3px solid rgba(255,255,255,.9);
+            box-shadow:0 8px 18px rgba(15,23,42,.20);
+            background:#fff;
+            flex-shrink:0;
+          "
+        >
+      `
+      : `
+        <div
+          title="${escaparHTML(petFotoPath)}"
+          style="
+            width:70px;
+            height:70px;
+            border-radius:22px;
+            background:rgba(255,255,255,.18);
+            border:3px solid rgba(255,255,255,.55);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:2rem;
+            box-shadow:0 8px 18px rgba(15,23,42,.16);
+            flex-shrink:0;
+          "
+        >
+          🐾
+        </div>
+      `;
 
     const cardElement = document.createElement("div");
     cardElement.className = "card card--agenda";
 
     cardElement.innerHTML = `
       <div style="
-        margin:-1px -1px 16px -1px;
-        padding:16px 18px;
-        border-radius:16px 16px 0 0;
-        background:linear-gradient(135deg,#4f46e5,#6366f1);
+        margin:-1px -1px 18px -1px;
+        padding:18px;
+        border-radius:18px 18px 0 0;
+        background:linear-gradient(135deg,#4f46e5 0%,#6366f1 48%,#8b5cf6 100%);
         color:#ffffff;
-        box-shadow:0 8px 18px rgba(79,70,229,0.18);
+        box-shadow:0 10px 22px rgba(79,70,229,0.20);
       ">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-          <div>
-            <div style="font-size:0.78rem;font-weight:800;opacity:.9;text-transform:uppercase;letter-spacing:.04em;">
-              Atendimento Pet
-            </div>
-            <div style="font-size:1.15rem;font-weight:900;margin-top:4px;">
-              🐾 ${petNome}
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:14px;min-width:240px;">
+            ${fotoPetHtml}
+
+            <div>
+              <div style="font-size:0.75rem;font-weight:900;opacity:.9;text-transform:uppercase;letter-spacing:.06em;">
+                Atendimento Pet
+              </div>
+
+              <div style="font-size:1.25rem;font-weight:900;margin-top:4px;line-height:1.1;">
+                ${petNome}
+              </div>
+
+              <div style="font-size:.9rem;font-weight:700;opacity:.95;margin-top:5px;">
+                ${petPorte ? `Porte: ${petPorte}` : "Porte não informado"}
+              </div>
             </div>
           </div>
-          <div style="background:rgba(255,255,255,.18);padding:8px 12px;border-radius:999px;font-weight:900;font-size:.92rem;">
-            ${ag.horario || "Horário não informado"}
+
+          <div style="
+            background:rgba(255,255,255,.18);
+            padding:9px 14px;
+            border-radius:999px;
+            font-weight:900;
+            font-size:.95rem;
+            display:flex;
+            align-items:center;
+            gap:7px;
+          ">
+            <i class="fa-solid fa-clock"></i>
+            ${horarioTexto}
           </div>
         </div>
       </div>
 
-      <div class="card-title" style="color:#312e81;margin-bottom:12px;">
-        ${ag.servicoNome || "Serviço não informado"}
-      </div>
-
-      <div class="card-info">
-        <div style="
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-          gap:10px;
-          margin-bottom:12px;
+      <div style="padding:0 2px 2px 2px;">
+        <div class="card-title" style="
+          color:#312e81;
+          margin-bottom:14px;
+          font-size:1.05rem;
+          font-weight:900;
+          display:flex;
+          align-items:center;
+          gap:8px;
         ">
-          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">🐾 Pet</p>
-            <p style="margin:0;font-weight:900;color:#1e293b;">${petNome}</p>
-            ${petPorte ? `<p style="margin:4px 0 0 0;color:#334155;"><b>Porte:</b> ${petPorte}</p>` : ""}
-          </div>
-
-          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">👤 Tutor</p>
-            <p style="margin:0;font-weight:900;color:#1e293b;">${clienteNome}</p>
-          </div>
-
-          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">🧑‍🔧 Profissional</p>
-            <p style="margin:0;font-weight:900;color:#1e293b;">${profissionalNome}</p>
-          </div>
+          <span style="
+            width:34px;
+            height:34px;
+            border-radius:11px;
+            background:#eef2ff;
+            color:#4f46e5;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+          ">
+            <i class="fa-solid fa-scissors"></i>
+          </span>
+          ${servicoNome}
         </div>
 
-        ${
-          observacaoAgendamento
-            ? `
-              <div style="margin-top:12px;padding:13px 14px;border-radius:14px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
-                <div style="font-weight:900;margin-bottom:5px;">⚠️ Observação do atendimento</div>
-                <div style="white-space:pre-wrap;line-height:1.45;">${observacaoAgendamento}</div>
-              </div>
-            `
-            : ""
-        }
+        <div class="card-info">
+          <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+            gap:10px;
+            margin-bottom:12px;
+          ">
+            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">🐾 Pet</p>
+              <p style="margin:0;font-weight:900;color:#1e293b;">${petNome}</p>
+              ${petPorte ? `<p style="margin:4px 0 0 0;color:#334155;"><b>Porte:</b> ${petPorte}</p>` : ""}
+            </div>
 
-        ${
-          observacaoPet
-            ? `
-              <div style="margin-top:10px;padding:13px 14px;border-radius:14px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
-                <div style="font-weight:900;margin-bottom:5px;">📌 Cadastro do pet</div>
-                <div style="white-space:pre-wrap;line-height:1.45;">${observacaoPet}</div>
-              </div>
-            `
-            : ""
-        }
+            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">👤 Tutor</p>
+              <p style="margin:0;font-weight:900;color:#1e293b;">${clienteNome}</p>
+            </div>
 
-        <p style="margin-top:14px;">
-          <i class="fa-solid fa-calendar-day"></i>
-          <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
-          <i class="fa-solid fa-clock"></i>
-          <span class="card-agenda-hora">${ag.horario || "Não informada"}</span>
-        </p>
+            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">🧑‍🔧 Profissional</p>
+              <p style="margin:0;font-weight:900;color:#1e293b;">${profissionalNome}</p>
+            </div>
+          </div>
 
-        <p><b>Status:</b> ${statusLabel}</p>
+          ${
+            observacaoAgendamento
+              ? `
+                <div style="margin-top:12px;padding:13px 14px;border-radius:14px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
+                  <div style="font-weight:900;margin-bottom:5px;">⚠️ Observação do atendimento</div>
+                  <div style="white-space:pre-wrap;line-height:1.45;">${observacaoAgendamento}</div>
+                </div>
+              `
+              : ""
+          }
 
-        ${
-          ag.horarioFimExpediente
-            ? `<p><b>Fim do expediente:</b> ${ag.horarioFimExpediente}</p>`
-            : ""
-        }
+          ${
+            observacaoPet
+              ? `
+                <div style="margin-top:10px;padding:13px 14px;border-radius:14px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
+                  <div style="font-weight:900;margin-bottom:5px;">📌 Cadastro do pet</div>
+                  <div style="white-space:pre-wrap;line-height:1.45;">${observacaoPet}</div>
+                </div>
+              `
+              : ""
+          }
+
+          <p style="margin-top:14px;">
+            <i class="fa-solid fa-calendar-day"></i>
+            <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
+            <i class="fa-solid fa-clock"></i>
+            <span class="card-agenda-hora">${horarioTexto}</span>
+          </p>
+
+          <p><b>Status:</b> ${statusLabel}</p>
+
+          ${
+            ag.horarioFimExpediente
+              ? `<p><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</p>`
+              : ""
+          }
+
+          ${
+            petFotoPath
+              ? `<p style="display:none;" data-pet-foto-path="${escaparHTML(petFotoPath)}"></p>`
+              : ""
+          }
+        </div>
       </div>
 
       ${
