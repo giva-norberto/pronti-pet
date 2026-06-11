@@ -110,6 +110,13 @@ function aplicarEstiloAgendaPet() {
   style.textContent = `
     body {
       background: #eef2f7;
+      overflow-x: hidden;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
     }
 
     main,
@@ -124,6 +131,9 @@ function aplicarEstiloAgendaPet() {
       background: #eef2f7;
       padding: 18px;
       border-radius: 20px;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .card--agenda {
@@ -134,6 +144,7 @@ function aplicarEstiloAgendaPet() {
       overflow: hidden !important;
       margin: 0 auto 18px auto !important;
       max-width: 1180px;
+      width: 100%;
     }
 
     .agenda-pet-card-header {
@@ -250,9 +261,16 @@ function aplicarEstiloAgendaPet() {
 
     .agenda-pet-alert-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
       margin-bottom: 12px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .agenda-pet-alert-grid--full {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .agenda-pet-alerta,
@@ -263,6 +281,9 @@ function aplicarEstiloAgendaPet() {
       gap: 11px;
       align-items: flex-start;
       min-height: 50px;
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
     }
 
     .agenda-pet-alerta {
@@ -302,9 +323,11 @@ function aplicarEstiloAgendaPet() {
 
     .agenda-pet-pessoa-grid {
       display: grid;
-      grid-template-columns: 1.3fr 1fr;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
       gap: 10px;
       align-items: stretch;
+      width: 100%;
+      max-width: 100%;
     }
 
     .agenda-pet-pet-tutor,
@@ -312,6 +335,8 @@ function aplicarEstiloAgendaPet() {
       border-radius: 14px;
       padding: 11px 13px;
       border: 1px solid #dbeafe;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .agenda-pet-pet-tutor {
@@ -388,6 +413,46 @@ function aplicarEstiloAgendaPet() {
     .status-falta { background: #ffedd5; color: #c2410c; }
     .status-realizado { background: #e0f2fe; color: #0369a1; }
 
+    #filtro-profissional,
+    #data-semana,
+    #data-inicial,
+    #data-final {
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid #dbe3ef;
+      background: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      padding: 8px 12px;
+      outline: none;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+    }
+
+    #btn-agenda-dia,
+    #btn-agenda-semana,
+    #btn-historico,
+    #btn-semana-proxima,
+    #btn-aplicar-historico,
+    #btn-mes-atual {
+      border-radius: 12px;
+      border: 1px solid #dbe3ef;
+      background: #ffffff;
+      color: #334155;
+      font-weight: 900;
+      min-height: 42px;
+      padding: 8px 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+    }
+
+    #btn-agenda-dia.active,
+    #btn-agenda-semana.active,
+    #btn-historico.active {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
     @media (max-width: 900px) {
       #lista-agendamentos {
         padding: 12px;
@@ -396,6 +461,7 @@ function aplicarEstiloAgendaPet() {
       .card--agenda {
         border-radius: 16px !important;
         margin-bottom: 14px !important;
+        max-width: 100% !important;
       }
 
       .agenda-pet-header-grid {
@@ -410,8 +476,11 @@ function aplicarEstiloAgendaPet() {
       }
 
       .agenda-pet-alert-grid,
+      .agenda-pet-alert-grid--full,
       .agenda-pet-pessoa-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100%;
+        max-width: 100%;
       }
 
       .agenda-pet-footer {
@@ -618,59 +687,82 @@ async function inicializarPaginaAgenda() {
     dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
   }
 
-  inputDataSemana.value = dataFiltrar;
+  if (inputDataSemana) inputDataSemana.value = dataFiltrar;
   configurarListeners();
   ativarModoAgenda("dia");
 }
 
 function configurarListeners() {
-  btnAgendaDia.addEventListener("click", async () => {
-    let hojeISO = formatarDataISO(new Date());
-    let acabou = await expedienteAcabou(empresaId, hojeISO);
-    let dataFiltrar = hojeISO;
+  if (btnAgendaDia) {
+    btnAgendaDia.addEventListener("click", async () => {
+      let hojeISO = formatarDataISO(new Date());
+      let acabou = await expedienteAcabou(empresaId, hojeISO);
+      let dataFiltrar = hojeISO;
 
-    if (acabou) {
-      dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
-    }
-
-    inputDataSemana.value = dataFiltrar;
-    ativarModoAgenda("dia");
-  });
-
-  btnAgendaSemana.addEventListener("click", () => ativarModoAgenda("semana"));
-  btnHistorico.addEventListener("click", () => ativarModoAgenda("historico"));
-  filtroProfissionalEl.addEventListener("change", carregarAgendamentosConformeModo);
-  inputDataSemana.addEventListener("change", carregarAgendamentosConformeModo);
-
-  btnSemanaProxima.addEventListener("click", () => {
-    const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
-    const dataAtual = new Date(ano, mes - 1, dia);
-    dataAtual.setDate(dataAtual.getDate() + 7);
-    inputDataSemana.value = formatarDataISO(dataAtual);
-    carregarAgendamentosConformeModo();
-  });
-
-  btnAplicarHistorico.addEventListener("click", function(e) {
-    e.preventDefault();
-    carregarAgendamentosHistorico();
-  });
-
-  btnMesAtual.addEventListener("click", () => {
-    preencherCamposMesAtual();
-    carregarAgendamentosHistorico();
-  });
-
-  listaAgendamentosDiv.addEventListener("click", async (e) => {
-    const btnAusencia = e.target.closest(".btn-ausencia");
-
-    if (btnAusencia) {
-      const agendamentoId = btnAusencia.dataset.id;
-
-      if (confirm("Marcar ausência deste cliente? Isso ficará registrado no histórico.")) {
-        await marcarNaoCompareceu(agendamentoId);
+      if (acabou) {
+        dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
       }
-    }
-  });
+
+      if (inputDataSemana) inputDataSemana.value = dataFiltrar;
+      ativarModoAgenda("dia");
+    });
+  }
+
+  if (btnAgendaSemana) {
+    btnAgendaSemana.addEventListener("click", () => ativarModoAgenda("semana"));
+  }
+
+  if (btnHistorico) {
+    btnHistorico.addEventListener("click", () => ativarModoAgenda("historico"));
+  }
+
+  if (filtroProfissionalEl) {
+    filtroProfissionalEl.addEventListener("change", carregarAgendamentosConformeModo);
+  }
+
+  if (inputDataSemana) {
+    inputDataSemana.addEventListener("change", carregarAgendamentosConformeModo);
+  }
+
+  if (btnSemanaProxima) {
+    btnSemanaProxima.addEventListener("click", () => {
+      if (!inputDataSemana || !inputDataSemana.value) return;
+
+      const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
+      const dataAtual = new Date(ano, mes - 1, dia);
+      dataAtual.setDate(dataAtual.getDate() + 7);
+      inputDataSemana.value = formatarDataISO(dataAtual);
+      carregarAgendamentosConformeModo();
+    });
+  }
+
+  if (btnAplicarHistorico) {
+    btnAplicarHistorico.addEventListener("click", function(e) {
+      e.preventDefault();
+      carregarAgendamentosHistorico();
+    });
+  }
+
+  if (btnMesAtual) {
+    btnMesAtual.addEventListener("click", () => {
+      preencherCamposMesAtual();
+      carregarAgendamentosHistorico();
+    });
+  }
+
+  if (listaAgendamentosDiv) {
+    listaAgendamentosDiv.addEventListener("click", async (e) => {
+      const btnAusencia = e.target.closest(".btn-ausencia");
+
+      if (btnAusencia) {
+        const agendamentoId = btnAusencia.dataset.id;
+
+        if (confirm("Marcar ausência deste cliente? Isso ficará registrado no histórico.")) {
+          await marcarNaoCompareceu(agendamentoId);
+        }
+      }
+    });
+  }
 }
 
 async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
@@ -740,14 +832,20 @@ function carregarAgendamentosConformeModo() {
 function ativarModoAgenda(modo) {
   modoAgenda = modo;
 
-  document.getElementById("filtros-semana-container").style.display =
-    modo === "semana" || modo === "dia" ? "flex" : "none";
+  const filtrosSemanaContainer = document.getElementById("filtros-semana-container");
 
-  filtrosHistoricoDiv.style.display = modo === "historico" ? "flex" : "none";
+  if (filtrosSemanaContainer) {
+    filtrosSemanaContainer.style.display =
+      modo === "semana" || modo === "dia" ? "flex" : "none";
+  }
 
-  btnAgendaDia.classList.toggle("active", modo === "dia");
-  btnAgendaSemana.classList.toggle("active", modo === "semana");
-  btnHistorico.classList.toggle("active", modo === "historico");
+  if (filtrosHistoricoDiv) {
+    filtrosHistoricoDiv.style.display = modo === "historico" ? "flex" : "none";
+  }
+
+  if (btnAgendaDia) btnAgendaDia.classList.toggle("active", modo === "dia");
+  if (btnAgendaSemana) btnAgendaSemana.classList.toggle("active", modo === "semana");
+  if (btnHistorico) btnHistorico.classList.toggle("active", modo === "historico");
 
   carregarAgendamentosConformeModo();
 }
@@ -982,10 +1080,10 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
       (observacaoAgendamento ? 1 : 0) +
       (observacaoPet ? 1 : 0);
 
-    const estiloGridObservacoes =
+    const classeGridObservacoes =
       quantidadeObservacoes === 1
-        ? "grid-template-columns:1fr;"
-        : "grid-template-columns:1fr 1fr;";
+        ? "agenda-pet-alert-grid agenda-pet-alert-grid--full"
+        : "agenda-pet-alert-grid";
 
     const petNome = escaparHTML(ag.petNome || "Pet não informado");
     const petPorte = escaparHTML(ag.petPorte || "");
@@ -1046,7 +1144,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
         ${
           observacaoAgendamento || observacaoPet
             ? `
-              <div class="agenda-pet-alert-grid" style="${estiloGridObservacoes}">
+              <div class="${classeGridObservacoes}">
                 ${
                   observacaoAgendamento
                     ? `
@@ -1097,7 +1195,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
             }
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;">
             <span>${statusLabel}</span>
 
             ${
@@ -1145,8 +1243,9 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     listaAgendamentosDiv.appendChild(cardPadrao);
   }
 }
+
 function carregarAgendamentosDiaAtual() {
-  const diaSelecionado = inputDataSemana.value;
+  const diaSelecionado = inputDataSemana?.value || formatarDataISO(new Date());
   atualizarLegendaSemana(diaSelecionado, diaSelecionado);
 
   const constraints = [where("data", "==", diaSelecionado)];
@@ -1160,7 +1259,7 @@ function carregarAgendamentosDiaAtual() {
 }
 
 function carregarAgendamentosSemana() {
-  const diaSelecionado = inputDataSemana.value;
+  const diaSelecionado = inputDataSemana?.value || formatarDataISO(new Date());
   const fimISO = getFimSemana(diaSelecionado);
   atualizarLegendaSemana(diaSelecionado, fimISO);
 
@@ -1179,8 +1278,8 @@ function carregarAgendamentosSemana() {
 }
 
 function carregarAgendamentosHistorico() {
-  const dataIni = dataInicialEl.value;
-  const dataFim = dataFinalEl.value;
+  const dataIni = dataInicialEl?.value;
+  const dataFim = dataFinalEl?.value;
 
   if (!dataIni || !dataFim) {
     mostrarToast("Por favor, selecione as datas de início e fim.", "#ef4444");
