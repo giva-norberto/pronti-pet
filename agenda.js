@@ -1,11 +1,9 @@
 /**
- * agenda.js - Pronti (versão completa e revisada, Firebase 10.13.2)
+ * agenda.js - Pronti Pet
  * - Três modos: Dia, Semana, Histórico.
  * - Considera expediente dos profissionais para fechamento e filtro.
- * - Modal "Ausência" (Não Compareceu) só aparece após expediente do dia.
- * - Só pergunta sobre ausência se o dia tinha expediente ativo de ao menos 1 profissional.
- * - Filtro DIA já pula para o próximo expediente se o dia atual acabou.
- * - Multi-empresa, profissional, e lógica completa de fechamento.
+ * - Modal "Ausência" só aparece após expediente do dia.
+ * - Mostra Pet, Tutor, Profissional e observações no card da agenda.
  */
 
 import { db, auth } from "./firebase-config.js";
@@ -21,14 +19,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-// ----------- MULTI-EMPRESA: Checa empresa ativa -----------
 let empresaId = localStorage.getItem("empresaAtivaId");
 if (!empresaId) {
   window.location.href = "selecionar-empresa.html";
   throw new Error("Nenhuma empresa ativa encontrada.");
 }
 
-// DOM Elements
 const listaAgendamentosDiv = document.getElementById("lista-agendamentos");
 const filtroProfissionalEl = document.getElementById("filtro-profissional");
 const btnAgendaDia = document.getElementById("btn-agenda-dia");
@@ -43,12 +39,10 @@ const dataFinalEl = document.getElementById("data-final");
 const btnAplicarHistorico = document.getElementById("btn-aplicar-historico");
 const btnMesAtual = document.getElementById("btn-mes-atual");
 
-// Nova lógica: modal de confirmação
 let modalFinalizarDia = null;
-
 let perfilUsuario = "dono";
 let meuUid = null;
-let modoAgenda = "dia"; // Padrão: dia
+let modoAgenda = "dia";
 
 const diasDaSemanaArr = [
   "domingo",
@@ -60,7 +54,6 @@ const diasDaSemanaArr = [
   "sabado",
 ];
 
-// ----------- UTILITÁRIOS -----------
 function mostrarToast(texto, cor = "#38bdf8") {
   if (typeof Toastify !== "undefined") {
     Toastify({
@@ -74,28 +67,30 @@ function mostrarToast(texto, cor = "#38bdf8") {
     alert(texto);
   }
 }
+
 function formatarDataISO(data) {
   const off = data.getTimezoneOffset();
   const dataLocal = new Date(data.getTime() - off * 60 * 1000);
   return dataLocal.toISOString().split("T")[0];
 }
+
 function formatarDataBrasileira(dataISO) {
   if (!dataISO || dataISO.length !== 10) return dataISO;
   const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
-// ----------- EXPEDIENTE PROFISSIONAIS -----------
-
 async function expedienteAcabou(empresaId, dataISO) {
   const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
   let maxFim = null;
   const dt = new Date(`${dataISO}T00:00:00`);
   const nomeDia = diasDaSemanaArr[dt.getDay()];
+
   for (const docProf of profs.docs) {
     const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
     const horariosSnap = await getDoc(horariosRef);
     if (!horariosSnap.exists()) continue;
+
     const conf = horariosSnap.data();
     if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
       for (const bloco of conf[nomeDia].blocos) {
@@ -103,49 +98,56 @@ async function expedienteAcabou(empresaId, dataISO) {
       }
     }
   }
-  if (!maxFim) return true; // não há expediente hoje
+
+  if (!maxFim) return true;
   const [h, m] = maxFim.split(":").map(Number);
   const fimExpediente = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), h, m);
   return Date.now() > fimExpediente.getTime();
 }
 
-// Regra extra: só pergunta ausência se o dia tinha expediente ativo
 async function diaTemExpediente(empresaId, dataISO) {
   const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
   const dt = new Date(`${dataISO}T00:00:00`);
   const nomeDia = diasDaSemanaArr[dt.getDay()];
+
   for (const docProf of profs.docs) {
     const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
     const horariosSnap = await getDoc(horariosRef);
     if (!horariosSnap.exists()) continue;
+
     const conf = horariosSnap.data();
     if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
       return true;
     }
   }
+
   return false;
 }
 
 async function encontrarProximoDiaComExpediente(empresaId, dataInicialISO) {
   let data = new Date(`${dataInicialISO}T00:00:00`);
-  for (let i = 0; i < 14; i++) { // até 2 semanas
+
+  for (let i = 0; i < 14; i++) {
     const nomeDia = diasDaSemanaArr[data.getDay()];
     const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
+
     for (const docProf of profs.docs) {
       const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
       const horariosSnap = await getDoc(horariosRef);
       if (!horariosSnap.exists()) continue;
+
       const conf = horariosSnap.data();
       if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
         return data.toISOString().split("T")[0];
       }
     }
+
     data.setDate(data.getDate() + 1);
   }
-  return dataInicialISO; // fallback para o mesmo dia se não encontrar
+
+  return dataInicialISO;
 }
 
-// ----------- LÓGICA DE DATAS -----------
 function getFimSemana(dataBaseStr) {
   const [ano, mes, dia] = dataBaseStr.split("-").map(Number);
   const inicio = new Date(ano, mes - 1, dia);
@@ -155,34 +157,40 @@ function getFimSemana(dataBaseStr) {
   fim.setDate(inicio.getDate() + diasAteDomingo - 1);
   return formatarDataISO(fim);
 }
+
 function atualizarLegendaSemana(inicioISO, fimISO) {
   if (legendaSemana) {
     legendaSemana.innerHTML = `Mostrando de <strong>${formatarDataBrasileira(inicioISO)}</strong> a <strong>${formatarDataBrasileira(fimISO)}</strong>`;
   }
 }
+
 function agendamentoJaVenceu(dataISO, horarioStr, horarioFimExpediente) {
   if (!dataISO) return false;
+
   if (horarioFimExpediente) {
     const [ano, mes, dia] = dataISO.split("-").map(Number);
     const [horaFim, minFim] = horarioFimExpediente.split(":").map(Number);
     const dataFimExp = new Date(ano, mes - 1, dia, horaFim, minFim, 0, 0);
     return Date.now() > dataFimExp.getTime();
   }
+
   if (!horarioStr) return false;
+
   const [ano, mes, dia] = dataISO.split("-").map(Number);
   const [hora, min] = horarioStr.split(":").map(Number);
   const dataAg = new Date(ano, mes - 1, dia, hora, min, 0, 0);
   return dataAg.getTime() < Date.now();
 }
+
 function isDataAnteriorOuHoje(dataISO) {
   const hojeISO = formatarDataISO(new Date());
   return dataISO <= hojeISO;
 }
 
-// ----------- AUTENTICAÇÃO E PERFIL -----------
 onAuthStateChanged(auth, async (user) => {
   if (!user) return (window.location.href = "login.html");
   meuUid = user.uid;
+
   try {
     perfilUsuario = await checarTipoUsuario(user.uid, empresaId);
     await inicializarPaginaAgenda();
@@ -200,22 +208,25 @@ async function checarTipoUsuario(uid, empresaId) {
       where("__name__", "==", empresaId)
     )
   );
+
   return docEmp.empty ? "funcionario" : "dono";
 }
 
-// ----------- INICIALIZAÇÃO DA PÁGINA/FILTRO INTELIGENTE -----------
 async function inicializarPaginaAgenda() {
   if (perfilUsuario === "dono") {
     await popularFiltroProfissionais();
   } else {
     document.getElementById("filtro-profissional-item").style.display = "none";
   }
+
   let hojeISO = formatarDataISO(new Date());
   let acabou = await expedienteAcabou(empresaId, hojeISO);
   let dataFiltrar = hojeISO;
+
   if (acabou) {
     dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
   }
+
   inputDataSemana.value = dataFiltrar;
   configurarListeners();
   ativarModoAgenda("dia");
@@ -226,16 +237,20 @@ function configurarListeners() {
     let hojeISO = formatarDataISO(new Date());
     let acabou = await expedienteAcabou(empresaId, hojeISO);
     let dataFiltrar = hojeISO;
+
     if (acabou) {
       dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
     }
+
     inputDataSemana.value = dataFiltrar;
     ativarModoAgenda("dia");
   });
+
   btnAgendaSemana.addEventListener("click", () => ativarModoAgenda("semana"));
   btnHistorico.addEventListener("click", () => ativarModoAgenda("historico"));
   filtroProfissionalEl.addEventListener("change", carregarAgendamentosConformeModo);
   inputDataSemana.addEventListener("change", carregarAgendamentosConformeModo);
+
   btnSemanaProxima.addEventListener("click", () => {
     const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
     const dataAtual = new Date(ano, mes - 1, dia);
@@ -244,11 +259,11 @@ function configurarListeners() {
     carregarAgendamentosConformeModo();
   });
 
-  // CORREÇÃO DO FILTRO HISTÓRICO
   btnAplicarHistorico.addEventListener("click", function(e) {
-    e.preventDefault(); // Evita qualquer ação submit caso o botão esteja em form.
+    e.preventDefault();
     carregarAgendamentosHistorico();
   });
+
   btnMesAtual.addEventListener("click", () => {
     preencherCamposMesAtual();
     carregarAgendamentosHistorico();
@@ -256,8 +271,10 @@ function configurarListeners() {
 
   listaAgendamentosDiv.addEventListener("click", async (e) => {
     const btnAusencia = e.target.closest(".btn-ausencia");
+
     if (btnAusencia) {
       const agendamentoId = btnAusencia.dataset.id;
+
       if (confirm("Marcar ausência deste cliente? Isso ficará registrado no histórico.")) {
         await marcarNaoCompareceu(agendamentoId);
       }
@@ -265,42 +282,49 @@ function configurarListeners() {
   });
 }
 
-// ----------- FECHAMENTO DE DIAS PENDENTES (considera expediente ativo) -----------
 async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
   const hojeISO = formatarDataISO(new Date());
   const ref = collection(db, "empresarios", empresaId, "agendamentos");
+
   const queryRetroativos = query(
     ref,
     where("data", "<", hojeISO),
     where("status", "==", "ativo")
   );
+
   const snapshotRetroativos = await getDocs(queryRetroativos);
 
   if (!window._finalizouDiasRetroativos && !snapshotRetroativos.empty) {
     const diasPendentes = {};
+
     snapshotRetroativos.docs.forEach((docSnap) => {
       const ag = docSnap.data();
       if (!diasPendentes[ag.data]) diasPendentes[ag.data] = [];
       diasPendentes[ag.data].push(docSnap);
     });
+
     const diasOrdenados = Object.keys(diasPendentes).sort();
     const dataPend = diasOrdenados[0];
     const docsPend = diasPendentes[dataPend];
+
     if (await expedienteAcabou(empresaId, dataPend) && await diaTemExpediente(empresaId, dataPend)) {
       exibirCardsAgendamento(docsPend, false);
+
       exibirModalFinalizarDia(docsPend, dataPend, async () => {
         window._finalizouDiasRetroativos = false;
         await checarFechamentoDiasPendentes(callbackQuandoFinalizar);
       });
+
       window._finalizouDiasRetroativos = true;
       return;
     }
   }
+
   window._finalizouDiasRetroativos = false;
+
   if (typeof callbackQuandoFinalizar === "function") callbackQuandoFinalizar();
 }
 
-// ----------- FUNÇÃO PARA MARCAR AUSÊNCIA -----------
 async function marcarNaoCompareceu(agendamentoId) {
   try {
     const agRef = doc(db, "empresarios", empresaId, "agendamentos", agendamentoId);
@@ -324,21 +348,24 @@ function carregarAgendamentosConformeModo() {
 
 function ativarModoAgenda(modo) {
   modoAgenda = modo;
+
   document.getElementById("filtros-semana-container").style.display =
     modo === "semana" || modo === "dia" ? "flex" : "none";
+
   filtrosHistoricoDiv.style.display = modo === "historico" ? "flex" : "none";
+
   btnAgendaDia.classList.toggle("active", modo === "dia");
   btnAgendaSemana.classList.toggle("active", modo === "semana");
   btnHistorico.classList.toggle("active", modo === "historico");
+
   carregarAgendamentosConformeModo();
 }
 
-// ----------- FILTRO PROFISSIONAL -----------
 async function popularFiltroProfissionais() {
   try {
     const snapshot = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
-    filtroProfissionalEl.innerHTML =
-      '<option value="todos">Todos os Profissionais</option>';
+    filtroProfissionalEl.innerHTML = '<option value="todos">Todos os Profissionais</option>';
+
     snapshot.forEach((doc) => {
       filtroProfissionalEl.appendChild(new Option(doc.data().nome, doc.id));
     });
@@ -347,9 +374,9 @@ async function popularFiltroProfissionais() {
   }
 }
 
-// ----------- CARREGAMENTO DE AGENDAMENTOS -----------
 async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico = false) {
   listaAgendamentosDiv.innerHTML = `<p>Carregando agendamentos...</p>`;
+
   try {
     await checarFechamentoDiasPendentes(async () => {
       const ref = collection(db, "empresarios", empresaId, "agendamentos");
@@ -363,17 +390,24 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
 
       let profConfigs = {};
       let profissionaisIds = new Set();
+
       snapshot.docs.forEach((docSnap) => {
         const ag = docSnap.data();
         if (ag.profissionalId) profissionaisIds.add(ag.profissionalId);
       });
+
       const profConfigsArr = await Promise.all(
         Array.from(profissionaisIds).map(async (profId) => {
           const horariosRef = doc(db, "empresarios", empresaId, "profissionais", profId, "configuracoes", "horarios");
           const horariosSnap = await getDoc(horariosRef);
-          return { profId, horarios: horariosSnap.exists() ? horariosSnap.data() : null };
+
+          return {
+            profId,
+            horarios: horariosSnap.exists() ? horariosSnap.data() : null
+          };
         })
       );
+
       profConfigsArr.forEach(({ profId, horarios }) => {
         profConfigs[profId] = horarios;
       });
@@ -382,13 +416,16 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
       let ultimoHorarioDia = null;
       let dataReferencia = null;
       let horarioFimExpediente = null;
+
       snapshot.docs.forEach((docSnap) => {
         const ag = docSnap.data();
         let horarioFim = null;
+
         if (ag.profissionalId && ag.data) {
           const dt = new Date(`${ag.data}T00:00:00`);
           const nomeDia = diasDaSemanaArr[dt.getDay()];
           const profHorarios = profConfigs[ag.profissionalId];
+
           if (
             profHorarios &&
             profHorarios[nomeDia] &&
@@ -400,6 +437,7 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
             }
           }
         }
+
         ag.horarioFimExpediente = horarioFim;
 
         if (
@@ -408,12 +446,15 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
         ) {
           docsVencidos.push(docSnap);
         }
+
         if (!isHistorico && ag.data) {
           if (!dataReferencia) dataReferencia = ag.data;
+
           if (ag.data === dataReferencia) {
             if (!ultimoHorarioDia || ag.horario > ultimoHorarioDia) {
               ultimoHorarioDia = ag.horario;
             }
+
             if (
               ag.horarioFimExpediente &&
               (!horarioFimExpediente ||
@@ -479,12 +520,15 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
         #btn-fechar-modal { background: #aaa; }
         </style>
     `;
+
   document.body.appendChild(modalFinalizarDia);
 
   document.getElementById("btn-finalizar-dia").onclick = async () => {
     const updates = [];
+
     for (const docSnap of docsVencidos) {
       const ag = docSnap.data();
+
       if (
         ag.status === "ativo" &&
         agendamentoJaVenceu(ag.data, ag.horario, ag.horarioFimExpediente) &&
@@ -506,11 +550,15 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
         );
       }
     }
+
     if (updates.length > 0) await Promise.all(updates);
+
     mostrarToast("Agendamentos finalizados como 'realizado'.");
     modalFinalizarDia.remove();
+
     if (typeof onFinalizarDia === "function") await onFinalizarDia();
   };
+
   document.getElementById("btn-fechar-modal").onclick = () => {
     modalFinalizarDia.remove();
   };
@@ -519,6 +567,7 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
 // ----------- CARD PADRÃO MAIS BONITO -----------
 function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
   listaAgendamentosDiv.innerHTML = "";
+
   docs.forEach((doc) => {
     const ag = { id: doc.id, ...doc.data() };
 
@@ -527,163 +576,226 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     }
 
     let statusLabel = "<span class='status-label status-ativo'>Ativo</span>";
-    if (ag.status === "cancelado_pelo_gestor" || ag.status === "cancelado")
+
+    if (ag.status === "cancelado_pelo_gestor" || ag.status === "cancelado") {
       statusLabel = "<span class='status-label status-cancelado'>Cancelado</span>";
-    else if (ag.status === "nao_compareceu")
+    } else if (ag.status === "nao_compareceu") {
       statusLabel = "<span class='status-label status-falta'>Falta</span>";
-    else if (ag.status === "realizado")
+    } else if (ag.status === "realizado") {
       statusLabel = "<span class='status-label status-realizado'>Realizado</span>";
+    }
 
     const observacaoPet = String(ag.observacaoPet || "").trim();
     const observacaoAgendamento = String(ag.observacaoAgendamento || "").trim();
 
-    const blocoPet = ag.petNome
-      ? `
-        <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;">
-          <p style="margin:0;"><b>🐾 Pet:</b> ${ag.petNome || "Não informado"}</p>
-          ${ag.petPorte ? `<p style="margin:4px 0 0 0;"><b>Porte:</b> ${ag.petPorte}</p>` : ""}
-        </div>
-      `
-      : "";
+    const petNome = ag.petNome || "Pet não informado";
+    const petPorte = ag.petPorte || "";
+    const clienteNome = ag.clienteNome || "Tutor não informado";
+    const profissionalNome = ag.profissionalNome || "Profissional não informado";
 
-    const blocoObservacoes = `
-      ${
-        observacaoAgendamento
-          ? `
-            <div style="margin-top:12px;padding:12px;border-radius:12px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
-              <div style="font-weight:800;margin-bottom:4px;">⚠️ Observação do atendimento</div>
-              <div style="white-space:pre-wrap;line-height:1.4;">${observacaoAgendamento}</div>
+    const cardElement = document.createElement("div");
+    cardElement.className = "card card--agenda";
+
+    cardElement.innerHTML = `
+      <div style="
+        margin:-1px -1px 16px -1px;
+        padding:16px 18px;
+        border-radius:16px 16px 0 0;
+        background:linear-gradient(135deg,#4f46e5,#6366f1);
+        color:#ffffff;
+        box-shadow:0 8px 18px rgba(79,70,229,0.18);
+      ">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.78rem;font-weight:800;opacity:.9;text-transform:uppercase;letter-spacing:.04em;">
+              Atendimento Pet
             </div>
-          `
-          : ""
-      }
+            <div style="font-size:1.15rem;font-weight:900;margin-top:4px;">
+              🐾 ${petNome}
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.18);padding:8px 12px;border-radius:999px;font-weight:900;font-size:.92rem;">
+            ${ag.horario || "Horário não informado"}
+          </div>
+        </div>
+      </div>
+
+      <div class="card-title" style="color:#312e81;margin-bottom:12px;">
+        ${ag.servicoNome || "Serviço não informado"}
+      </div>
+
+      <div class="card-info">
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+          gap:10px;
+          margin-bottom:12px;
+        ">
+          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">🐾 Pet</p>
+            <p style="margin:0;font-weight:900;color:#1e293b;">${petNome}</p>
+            ${petPorte ? `<p style="margin:4px 0 0 0;color:#334155;"><b>Porte:</b> ${petPorte}</p>` : ""}
+          </div>
+
+          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">👤 Tutor</p>
+            <p style="margin:0;font-weight:900;color:#1e293b;">${clienteNome}</p>
+          </div>
+
+          <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:800;">🧑‍🔧 Profissional</p>
+            <p style="margin:0;font-weight:900;color:#1e293b;">${profissionalNome}</p>
+          </div>
+        </div>
+
+        ${
+          observacaoAgendamento
+            ? `
+              <div style="margin-top:12px;padding:13px 14px;border-radius:14px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
+                <div style="font-weight:900;margin-bottom:5px;">⚠️ Observação do atendimento</div>
+                <div style="white-space:pre-wrap;line-height:1.45;">${observacaoAgendamento}</div>
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          observacaoPet
+            ? `
+              <div style="margin-top:10px;padding:13px 14px;border-radius:14px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
+                <div style="font-weight:900;margin-bottom:5px;">📌 Cadastro do pet</div>
+                <div style="white-space:pre-wrap;line-height:1.45;">${observacaoPet}</div>
+              </div>
+            `
+            : ""
+        }
+
+        <p style="margin-top:14px;">
+          <i class="fa-solid fa-calendar-day"></i>
+          <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
+          <i class="fa-solid fa-clock"></i>
+          <span class="card-agenda-hora">${ag.horario || "Não informada"}</span>
+        </p>
+
+        <p><b>Status:</b> ${statusLabel}</p>
+
+        ${
+          ag.horarioFimExpediente
+            ? `<p><b>Fim do expediente:</b> ${ag.horarioFimExpediente}</p>`
+            : ""
+        }
+      </div>
 
       ${
-        observacaoPet
+        !isHistorico && ag.status === "ativo"
           ? `
-            <div style="margin-top:10px;padding:12px;border-radius:12px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
-              <div style="font-weight:800;margin-bottom:4px;">📌 Cadastro do pet</div>
-              <div style="white-space:pre-wrap;line-height:1.4;">${observacaoPet}</div>
+            <div class="card-actions">
+              <button class="btn-ausencia" data-id="${ag.id}" title="Marcar ausência">
+                <i class="fa-solid fa-user-slash"></i> Ausência
+              </button>
             </div>
           `
           : ""
       }
     `;
 
-    const cardElement = document.createElement("div");
-    cardElement.className = "card card--agenda";
-    cardElement.innerHTML = `
-            <div class="card-title">${ag.servicoNome || "Serviço não informado"}</div>
-            <div class="card-info">
-                <p><b>Cliente:</b> ${ag.clienteNome || "Não informado"}</p>
-                <p><b>Profissional:</b> ${ag.profissionalNome || "Não informado"}</p>
-
-                ${blocoPet}
-                ${blocoObservacoes}
-
-                <p>
-                    <i class="fa-solid fa-calendar-day"></i>
-                    <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
-                    <i class="fa-solid fa-clock"></i>
-                    <span class="card-agenda-hora">${ag.horario || "Não informada"}</span>
-                </p>
-                <p><b>Status:</b> ${statusLabel}</p>
-                ${
-                  ag.horarioFimExpediente
-                    ? `<p><b>Fim do expediente:</b> ${ag.horarioFimExpediente}</p>`
-                    : ""
-                }
-            </div>
-            ${
-              !isHistorico && ag.status === "ativo"
-                ? `
-                <div class="card-actions">
-                    <button class="btn-ausencia" data-id="${ag.id}" title="Marcar ausência">
-                        <i class="fa-solid fa-user-slash"></i> Ausência
-                    </button>
-                </div>
-                `
-                : ""
-            }
-        `;
     listaAgendamentosDiv.appendChild(cardElement);
   });
 
   if (listaAgendamentosDiv.childElementCount === 0) {
     const cardPadrao = document.createElement("div");
     cardPadrao.className = "card card--agenda card--padrao-pronti";
+
     cardPadrao.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
-                <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;"><i class="fa-solid fa-calendar-check"></i></div>
-                <div class="card-title" style="color:#38bdf8;text-align:center;">Nenhum agendamento encontrado</div>
-                <div class="card-info" style="text-align:center;">
-                    <p style="margin:8px 0 0 0;">Sua agenda está livre para o período selecionado.<br>Que tal criar um novo agendamento? 😎</p>
-                </div>
-            </div>
-        `;
-    cardPadrao.style.background =
-      "linear-gradient(135deg, #e0f7fa 60%, #b2ebf2 100%)";
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
+        <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="card-title" style="color:#38bdf8;text-align:center;">Nenhum agendamento encontrado</div>
+        <div class="card-info" style="text-align:center;">
+          <p style="margin:8px 0 0 0;">Sua agenda está livre para o período selecionado.<br>Que tal criar um novo agendamento? 😎</p>
+        </div>
+      </div>
+    `;
+
+    cardPadrao.style.background = "linear-gradient(135deg, #e0f7fa 60%, #b2ebf2 100%)";
     cardPadrao.style.borderRadius = "14px";
     cardPadrao.style.boxShadow = "0 4px 20px #0001";
     cardPadrao.style.padding = "36px 18px 28px 18px";
     cardPadrao.style.maxWidth = "330px";
     cardPadrao.style.margin = "32px auto";
+
     listaAgendamentosDiv.appendChild(cardPadrao);
   }
 }
-// ----------- MODO DIA (INTELIGENTE) -----------
+
 function carregarAgendamentosDiaAtual() {
   const diaSelecionado = inputDataSemana.value;
   atualizarLegendaSemana(diaSelecionado, diaSelecionado);
+
   const constraints = [where("data", "==", diaSelecionado)];
   const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+
   if (profissionalId !== "todos") {
     constraints.push(where("profissionalId", "==", profissionalId));
   }
+
   buscarEExibirAgendamentos(constraints, "Nenhum agendamento ativo para este dia.");
 }
 
-// ----------- MODO SEMANA -----------
 function carregarAgendamentosSemana() {
   const diaSelecionado = inputDataSemana.value;
   const fimISO = getFimSemana(diaSelecionado);
   atualizarLegendaSemana(diaSelecionado, fimISO);
+
   const constraints = [
     where("data", ">=", diaSelecionado),
     where("data", "<=", fimISO),
   ];
+
   const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+
   if (profissionalId !== "todos") {
     constraints.push(where("profissionalId", "==", profissionalId));
   }
+
   buscarEExibirAgendamentos(constraints, "Nenhum agendamento ativo para este período.");
 }
 
-// ----------- MODO HISTÓRICO -----------
 function carregarAgendamentosHistorico() {
   const dataIni = dataInicialEl.value;
   const dataFim = dataFinalEl.value;
+
   if (!dataIni || !dataFim) {
     mostrarToast("Por favor, selecione as datas de início e fim.", "#ef4444");
     return;
   }
+
   atualizarLegendaSemana(dataIni, dataFim);
+
   const constraints = [
     where("data", ">=", dataIni),
     where("data", "<=", dataFim),
   ];
+
   const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+
   if (profissionalId !== "todos") {
     constraints.push(where("profissionalId", "==", profissionalId));
   }
-  buscarEExibirAgendamentos(constraints, "Nenhum agendamento encontrado no histórico para este período.", true);
+
+  buscarEExibirAgendamentos(
+    constraints,
+    "Nenhum agendamento encontrado no histórico para este período.",
+    true
+  );
 }
 
-// ----------- FUNÇÕES AUXILIARES -----------
 function preencherCamposMesAtual() {
   const hoje = new Date();
   const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+
   if (dataInicialEl) dataInicialEl.value = formatarDataISO(primeiroDia);
   if (dataFinalEl) dataFinalEl.value = formatarDataISO(ultimoDia);
 }
