@@ -1,9 +1,8 @@
 /**
  * agenda.js - Pronti Pet
- * - Três modos: Dia, Semana, Histórico.
- * - Considera expediente dos profissionais para fechamento e filtro.
- * - Modal "Ausência" só aparece após expediente do dia.
- * - Mostra Pet, Tutor, Profissional, foto do pet e observações no card da agenda.
+ * - Agenda com fundo cinza e card pet compacto.
+ * - Mantém menu lateral original do Pronti.
+ * - Mostra Pet, Tutor, Profissional, observações e foto preparada.
  */
 
 import { db, auth } from "./firebase-config.js";
@@ -101,6 +100,377 @@ function montarCaminhoFotoPet(ag) {
   }
 
   return "";
+}
+
+function aplicarEstiloAgendaPet() {
+  if (document.getElementById("style-agenda-pet-cards")) return;
+
+  const style = document.createElement("style");
+  style.id = "style-agenda-pet-cards";
+  style.textContent = `
+    body {
+      background: #eef2f7;
+    }
+
+    main,
+    .main-content,
+    .content,
+    .page-content,
+    .dashboard-content {
+      background: #eef2f7 !important;
+    }
+
+    #lista-agendamentos {
+      background: #eef2f7;
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .card--agenda {
+      background: #ffffff !important;
+      border: 1px solid #dbe3ef !important;
+      border-radius: 18px !important;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.13) !important;
+      overflow: hidden !important;
+      margin: 0 auto 18px auto !important;
+      max-width: 1180px;
+    }
+
+    .agenda-pet-card-header {
+      background: linear-gradient(135deg, #312e81 0%, #4338ca 48%, #6366f1 100%);
+      color: #ffffff;
+      padding: 14px 18px;
+    }
+
+    .agenda-pet-header-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .agenda-pet-identidade {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .agenda-pet-foto,
+    .agenda-pet-foto-placeholder {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      flex-shrink: 0;
+      border: 3px solid rgba(255, 255, 255, .75);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, .20);
+      background: rgba(255,255,255,.16);
+    }
+
+    .agenda-pet-foto {
+      object-fit: cover;
+    }
+
+    .agenda-pet-foto-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+    }
+
+    .agenda-pet-kicker {
+      font-size: .72rem;
+      font-weight: 900;
+      opacity: .88;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+
+    .agenda-pet-nome {
+      font-size: 1.22rem;
+      font-weight: 950;
+      line-height: 1.1;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agenda-pet-sub {
+      font-size: .86rem;
+      font-weight: 700;
+      opacity: .95;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agenda-pet-servico-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 950;
+      font-size: 1rem;
+      min-width: 0;
+    }
+
+    .agenda-pet-servico-icone {
+      width: 36px;
+      height: 36px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.16);
+      flex-shrink: 0;
+    }
+
+    .agenda-pet-badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(16, 185, 129, .95);
+      padding: 8px 13px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: .84rem;
+      white-space: nowrap;
+    }
+
+    .agenda-pet-data-hora {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      white-space: nowrap;
+      font-weight: 950;
+      font-size: .96rem;
+    }
+
+    .agenda-pet-data-hora span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .agenda-pet-body {
+      padding: 14px 18px 16px 18px;
+      background: #ffffff;
+    }
+
+    .agenda-pet-alert-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .agenda-pet-alerta,
+    .agenda-pet-info {
+      padding: 11px 13px;
+      border-radius: 14px;
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      min-height: 50px;
+    }
+
+    .agenda-pet-alerta {
+      background: #fff7ed;
+      border: 1.5px solid #fb923c;
+      color: #7c2d12;
+    }
+
+    .agenda-pet-info {
+      background: #fffbeb;
+      border: 1.5px solid #facc15;
+      color: #78350f;
+    }
+
+    .agenda-pet-alert-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.55);
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .agenda-pet-box-title {
+      font-weight: 950;
+      margin-bottom: 3px;
+    }
+
+    .agenda-pet-box-text {
+      white-space: pre-wrap;
+      line-height: 1.36;
+      font-weight: 600;
+    }
+
+    .agenda-pet-pessoa-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .agenda-pet-pet-tutor,
+    .agenda-pet-profissional {
+      border-radius: 14px;
+      padding: 11px 13px;
+      border: 1px solid #dbeafe;
+    }
+
+    .agenda-pet-pet-tutor {
+      background: #f8fbff;
+    }
+
+    .agenda-pet-profissional {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .agenda-pet-mini-label {
+      color: #4f46e5;
+      font-size: .78rem;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .agenda-pet-mini-value {
+      color: #0f172a;
+      font-size: .96rem;
+      font-weight: 950;
+    }
+
+    .agenda-pet-divider {
+      display: inline-block;
+      margin: 0 10px;
+      color: #94a3b8;
+    }
+
+    .agenda-pet-footer {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .agenda-pet-status-linha {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    .agenda-pet-botao-ausencia {
+      border: 1.5px solid #fecaca;
+      background: #fff1f2;
+      color: #dc2626;
+      padding: 10px 16px;
+      border-radius: 13px;
+      font-weight: 950;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .agenda-pet-botao-ausencia:hover {
+      background: #ffe4e6;
+    }
+
+    .status-label {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: .78rem;
+    }
+
+    .status-ativo { background: #dcfce7; color: #15803d; }
+    .status-cancelado { background: #fee2e2; color: #b91c1c; }
+    .status-falta { background: #ffedd5; color: #c2410c; }
+    .status-realizado { background: #e0f2fe; color: #0369a1; }
+
+    @media (max-width: 900px) {
+      #lista-agendamentos {
+        padding: 12px;
+      }
+
+      .card--agenda {
+        border-radius: 16px !important;
+        margin-bottom: 14px !important;
+      }
+
+      .agenda-pet-header-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .agenda-pet-data-hora {
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .agenda-pet-alert-grid,
+      .agenda-pet-pessoa-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .agenda-pet-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .agenda-pet-botao-ausencia {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .agenda-pet-card-header {
+        padding: 13px;
+      }
+
+      .agenda-pet-body {
+        padding: 12px;
+      }
+
+      .agenda-pet-identidade {
+        align-items: flex-start;
+      }
+
+      .agenda-pet-foto,
+      .agenda-pet-foto-placeholder {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+      }
+
+      .agenda-pet-nome {
+        font-size: 1.08rem;
+      }
+
+      .agenda-pet-servico-top {
+        font-size: .95rem;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
 }
 
 async function expedienteAcabou(empresaId, dataISO) {
@@ -236,10 +606,13 @@ async function checarTipoUsuario(uid, empresaId) {
 }
 
 async function inicializarPaginaAgenda() {
+  aplicarEstiloAgendaPet();
+
   if (perfilUsuario === "dono") {
     await popularFiltroProfissionais();
   } else {
-    document.getElementById("filtro-profissional-item").style.display = "none";
+    const filtroItem = document.getElementById("filtro-profissional-item");
+    if (filtroItem) filtroItem.style.display = "none";
   }
 
   let hojeISO = formatarDataISO(new Date());
@@ -587,7 +960,6 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
   };
 }
 
-// ----------- CARD PADRÃO MAIS BONITO -----------
 function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
   listaAgendamentosDiv.innerHTML = "";
 
@@ -617,201 +989,125 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     const profissionalNome = escaparHTML(ag.profissionalNome || "Profissional não informado");
     const servicoNome = escaparHTML(ag.servicoNome || "Serviço não informado");
     const horarioTexto = escaparHTML(ag.horario || "Horário não informado");
+    const dataTexto = formatarDataBrasileira(ag.data);
 
     const petFotoUrl = String(ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || "").trim();
     const petFotoPath = montarCaminhoFotoPet(ag);
 
     const fotoPetHtml = petFotoUrl
-      ? `
-        <img
-          src="${escaparHTML(petFotoUrl)}"
-          alt="Foto de ${petNome}"
-          title="${escaparHTML(petFotoPath)}"
-          style="
-            width:70px;
-            height:70px;
-            border-radius:22px;
-            object-fit:cover;
-            border:3px solid rgba(255,255,255,.9);
-            box-shadow:0 8px 18px rgba(15,23,42,.20);
-            background:#fff;
-            flex-shrink:0;
-          "
-        >
-      `
-      : `
-        <div
-          title="${escaparHTML(petFotoPath)}"
-          style="
-            width:70px;
-            height:70px;
-            border-radius:22px;
-            background:rgba(255,255,255,.18);
-            border:3px solid rgba(255,255,255,.55);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:2rem;
-            box-shadow:0 8px 18px rgba(15,23,42,.16);
-            flex-shrink:0;
-          "
-        >
-          🐾
-        </div>
-      `;
+      ? `<img src="${escaparHTML(petFotoUrl)}" alt="Foto de ${petNome}" title="${escaparHTML(petFotoPath)}" class="agenda-pet-foto">`
+      : `<div title="${escaparHTML(petFotoPath)}" class="agenda-pet-foto-placeholder">🐾</div>`;
 
     const cardElement = document.createElement("div");
     cardElement.className = "card card--agenda";
 
     cardElement.innerHTML = `
-      <div style="
-        margin:-1px -1px 18px -1px;
-        padding:18px;
-        border-radius:18px 18px 0 0;
-        background:linear-gradient(135deg,#4f46e5 0%,#6366f1 48%,#8b5cf6 100%);
-        color:#ffffff;
-        box-shadow:0 10px 22px rgba(79,70,229,0.20);
-      ">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:14px;min-width:240px;">
+      <div class="agenda-pet-card-header">
+        <div class="agenda-pet-header-grid">
+          <div class="agenda-pet-identidade">
             ${fotoPetHtml}
-
-            <div>
-              <div style="font-size:0.75rem;font-weight:900;opacity:.9;text-transform:uppercase;letter-spacing:.06em;">
-                Atendimento Pet
-              </div>
-
-              <div style="font-size:1.25rem;font-weight:900;margin-top:4px;line-height:1.1;">
-                ${petNome}
-              </div>
-
-              <div style="font-size:.9rem;font-weight:700;opacity:.95;margin-top:5px;">
-                ${petPorte ? `Porte: ${petPorte}` : "Porte não informado"}
-              </div>
+            <div style="min-width:0;">
+              <div class="agenda-pet-kicker">Atendimento Pet</div>
+              <div class="agenda-pet-nome">${petNome}</div>
+              <div class="agenda-pet-sub">${petPorte ? `Porte: ${petPorte}` : "Porte não informado"}</div>
             </div>
           </div>
 
-          <div style="
-            background:rgba(255,255,255,.18);
-            padding:9px 14px;
-            border-radius:999px;
-            font-weight:900;
-            font-size:.95rem;
-            display:flex;
-            align-items:center;
-            gap:7px;
-          ">
-            <i class="fa-solid fa-clock"></i>
-            ${horarioTexto}
+          <div class="agenda-pet-servico-top">
+            <span class="agenda-pet-servico-icone"><i class="fa-solid fa-scissors"></i></span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${servicoNome}</span>
+          </div>
+
+          <div class="agenda-pet-badge-status">
+            <span style="width:8px;height:8px;background:#bbf7d0;border-radius:50%;display:inline-block;"></span>
+            ${ag.status === "ativo" ? "ATIVO" : escaparHTML(ag.status || "STATUS")}
+          </div>
+
+          <div class="agenda-pet-data-hora">
+            <span><i class="fa-solid fa-calendar-day"></i> ${dataTexto}</span>
+            <span><i class="fa-solid fa-clock"></i> ${horarioTexto}</span>
           </div>
         </div>
       </div>
 
-      <div style="padding:0 2px 2px 2px;">
-        <div class="card-title" style="
-          color:#312e81;
-          margin-bottom:14px;
-          font-size:1.05rem;
-          font-weight:900;
-          display:flex;
-          align-items:center;
-          gap:8px;
-        ">
-          <span style="
-            width:34px;
-            height:34px;
-            border-radius:11px;
-            background:#eef2ff;
-            color:#4f46e5;
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-          ">
-            <i class="fa-solid fa-scissors"></i>
-          </span>
-          ${servicoNome}
-        </div>
+      <div class="agenda-pet-body">
+        ${
+          observacaoAgendamento || observacaoPet
+            ? `
+              <div class="agenda-pet-alert-grid">
+                ${
+                  observacaoAgendamento
+                    ? `
+                      <div class="agenda-pet-alerta">
+                        <div class="agenda-pet-alert-icon">⚠️</div>
+                        <div>
+                          <div class="agenda-pet-box-title">Observação do atendimento</div>
+                          <div class="agenda-pet-box-text">${observacaoAgendamento}</div>
+                        </div>
+                      </div>`
+                    : ""
+                }
 
-        <div class="card-info">
-          <div style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-            gap:10px;
-            margin-bottom:12px;
-          ">
-            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">🐾 Pet</p>
-              <p style="margin:0;font-weight:900;color:#1e293b;">${petNome}</p>
-              ${petPorte ? `<p style="margin:4px 0 0 0;color:#334155;"><b>Porte:</b> ${petPorte}</p>` : ""}
-            </div>
+                ${
+                  observacaoPet
+                    ? `
+                      <div class="agenda-pet-info">
+                        <div class="agenda-pet-alert-icon">📌</div>
+                        <div>
+                          <div class="agenda-pet-box-title">Informações do Pet</div>
+                          <div class="agenda-pet-box-text">${observacaoPet}</div>
+                        </div>
+                      </div>`
+                    : ""
+                }
+              </div>`
+            : ""
+        }
 
-            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">👤 Tutor</p>
-              <p style="margin:0;font-weight:900;color:#1e293b;">${clienteNome}</p>
-            </div>
-
-            <div style="padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
-              <p style="margin:0 0 4px 0;color:#64748b;font-size:.82rem;font-weight:900;">🧑‍🔧 Profissional</p>
-              <p style="margin:0;font-weight:900;color:#1e293b;">${profissionalNome}</p>
+        <div class="agenda-pet-pessoa-grid">
+          <div class="agenda-pet-pet-tutor">
+            <div class="agenda-pet-mini-label">🐾 Pet <span class="agenda-pet-divider">|</span> 👤 Tutor</div>
+            <div class="agenda-pet-mini-value">
+              ${petNome}
+              ${petPorte ? `<span style="font-weight:800;color:#475569;"> • Porte: ${petPorte}</span>` : ""}
+              <span class="agenda-pet-divider">|</span>
+              ${clienteNome}
             </div>
           </div>
 
-          ${
-            observacaoAgendamento
-              ? `
-                <div style="margin-top:12px;padding:13px 14px;border-radius:14px;background:#fff7ed;border:1.5px solid #fb923c;color:#7c2d12;">
-                  <div style="font-weight:900;margin-bottom:5px;">⚠️ Observação do atendimento</div>
-                  <div style="white-space:pre-wrap;line-height:1.45;">${observacaoAgendamento}</div>
-                </div>
-              `
-              : ""
-          }
+          <div class="agenda-pet-profissional">
+            <div class="agenda-pet-mini-label" style="color:#15803d;">🧑‍🔧 Profissional</div>
+            <div class="agenda-pet-mini-value">${profissionalNome}</div>
+          </div>
+        </div>
+
+        <div class="agenda-pet-footer">
+          <div class="agenda-pet-status-linha">
+            <span><i class="fa-solid fa-calendar-day"></i> ${dataTexto}</span>
+            <span><i class="fa-solid fa-clock"></i> ${horarioTexto}</span>
+            <span><b>Status:</b> ${statusLabel}</span>
+            ${
+              ag.horarioFimExpediente
+                ? `<span><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</span>`
+                : ""
+            }
+          </div>
 
           ${
-            observacaoPet
-              ? `
-                <div style="margin-top:10px;padding:13px 14px;border-radius:14px;background:#fffbeb;border:1.5px solid #facc15;color:#78350f;">
-                  <div style="font-weight:900;margin-bottom:5px;">📌 Cadastro do pet</div>
-                  <div style="white-space:pre-wrap;line-height:1.45;">${observacaoPet}</div>
-                </div>
-              `
-              : ""
-          }
-
-          <p style="margin-top:14px;">
-            <i class="fa-solid fa-calendar-day"></i>
-            <span class="card-agenda-dia">${formatarDataBrasileira(ag.data)}</span>
-            <i class="fa-solid fa-clock"></i>
-            <span class="card-agenda-hora">${horarioTexto}</span>
-          </p>
-
-          <p><b>Status:</b> ${statusLabel}</p>
-
-          ${
-            ag.horarioFimExpediente
-              ? `<p><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</p>`
-              : ""
-          }
-
-          ${
-            petFotoPath
-              ? `<p style="display:none;" data-pet-foto-path="${escaparHTML(petFotoPath)}"></p>`
+            !isHistorico && ag.status === "ativo"
+              ? `<button class="btn-ausencia agenda-pet-botao-ausencia" data-id="${ag.id}" title="Marcar ausência">
+                  <i class="fa-solid fa-user-slash"></i> Marcar ausência
+                </button>`
               : ""
           }
         </div>
-      </div>
 
-      ${
-        !isHistorico && ag.status === "ativo"
-          ? `
-            <div class="card-actions">
-              <button class="btn-ausencia" data-id="${ag.id}" title="Marcar ausência">
-                <i class="fa-solid fa-user-slash"></i> Ausência
-              </button>
-            </div>
-          `
-          : ""
-      }
+        ${
+          petFotoPath
+            ? `<p style="display:none;" data-pet-foto-path="${escaparHTML(petFotoPath)}"></p>`
+            : ""
+        }
+      </div>
     `;
 
     listaAgendamentosDiv.appendChild(cardElement);
@@ -823,9 +1119,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
     cardPadrao.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
-        <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;">
-          <i class="fa-solid fa-calendar-check"></i>
-        </div>
+        <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;"><i class="fa-solid fa-calendar-check"></i></div>
         <div class="card-title" style="color:#38bdf8;text-align:center;">Nenhum agendamento encontrado</div>
         <div class="card-info" style="text-align:center;">
           <p style="margin:8px 0 0 0;">Sua agenda está livre para o período selecionado.<br>Que tal criar um novo agendamento? 😎</p>
