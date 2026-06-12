@@ -405,7 +405,31 @@ export function renderizarDadosIniciaisEmpresa(dadosEmpresa = {}, todosOsServico
     if (infoNegocio) {
         infoNegocio.innerHTML = `<p>${escapeHTML(dadosEmpresa.descricao || "Descrição não informada.")}</p>`;
     }
+    // ================================
+    // CARD MEUS PETS
+    // ================================
 
+const cardPetsContainer = document.getElementById('card-meus-pets');
+
+if (cardPetsContainer) {
+    cardPetsContainer.innerHTML = `
+        <div class="card-meus-pets-vitrine">
+            <div class="card-meus-pets-icon">🐾</div>
+
+            <div class="card-meus-pets-info">
+                <h3>Meus Pets</h3>
+                <p>Cadastre e gerencie seus pets antes do agendamento.</p>
+            </div>
+
+            <button
+                type="button"
+                id="btn-meus-pets"
+                class="btn-meus-pets">
+                Gerenciar Pets
+            </button>
+        </div>
+    `;
+}
     const servicosContainer = document.getElementById('info-servicos');
 
     if (servicosContainer) {
