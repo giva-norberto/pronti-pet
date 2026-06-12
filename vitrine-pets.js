@@ -1,6 +1,6 @@
 // ======================================================================
 // ARQUIVO: vitrine-pets.js
-// PRONTI PET - Cadastro e seleção de pet do cliente na vitrine
+// PRONTI PET - Cadastro, gestão e seleção de pet do cliente na vitrine
 // ======================================================================
 
 import {
@@ -27,18 +27,37 @@ import { db } from "./vitrini-firebase.js";
 // ======================================================================
 // Estado local dos pets
 // ======================================================================
+
 let petsCliente = [];
 let petSelecionado = null;
 
 // ======================================================================
 // Utilitários
 // ======================================================================
+
 function normalizarPorte(porte) {
     return String(porte || "")
         .trim()
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeHTML(valor) {
+    const div = document.createElement("div");
+    div.textContent = valor || "";
+    return div.innerHTML;
+}
+
+function nomePorte(porte) {
+    const mapa = {
+        pequeno: "Pequeno",
+        medio: "Médio",
+        grande: "Grande",
+        gigante: "Gigante"
+    };
+
+    return mapa[normalizarPorte(porte)] || "Porte não informado";
 }
 
 function getClientePetsRef(empresaId, clienteId) {
@@ -78,23 +97,40 @@ function podeAlterarFotoPet(pet) {
     }
 
     const dataAlteracao = getDataFotoAlteradaEm(pet?.fotoAlteradaEm);
-    if (!dataAlteracao) return true;
+
+    if (!dataAlteracao) {
+        return true;
+    }
 
     const agora = new Date();
-    const diasPassados = Math.floor((agora.getTime() - dataAlteracao.getTime()) / (1000 * 60 * 60 * 24));
+    const diasPassados = Math.floor(
+        (agora.getTime() - dataAlteracao.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     return diasPassados >= 30;
 }
 
 function diasParaLiberarTrocaFoto(pet) {
     const dataAlteracao = getDataFotoAlteradaEm(pet?.fotoAlteradaEm);
-    if (!dataAlteracao) return 0;
+
+    if (!dataAlteracao) {
+        return 0;
+    }
 
     const agora = new Date();
-    const diasPassados = Math.floor((agora.getTime() - dataAlteracao.getTime()) / (1000 * 60 * 60 * 24));
+    const diasPassados = Math.floor(
+        (agora.getTime() - dataAlteracao.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     const restante = 30 - diasPassados;
 
     return restante > 0 ? restante : 0;
+}
+
+function montarHtmlPreviewFoto(url) {
+    if (!url) return "🐾";
+
+    return `<img src="${escapeHTML(url)}" alt="Foto do pet">`;
 }
 
 function validarArquivoFotoPet(arquivo) {
@@ -141,16 +177,19 @@ async function enviarFotoPetStorage(empresaId, clienteId, petId, arquivoFoto) {
 // ======================================================================
 // Buscar pets do cliente
 // ======================================================================
+
 export async function buscarPetsDoCliente(empresaId, clienteId) {
     if (!empresaId || !clienteId) return [];
 
     const petsRef = getClientePetsRef(empresaId, clienteId);
     const snap = await getDocs(petsRef);
 
-    petsCliente = snap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data()
-    }));
+    petsCliente = snap.docs
+        .map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        }))
+        .filter((pet) => pet.ativo !== false);
 
     return petsCliente;
 }
@@ -158,6 +197,7 @@ export async function buscarPetsDoCliente(empresaId, clienteId) {
 // ======================================================================
 // Salvar pet
 // ======================================================================
+
 export async function salvarPetCliente(empresaId, clienteId, dadosPet) {
     if (!empresaId) throw new Error("Empresa não identificada.");
     if (!clienteId) throw new Error("Cliente não identificado.");
@@ -201,7 +241,12 @@ export async function salvarPetCliente(empresaId, clienteId, dadosPet) {
     };
 
     if (arquivoFoto) {
-        dadosFoto = await enviarFotoPetStorage(empresaId, clienteId, novoPetRef.id, arquivoFoto);
+        dadosFoto = await enviarFotoPetStorage(
+            empresaId,
+            clienteId,
+            novoPetRef.id,
+            arquivoFoto
+        );
 
         await updateDoc(novoPetRef, {
             fotoUrl: dadosFoto.fotoUrl,
@@ -228,6 +273,7 @@ export async function salvarPetCliente(empresaId, clienteId, dadosPet) {
 // ======================================================================
 // Atualizar foto do pet existente - trava de 30 dias
 // ======================================================================
+
 export async function atualizarFotoPetCliente(empresaId, clienteId, petId, arquivoFoto) {
     if (!empresaId) throw new Error("Empresa não identificada.");
     if (!clienteId) throw new Error("Cliente não identificado.");
@@ -253,7 +299,12 @@ export async function atualizarFotoPetCliente(empresaId, clienteId, petId, arqui
         throw new Error(`A foto deste pet só poderá ser alterada novamente em ${dias} dia(s).`);
     }
 
-    const dadosFoto = await enviarFotoPetStorage(empresaId, clienteId, petId, arquivoFoto);
+    const dadosFoto = await enviarFotoPetStorage(
+        empresaId,
+        clienteId,
+        petId,
+        arquivoFoto
+    );
 
     await updateDoc(petRef, {
         fotoUrl: dadosFoto.fotoUrl,
@@ -293,6 +344,7 @@ export async function atualizarFotoPetCliente(empresaId, clienteId, petId, arqui
 // ======================================================================
 // Garante que cliente exista
 // ======================================================================
+
 export async function garantirClientePet(empresaId, user) {
     if (!empresaId || !user) return;
 
@@ -310,8 +362,9 @@ export async function garantirClientePet(empresaId, user) {
 }
 
 // ======================================================================
-// Modal HTML
+// Modal HTML e estilos
 // ======================================================================
+
 function garantirModalPetNoHtml() {
     let modal = document.getElementById("modal-pet-pronti");
 
@@ -326,6 +379,7 @@ function garantirModalPetNoHtml() {
 
     const style = document.createElement("style");
     style.id = "style-modal-pet-pronti";
+
     style.textContent = `
         #modal-pet-pronti {
             position: fixed;
@@ -346,7 +400,7 @@ function garantirModalPetNoHtml() {
 
         .modal-pet-card {
             width: 100%;
-            max-width: 460px;
+            max-width: 500px;
             max-height: calc(100vh - 28px);
             overflow-y: auto;
             background: #ffffff;
@@ -354,6 +408,7 @@ function garantirModalPetNoHtml() {
             padding: 22px;
             box-shadow: 0 18px 48px rgba(15, 23, 42, 0.32);
             box-sizing: border-box;
+            color: #1e293b;
         }
 
         .modal-pet-header {
@@ -485,19 +540,51 @@ function garantirModalPetNoHtml() {
             display: none;
         }
 
+        .btn-pet-foto,
+        .btn-pet-primary,
+        .btn-pet-secondary,
+        .btn-pet-danger {
+            border: none;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-weight: 900;
+            font-size: 0.92rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
         .btn-pet-foto {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 7px;
-            border: none;
-            border-radius: 11px;
-            padding: 9px 12px;
             background: #4f46e5;
             color: #fff;
-            font-weight: 900;
+            padding: 9px 12px;
             font-size: 0.88rem;
-            cursor: pointer;
+        }
+
+        .btn-pet-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+        }
+
+        .btn-pet-secondary {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+
+        .btn-pet-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .btn-pet-primary:disabled,
+        .btn-pet-secondary:disabled,
+        .btn-pet-danger:disabled,
+        .btn-pet-foto:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
         }
 
         .modal-pet-aviso-foto {
@@ -522,23 +609,13 @@ function garantirModalPetNoHtml() {
 
         .modal-pet-actions {
             margin-top: 18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        .btn-pet-primary {
-            width: 100%;
-            border: none;
-            border-radius: 13px;
-            padding: 13px 16px;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: #fff;
-            font-weight: 900;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-
-        .btn-pet-primary:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
+        .modal-pet-actions.um-botao {
+            grid-template-columns: 1fr;
         }
 
         .lista-pets-modal {
@@ -546,31 +623,43 @@ function garantirModalPetNoHtml() {
             gap: 10px;
         }
 
-        .pet-opcao-btn {
+        .pet-opcao-btn,
+        .pet-gestao-card {
             width: 100%;
             border: 1.5px solid #e0e7ff;
             background: #f8fafc;
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 13px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .pet-opcao-btn {
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            font-family: inherit;
             gap: 12px;
         }
 
-        .pet-opcao-dados {
+        .pet-opcao-btn:hover {
+            background: #eef2ff;
+            border-color: #4f46e5;
+        }
+
+        .pet-opcao-dados,
+        .pet-gestao-topo {
             display: flex;
             align-items: center;
             gap: 11px;
             min-width: 0;
         }
 
-        .pet-opcao-foto {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
+        .pet-opcao-foto,
+        .pet-gestao-foto {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
             background: #eef2ff;
             color: #6366f1;
             display: flex;
@@ -578,22 +667,25 @@ function garantirModalPetNoHtml() {
             justify-content: center;
             overflow: hidden;
             flex-shrink: 0;
-            font-size: 1.25rem;
+            font-size: 1.35rem;
         }
 
-        .pet-opcao-foto img {
+        .pet-opcao-foto img,
+        .pet-gestao-foto img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .pet-opcao-texto {
+        .pet-opcao-texto,
+        .pet-gestao-texto {
             display: grid;
             text-align: left;
             min-width: 0;
         }
 
-        .pet-opcao-texto strong {
+        .pet-opcao-texto strong,
+        .pet-gestao-texto strong {
             color: #1e293b;
             font-size: 1rem;
             white-space: nowrap;
@@ -601,10 +693,11 @@ function garantirModalPetNoHtml() {
             text-overflow: ellipsis;
         }
 
-        .pet-opcao-texto small {
+        .pet-opcao-texto small,
+        .pet-gestao-texto small {
             color: #64748b;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             margin-top: 2px;
         }
 
@@ -615,9 +708,43 @@ function garantirModalPetNoHtml() {
             white-space: nowrap;
         }
 
-        .pet-opcao-btn:hover {
-            background: #eef2ff;
-            border-color: #4f46e5;
+        .pet-gestao-card {
+            display: grid;
+            gap: 10px;
+        }
+
+        .pet-gestao-obs {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            border-radius: 12px;
+            padding: 8px 10px;
+            font-size: 0.84rem;
+            line-height: 1.35;
+        }
+
+        .pet-gestao-acoes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pet-gestao-vazio {
+            background: #f8fafc;
+            border: 1.5px dashed #c7d2fe;
+            border-radius: 16px;
+            padding: 18px;
+            text-align: center;
+            color: #475569;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .pet-gestao-vazio strong {
+            display: block;
+            color: #4f46e5;
+            margin-bottom: 5px;
+            font-size: 1.02rem;
         }
 
         @media (max-width: 520px) {
@@ -641,20 +768,34 @@ function garantirModalPetNoHtml() {
                 width: 82px;
                 height: 82px;
             }
+
+            .modal-pet-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .pet-opcao-btn {
+                align-items: flex-start;
+                flex-direction: column;
+            }
         }
     `;
 
     document.head.appendChild(style);
 }
 
-function montarHtmlPreviewFoto(url) {
-    if (!url) return "🐾";
-    return `<img src="${url}" alt="Foto do pet">`;
+function fecharModalPet() {
+    const modal = document.getElementById("modal-pet-pronti");
+
+    if (modal) {
+        modal.style.display = "none";
+        modal.innerHTML = "";
+    }
 }
 
 // ======================================================================
 // Abrir modal de cadastro de pet
 // ======================================================================
+
 export function abrirModalCadastroPet(empresaId, user) {
     return new Promise((resolve) => {
         garantirModalPetNoHtml();
@@ -668,7 +809,7 @@ export function abrirModalCadastroPet(empresaId, user) {
                         <div class="modal-pet-icon">🐾</div>
                         <div>
                             <h2>Cadastre seu Pet</h2>
-                            <p>Para mostrar o preço correto, precisamos saber o porte do seu pet.</p>
+                            <p>Preencha os dados do pet e confira a foto antes de salvar.</p>
                         </div>
                     </div>
 
@@ -676,15 +817,24 @@ export function abrirModalCadastroPet(empresaId, user) {
                         <div class="modal-pet-foto-box">
                             <div class="modal-pet-foto-topo">
                                 <div id="pet-foto-preview" class="modal-pet-preview">🐾</div>
+
                                 <div class="modal-pet-foto-info">
                                     <strong>Foto do Pet</strong>
                                     <span>Escolha uma foto clara. Você verá o preview antes de salvar.</span>
+
                                     <button type="button" id="btn-escolher-foto-pet" class="btn-pet-foto">
                                         📷 Escolher Foto
                                     </button>
-                                    <input type="file" id="pet-foto-arquivo" class="modal-pet-foto-input" accept="image/jpeg,image/png,image/webp">
+
+                                    <input
+                                        type="file"
+                                        id="pet-foto-arquivo"
+                                        class="modal-pet-foto-input"
+                                        accept="image/jpeg,image/png,image/webp"
+                                    >
                                 </div>
                             </div>
+
                             <div class="modal-pet-aviso-foto">
                                 Após salvar esta foto, uma nova alteração somente poderá ser realizada após 30 dias.
                             </div>
@@ -715,6 +865,10 @@ export function abrirModalCadastroPet(empresaId, user) {
                     </div>
 
                     <div class="modal-pet-actions">
+                        <button type="button" id="btn-cancelar-pet" class="btn-pet-secondary">
+                            Cancelar
+                        </button>
+
                         <button type="button" id="btn-salvar-pet" class="btn-pet-primary">
                             Salvar Pet
                         </button>
@@ -733,15 +887,27 @@ export function abrirModalCadastroPet(empresaId, user) {
         const btnEscolherFoto = document.getElementById("btn-escolher-foto-pet");
         const erroEl = document.getElementById("pet-modal-erro");
         const btnSalvar = document.getElementById("btn-salvar-pet");
+        const btnCancelar = document.getElementById("btn-cancelar-pet");
 
         let fotoArquivoSelecionado = null;
         let previewObjectUrl = null;
+
+        function cancelar() {
+            if (previewObjectUrl) {
+                URL.revokeObjectURL(previewObjectUrl);
+            }
+
+            fecharModalPet();
+            resolve(null);
+        }
 
         erroEl.style.display = "none";
         erroEl.textContent = "";
         modal.style.display = "block";
 
         setTimeout(() => nomeInput.focus(), 100);
+
+        btnCancelar.onclick = cancelar;
 
         btnEscolherFoto.onclick = () => {
             fotoInput.click();
@@ -753,6 +919,7 @@ export function abrirModalCadastroPet(empresaId, user) {
                 erroEl.textContent = "";
 
                 const arquivo = fotoInput.files && fotoInput.files[0] ? fotoInput.files[0] : null;
+
                 if (!arquivo) return;
 
                 validarArquivoFotoPet(arquivo);
@@ -764,6 +931,7 @@ export function abrirModalCadastroPet(empresaId, user) {
                 fotoArquivoSelecionado = arquivo;
                 previewObjectUrl = URL.createObjectURL(arquivo);
                 previewEl.innerHTML = montarHtmlPreviewFoto(previewObjectUrl);
+
             } catch (error) {
                 fotoArquivoSelecionado = null;
                 fotoInput.value = "";
@@ -776,6 +944,7 @@ export function abrirModalCadastroPet(empresaId, user) {
         btnSalvar.onclick = async () => {
             try {
                 btnSalvar.disabled = true;
+                btnCancelar.disabled = true;
                 btnSalvar.textContent = "Salvando...";
                 erroEl.style.display = "none";
                 erroEl.textContent = "";
@@ -793,7 +962,7 @@ export function abrirModalCadastroPet(empresaId, user) {
                     URL.revokeObjectURL(previewObjectUrl);
                 }
 
-                modal.style.display = "none";
+                fecharModalPet();
                 resolve(pet);
 
             } catch (error) {
@@ -801,6 +970,7 @@ export function abrirModalCadastroPet(empresaId, user) {
                 erroEl.style.display = "block";
             } finally {
                 btnSalvar.disabled = false;
+                btnCancelar.disabled = false;
                 btnSalvar.textContent = "Salvar Pet";
             }
         };
@@ -808,8 +978,231 @@ export function abrirModalCadastroPet(empresaId, user) {
 }
 
 // ======================================================================
+// Modal de gestão dos pets do cliente
+// ======================================================================
+
+export async function abrirModalGestaoPets(empresaId, user) {
+    garantirModalPetNoHtml();
+
+    const modal = document.getElementById("modal-pet-pronti");
+
+    if (!empresaId || !user) {
+        modal.innerHTML = `
+            <div class="modal-pet-overlay">
+                <div class="modal-pet-card">
+                    <div class="modal-pet-header">
+                        <div class="modal-pet-icon">🐾</div>
+                        <div>
+                            <h2>Meus Pets</h2>
+                            <p>Você precisa estar logado para gerenciar seus pets.</p>
+                        </div>
+                    </div>
+
+                    <div class="modal-pet-actions um-botao">
+                        <button type="button" id="btn-fechar-gestao-pets" class="btn-pet-secondary">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.style.display = "block";
+
+        document.getElementById("btn-fechar-gestao-pets").onclick = () => {
+            fecharModalPet();
+        };
+
+        return;
+    }
+
+    async function renderizarGestao() {
+        modal.innerHTML = `
+            <div class="modal-pet-overlay">
+                <div class="modal-pet-card">
+                    <div class="modal-pet-header">
+                        <div class="modal-pet-icon">🐾</div>
+                        <div>
+                            <h2>Meus Pets</h2>
+                            <p>Carregando seus pets cadastrados...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.style.display = "block";
+
+        await garantirClientePet(empresaId, user);
+        const pets = await buscarPetsDoCliente(empresaId, user.uid);
+
+        modal.innerHTML = `
+            <div class="modal-pet-overlay">
+                <div class="modal-pet-card">
+                    <div class="modal-pet-header">
+                        <div class="modal-pet-icon">🐾</div>
+                        <div>
+                            <h2>Meus Pets</h2>
+                            <p>Veja seus pets cadastrados ou adicione um novo pet.</p>
+                        </div>
+                    </div>
+
+                    <div id="lista-pets-gestao" class="lista-pets-modal">
+                        ${
+                            pets.length === 0
+                                ? `
+                                    <div class="pet-gestao-vazio">
+                                        <strong>Nenhum pet cadastrado ainda.</strong>
+                                        Cadastre seu primeiro pet para agilizar o agendamento.
+                                    </div>
+                                `
+                                : pets.map((pet) => {
+                                    const bloqueado = !podeAlterarFotoPet(pet);
+                                    const dias = diasParaLiberarTrocaFoto(pet);
+
+                                    return `
+                                        <div class="pet-gestao-card" data-pet-id="${escapeHTML(pet.id)}">
+                                            <div class="pet-gestao-topo">
+                                                <div class="pet-gestao-foto">
+                                                    ${montarHtmlPreviewFoto(pet.fotoUrl)}
+                                                </div>
+
+                                                <div class="pet-gestao-texto">
+                                                    <strong>${escapeHTML(pet.nome || "Pet")}</strong>
+                                                    <small>
+                                                        ${
+                                                            pet.raca
+                                                                ? `${escapeHTML(pet.raca)} • ${nomePorte(pet.porte)}`
+                                                                : nomePorte(pet.porte)
+                                                        }
+                                                        ${pet.peso ? ` • ${escapeHTML(pet.peso)}` : ""}
+                                                    </small>
+                                                </div>
+                                            </div>
+
+                                            ${
+                                                pet.observacoes
+                                                    ? `
+                                                        <div class="pet-gestao-obs">
+                                                            <strong>Observações:</strong>
+                                                            ${escapeHTML(pet.observacoes)}
+                                                        </div>
+                                                    `
+                                                    : ""
+                                            }
+
+                                            <div class="pet-gestao-acoes">
+                                                <button
+                                                    type="button"
+                                                    class="btn-pet-secondary btn-trocar-foto-pet"
+                                                    data-pet-id="${escapeHTML(pet.id)}"
+                                                    ${bloqueado ? "disabled" : ""}
+                                                >
+                                                    📷 Trocar Foto
+                                                </button>
+
+                                                ${
+                                                    bloqueado
+                                                        ? `
+                                                            <button type="button" class="btn-pet-danger" disabled>
+                                                                Bloqueado ${dias} dia(s)
+                                                            </button>
+                                                        `
+                                                        : ""
+                                                }
+
+                                                <input
+                                                    type="file"
+                                                    class="input-trocar-foto-pet"
+                                                    data-pet-id="${escapeHTML(pet.id)}"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    style="display:none;"
+                                                >
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join("")
+                        }
+                    </div>
+
+                    <div id="pet-gestao-erro" class="modal-pet-erro"></div>
+
+                    <div class="modal-pet-actions">
+                        <button type="button" id="btn-fechar-gestao-pets" class="btn-pet-secondary">
+                            Fechar
+                        </button>
+
+                        <button type="button" id="btn-novo-pet-gestao" class="btn-pet-primary">
+                            + Novo Pet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const btnFechar = document.getElementById("btn-fechar-gestao-pets");
+        const btnNovo = document.getElementById("btn-novo-pet-gestao");
+        const erroEl = document.getElementById("pet-gestao-erro");
+
+        btnFechar.onclick = () => {
+            fecharModalPet();
+        };
+
+        btnNovo.onclick = async () => {
+            const novoPet = await abrirModalCadastroPet(empresaId, user);
+
+            if (novoPet) {
+                await renderizarGestao();
+            }
+        };
+
+        modal.querySelectorAll(".btn-trocar-foto-pet").forEach((btn) => {
+            btn.onclick = () => {
+                const petId = btn.dataset.petId;
+                const input = modal.querySelector(`.input-trocar-foto-pet[data-pet-id="${petId}"]`);
+
+                if (input) {
+                    input.click();
+                }
+            };
+        });
+
+        modal.querySelectorAll(".input-trocar-foto-pet").forEach((input) => {
+            input.onchange = async () => {
+                const petId = input.dataset.petId;
+                const arquivo = input.files && input.files[0] ? input.files[0] : null;
+
+                if (!arquivo) return;
+
+                try {
+                    erroEl.style.display = "none";
+                    erroEl.textContent = "";
+
+                    await atualizarFotoPetCliente(
+                        empresaId,
+                        user.uid,
+                        petId,
+                        arquivo
+                    );
+
+                    await renderizarGestao();
+
+                } catch (error) {
+                    input.value = "";
+                    erroEl.textContent = error.message || "Erro ao trocar foto.";
+                    erroEl.style.display = "block";
+                }
+            };
+        });
+    }
+
+    await renderizarGestao();
+}
+
+// ======================================================================
 // Selecionar pet quando existe mais de um
 // ======================================================================
+
 export function abrirModalSelecionarPet(pets = []) {
     return new Promise((resolve) => {
         garantirModalPetNoHtml();
@@ -821,6 +1214,7 @@ export function abrirModalSelecionarPet(pets = []) {
                 <div class="modal-pet-card">
                     <div class="modal-pet-header">
                         <div class="modal-pet-icon">🐾</div>
+
                         <div>
                             <h2>Escolha o Pet</h2>
                             <p>Selecione qual pet será atendido neste agendamento.</p>
@@ -829,25 +1223,44 @@ export function abrirModalSelecionarPet(pets = []) {
 
                     <div class="lista-pets-modal">
                         ${pets.map((pet) => `
-                            <button type="button" class="pet-opcao-btn" data-pet-id="${pet.id}">
+                            <button type="button" class="pet-opcao-btn" data-pet-id="${escapeHTML(pet.id)}">
                                 <div class="pet-opcao-dados">
                                     <div class="pet-opcao-foto">
                                         ${montarHtmlPreviewFoto(pet.fotoUrl)}
                                     </div>
+
                                     <div class="pet-opcao-texto">
-                                        <strong>${pet.nome || "Pet"}</strong>
-                                        <small>${pet.raca ? `${pet.raca} • ${nomePorte(pet.porte)}` : nomePorte(pet.porte)}</small>
+                                        <strong>${escapeHTML(pet.nome || "Pet")}</strong>
+                                        <small>
+                                            ${
+                                                pet.raca
+                                                    ? `${escapeHTML(pet.raca)} • ${nomePorte(pet.porte)}`
+                                                    : nomePorte(pet.porte)
+                                            }
+                                        </small>
                                     </div>
                                 </div>
+
                                 <span>Selecionar</span>
                             </button>
                         `).join("")}
+                    </div>
+
+                    <div class="modal-pet-actions um-botao">
+                        <button type="button" id="btn-cancelar-selecao-pet" class="btn-pet-secondary">
+                            Cancelar
+                        </button>
                     </div>
                 </div>
             </div>
         `;
 
         modal.style.display = "block";
+
+        document.getElementById("btn-cancelar-selecao-pet").onclick = () => {
+            fecharModalPet();
+            resolve(null);
+        };
 
         modal.querySelectorAll(".pet-opcao-btn").forEach((btn) => {
             btn.onclick = () => {
@@ -856,27 +1269,17 @@ export function abrirModalSelecionarPet(pets = []) {
 
                 petSelecionado = pet || null;
 
-                modal.style.display = "none";
+                fecharModalPet();
                 resolve(petSelecionado);
             };
         });
     });
 }
 
-function nomePorte(porte) {
-    const mapa = {
-        pequeno: "Pequeno",
-        medio: "Médio",
-        grande: "Grande",
-        gigante: "Gigante"
-    };
-
-    return mapa[normalizarPorte(porte)] || "Porte não informado";
-}
-
 // ======================================================================
 // Fluxo principal: garantir pet antes do agendamento
 // ======================================================================
+
 export async function garantirPetParaAgendamento(empresaId, user) {
     if (!empresaId || !user) return null;
 
@@ -901,6 +1304,7 @@ export async function garantirPetParaAgendamento(empresaId, user) {
 // ======================================================================
 // Getters
 // ======================================================================
+
 export function getPetSelecionado() {
     return petSelecionado;
 }
@@ -919,6 +1323,7 @@ export function getFotoPetSelecionado() {
 // ======================================================================
 // Preço e duração do serviço pelo porte do pet
 // ======================================================================
+
 export function obterPrecoDuracaoPorPet(servico, pet) {
     if (!servico) {
         return {
