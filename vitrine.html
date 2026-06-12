@@ -207,7 +207,7 @@
                         <i class="fa-solid fa-calendar-check"></i>
                         <span>Agendar</span>
                     </a>
-                    <a href="#" class="vitrine-card" data-menu-card="pets" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+                    <a href="#" id="btn-meus-pets" class="vitrine-card" data-menu-card="pets" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
                         <i class="fa-solid fa-paw"></i>
                         <span>Meus Pets</span>
                     </a>
@@ -435,6 +435,7 @@
                 if (!btnPets) return;
 
                 e.preventDefault();
+                e.stopPropagation();
 
                 if (!state.currentUser) {
                     fazerLogin();
@@ -447,16 +448,18 @@
                 }
 
                 try {
-                    await abrirModalCadastroPet(state.empresaId, state.currentUser);
-                    alert('Pet cadastrado com sucesso!');
+                    await abrirModalGestaoPets(
+                        state.empresaId,
+                        state.currentUser
+                    );
                 } catch (error) {
-                    console.error('Erro ao abrir/cadastrar pet:', error);
-                    alert(error.message || 'Não foi possível cadastrar o pet.');
+                    console.error('Erro ao abrir gestão de pets:', error);
+                    alert(error.message || 'Não foi possível carregar os pets.');
                 }
             });
         });
     </script>
-    
+
     <script type="module">
         import { db, auth } from './vitrini-firebase.js';
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
