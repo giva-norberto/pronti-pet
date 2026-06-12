@@ -269,32 +269,107 @@
                 </div>
             </div>
 
-            <div id="menu-informacoes" class="menu-content" style="display: none;">
-                <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                <div class="card"><h2>Sobre o Negócio</h2><div id="info-negocio"></div></div>
-                <div class="card"><h2>Serviços Oferecidos</h2><div id="info-servicos"></div></div>
-                <div class="card"><h2>Contato e Localização</h2><div id="info-contato"></div></div>
-            </div>
-            <div id="menu-visualizacao" class="menu-content" style="display: none;">
-                <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                <div class="card"><h2>Reservas</h2><div id="agendamentos-login-prompt" style="display: none;"><p>Você precisa <a href="#" id="login-link-visualizacao">fazer login</a> para ver seus agendamentos.</p></div><div id="botoes-agendamento" class="botoes-agendamento" style="display: none;"><button id="btn-ver-ativos" class="btn-toggle ativo">Ver Ativos</button><button id="btn-ver-historico" class="btn-toggle">Ver Histórico</button></div></div>
-                <div id="lista-agendamentos-visualizacao" class="lista-agendamentos-resultado"></div>
-            </div>
-                <div id="menu-perfil" class="menu-content" style="display: none;">
-                <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                <div class="card"><h2>Meu Perfil</h2><div id="user-info" style="display: none;"><img id="user-photo" src="" alt="Foto do Utilizador" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 15px;"><p id="user-name" style="font-weight: 600; font-size: 1.2rem;"></p><button id="btn-logout" class="btn-secondary">Sair</button></div><div id="btn-login-container"><button id="btn-login" class="btn-submit">Fazer Login com Google</button></div></div>
-            </div>
-                 <div id="menu-minhas-assinaturas" class="menu-content" style="display:none;">
-                     <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                     <div class="card">
-                          <h2>Minhas Assinaturas</h2>
-                          <div id="lista-assinaturas-cliente">
-                               <p>Carregando suas assinaturas...</p>
-                              </div>
-                          </div>
-                      </div>
-        </main>
+          <div id="menu-informacoes" class="menu-content" style="display: none;">
+    <button class="btn-voltar">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </button>
+
+    <div class="card">
+        <h2>Sobre o Negócio</h2>
+        <div id="info-negocio"></div>
     </div>
+
+    <!-- NOVO CARD PETS -->
+    <div class="card">
+        <h2>🐾 Meus Pets</h2>
+        <div id="card-meus-pets"></div>
+    </div>
+
+    <div class="card">
+        <h2>Serviços Oferecidos</h2>
+        <div id="info-servicos"></div>
+    </div>
+
+    <div class="card">
+        <h2>Contato e Localização</h2>
+        <div id="info-contato"></div>
+    </div>
+</div>
+
+<div id="menu-visualizacao" class="menu-content" style="display: none;">
+    <button class="btn-voltar">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </button>
+
+    <div class="card">
+        <h2>Reservas</h2>
+
+        <div id="agendamentos-login-prompt" style="display: none;">
+            <p>
+                Você precisa
+                <a href="#" id="login-link-visualizacao">fazer login</a>
+                para ver seus agendamentos.
+            </p>
+        </div>
+
+        <div id="botoes-agendamento" class="botoes-agendamento" style="display: none;">
+            <button id="btn-ver-ativos" class="btn-toggle ativo">
+                Ver Ativos
+            </button>
+
+            <button id="btn-ver-historico" class="btn-toggle">
+                Ver Histórico
+            </button>
+        </div>
+    </div>
+
+    <div id="lista-agendamentos-visualizacao" class="lista-agendamentos-resultado"></div>
+</div>
+
+<div id="menu-perfil" class="menu-content" style="display: none;">
+    <button class="btn-voltar">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </button>
+
+    <div class="card">
+        <h2>Meu Perfil</h2>
+
+        <div id="user-info" style="display: none;">
+            <img
+                id="user-photo"
+                src=""
+                alt="Foto do Utilizador"
+                style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 15px;"
+            >
+
+            <p id="user-name" style="font-weight: 600; font-size: 1.2rem;"></p>
+
+            <button id="btn-logout" class="btn-secondary">
+                Sair
+            </button>
+        </div>
+
+        <div id="btn-login-container">
+            <button id="btn-login" class="btn-submit">
+                Fazer Login com Google
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="menu-minhas-assinaturas" class="menu-content" style="display:none;">
+    <button class="btn-voltar">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+    </button>
+
+    <div class="card">
+        <h2>Minhas Assinaturas</h2>
+
+        <div id="lista-assinaturas-cliente">
+            <p>Carregando suas assinaturas...</p>
+        </div>
+    </div>
+</div>
 
     <div id="custom-confirm-modal" class="modal-overlay"><div class="modal-box"><h3 id="modal-titulo">Confirmar Ação</h3><p id="modal-mensagem">Tem a certeza que deseja prosseguir?</p><div class="modal-botoes"><button id="modal-btn-cancelar">Cancelar</button><button id="modal-btn-confirmar">Confirmar</button></div></div></div>
     <div id="modal-auth-janela" class="modal-overlay">
