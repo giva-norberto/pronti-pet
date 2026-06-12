@@ -873,7 +873,11 @@ async function handleConfirmarAgendamento() {
             pet: pet ? {
                 id: pet.id || null,
                 nome: pet.nome || "",
-                porte: pet.porte || ""
+                porte: pet.porte || "",
+                raca: pet.raca || "",
+                fotoUrl: pet.fotoUrl || "",
+                fotoPath: pet.fotoPath || "",
+                observacoes: pet.observacoes || ""
             } : null
         };
 
