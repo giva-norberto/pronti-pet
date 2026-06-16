@@ -3,39 +3,14 @@
 // ARQUIVO: vitrine-pets.js
 // PRONTI PET - Lógica de Pet para AGENDAMENTO
 // ======================================================================
-//
-// Este arquivo deve cuidar somente do fluxo do agendamento:
-//
-// - Garantir que o cliente exista
-// - Buscar pets do cliente
-// - Selecionar pet para o agendamento
-// - Criar pet quando ainda não existir nenhum, usando o modal do arquivo novo
-// - Retornar pet selecionado
-// - Retornar foto do pet selecionado
-// - Calcular preço e duração pelo porte
-//
-// NÃO colocar aqui:
-// - Gestão visual dos pets
-// - Cards "Meus Pets"
-// - Editar pet
-// - Trocar foto
-// - Preview grande de foto
-// - Trava de 30 dias
-//
-// Tudo isso fica em:
-// vitrine-pets-gestao.js
-// ======================================================================
 
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-import { db } from "./vitrini-firebase.js";
+    buscarPetsDoCliente,
+    garantirClientePet,
+    normalizarPorte,
+    nomePorte,
+    escapeHTML
+} from "./vitrine-pets-db.js";
 
 import {
     abrirModalCadastroPet
@@ -49,50 +24,16 @@ let petsCliente = [];
 let petSelecionado = null;
 
 // ======================================================================
-// Utilitários
+// Utilitário visual
 // ======================================================================
-
-function normalizarPorte(porte) {
-    return String(porte || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-function escapeHTML(valor) {
-    const div = document.createElement("div");
-    div.textContent = valor || "";
-    return div.innerHTML;
-}
-
-function nomePorte(porte) {
-    const mapa = {
-        pequeno: "Pequeno",
-        medio: "Médio",
-        grande: "Grande",
-        gigante: "Gigante"
-    };
-
-    return mapa[normalizarPorte(porte)] || "Porte não informado";
-}
-
-function getClientePetsRef(empresaId, clienteId) {
-    return collection(db, "empresarios", empresaId, "clientes", clienteId, "pets");
-}
-
-function getClienteRef(empresaId, clienteId) {
-    return doc(db, "empresarios", empresaId, "clientes", clienteId);
-}
 
 function montarHtmlPreviewFoto(url) {
     if (!url) return "🐾";
-
     return `<img src="${escapeHTML(url)}" alt="Foto do pet">`;
 }
 
 // ======================================================================
-// Garantir modal básico para seleção de pet
+// Modal básico para seleção do pet no agendamento
 // ======================================================================
 
 function garantirModalPetNoHtml() {
@@ -309,43 +250,12 @@ function fecharModalPet() {
 }
 
 // ======================================================================
-// Buscar pets do cliente
+// Buscar pets para o fluxo de agendamento
 // ======================================================================
 
-export async function buscarPetsDoCliente(empresaId, clienteId) {
-    if (!empresaId || !clienteId) return [];
-
-    const petsRef = getClientePetsRef(empresaId, clienteId);
-    const snap = await getDocs(petsRef);
-
-    petsCliente = snap.docs
-        .map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data()
-        }))
-        .filter((pet) => pet.ativo !== false);
-
+export async function carregarPetsDoCliente(empresaId, userOuClienteId) {
+    petsCliente = await buscarPetsDoCliente(empresaId, userOuClienteId);
     return petsCliente;
-}
-
-// ======================================================================
-// Garantir que cliente exista
-// ======================================================================
-
-export async function garantirClientePet(empresaId, user) {
-    if (!empresaId || !user) return;
-
-    const clienteRef = getClienteRef(empresaId, user.uid);
-    const clienteSnap = await getDoc(clienteRef);
-
-    const dadosAtuais = clienteSnap.exists() ? clienteSnap.data() : {};
-
-    await setDoc(clienteRef, {
-        nome: dadosAtuais.nome || user.displayName || "Cliente",
-        email: dadosAtuais.email || user.email || "",
-        atualizadoEm: serverTimestamp(),
-        dataCadastro: dadosAtuais.dataCadastro || serverTimestamp()
-    }, { merge: true });
 }
 
 // ======================================================================
@@ -435,13 +345,13 @@ export async function garantirPetParaAgendamento(empresaId, user) {
 
     await garantirClientePet(empresaId, user);
 
-    const pets = await buscarPetsDoCliente(empresaId, user.uid);
+    const pets = await carregarPetsDoCliente(empresaId, user);
 
     if (pets.length === 0) {
         petSelecionado = await abrirModalCadastroPet(empresaId, user);
 
         if (petSelecionado) {
-            await buscarPetsDoCliente(empresaId, user.uid);
+            await carregarPetsDoCliente(empresaId, user);
         }
 
         return petSelecionado;
@@ -522,3 +432,4 @@ export function obterPrecoDuracaoPorPet(servico, pet) {
     };
 }
 ```
+
