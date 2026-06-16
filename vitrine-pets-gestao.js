@@ -1,4 +1,3 @@
-```js
 // vitrine-pets-gestao.js
 // Gestão isolada dos Pets na vitrine:
 // - Listagem dos pets
@@ -1101,4 +1100,3 @@ export async function abrirModalGestaoPets(empresaId, userOuClienteId) {
 export function getPetsGestaoCliente() {
     return petsGestaoCliente;
 }
-```
