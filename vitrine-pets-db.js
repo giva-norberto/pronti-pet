@@ -1,4 +1,3 @@
-```js
 // ======================================================================
 // ARQUIVO: vitrine-pets-db.js
 // PRONTI PET - Camada compartilhada de dados dos Pets
@@ -390,4 +389,3 @@ export async function buscarPetPorId(empresaId, userOuClienteId, petId) {
         ...petSnap.data()
     };
 }
-```
