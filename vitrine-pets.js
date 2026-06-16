@@ -1,4 +1,3 @@
-```js
 // ======================================================================
 // ARQUIVO: vitrine-pets.js
 // PRONTI PET - Lógica de Pet para AGENDAMENTO
@@ -431,5 +430,3 @@ export function obterPrecoDuracaoPorPet(servico, pet) {
         porte: portePet
     };
 }
-```
-
