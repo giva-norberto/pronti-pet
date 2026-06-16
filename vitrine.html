@@ -658,11 +658,27 @@
             }
 
             mainNavigationContainer.addEventListener('click', (e) => {
-                const card = e.target.closest('.vitrine-card'); if (!card) return; e.preventDefault();
-                const menuKey = card.dataset.menuCard;
-                if (menuKey === 'perfil' && !state.currentUser) { fazerLogin(); return; }
-                showContentSection(`menu-${menuKey}`);
-            });
+    const card = e.target.closest('.vitrine-card');
+
+    if (!card) return;
+
+    const menuKey = card.dataset.menuCard;
+
+    // PETS abre apenas o modal
+    if (menuKey === 'pets') {
+        e.preventDefault();
+        return;
+    }
+
+    e.preventDefault();
+
+    if (menuKey === 'perfil' && !state.currentUser) {
+        fazerLogin();
+        return;
+    }
+
+    showContentSection(`menu-${menuKey}`);
+});
             document.querySelectorAll('.btn-voltar').forEach(button => { 
                 button.addEventListener('click', showMainMenu);
             });
