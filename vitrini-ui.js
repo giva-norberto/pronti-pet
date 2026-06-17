@@ -301,27 +301,29 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
-               /* ===========================
+                  /* ===========================
            MEUS AGENDAMENTOS
         =========================== */
 
         #menu-visualizacao {
             background: #eef2f7 !important;
+            overflow-x: hidden !important;
         }
 
         #menu-visualizacao .content-card {
-            padding: 22px !important;
-            margin-bottom: 18px !important;
+            padding: 14px !important;
+            margin-bottom: 12px !important;
+            border-radius: 20px !important;
         }
 
         #menu-visualizacao .content-card h2 {
-            font-size: 2rem !important;
-            margin-bottom: 14px !important;
+            font-size: 1.55rem !important;
+            margin-bottom: 8px !important;
         }
 
         #menu-visualizacao .content-card .btn-toggle {
-            padding: 14px 22px !important;
-            min-width: 128px !important;
+            padding: 10px 14px !important;
+            min-width: 104px !important;
         }
 
         #lista-agendamentos-visualizacao {
@@ -329,29 +331,33 @@ function injetarEstilosPetCards() {
             gap: 14px;
             justify-items: center;
             background: #eef2f7;
-            padding: 12px 0 18px;
+            padding: 10px;
             border-radius: 18px;
             width: 100%;
+            max-width: 100%;
             box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .cliente-reserva-card {
             background: #ffffff;
             border-radius: 18px;
             padding: 0;
-            width: min(100%, 520px);
+            width: 100%;
+            max-width: 420px;
             overflow: hidden;
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
             border: 1px solid #dbe3ef;
             color: #1e293b;
+            box-sizing: border-box;
         }
 
         .cliente-reserva-cabecalho {
             background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: #ffffff;
-            padding: 10px 16px;
+            padding: 9px 14px;
             font-weight: 900;
-            font-size: .96rem;
+            font-size: .95rem;
             line-height: 1.2;
         }
 
@@ -512,29 +518,35 @@ function injetarEstilosPetCards() {
             }
 
             #menu-visualizacao .content-card {
-                padding: 18px !important;
-                margin-bottom: 14px !important;
+                padding: 14px !important;
+                margin-bottom: 10px !important;
+                border-radius: 18px !important;
             }
 
             #menu-visualizacao .content-card h2 {
-                font-size: 1.75rem !important;
-                margin-bottom: 10px !important;
+                font-size: 1.45rem !important;
+                margin-bottom: 8px !important;
             }
 
             #menu-visualizacao .content-card .btn-toggle {
-                padding: 12px 16px !important;
-                min-width: 112px !important;
+                padding: 10px 12px !important;
+                min-width: 98px !important;
             }
 
             #lista-agendamentos-visualizacao {
-                padding: 10px 0 16px;
+                padding: 10px;
                 border-radius: 16px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: hidden;
             }
 
             .cliente-reserva-card {
-                width: calc(100vw - 24px);
-                max-width: none;
+                width: 100%;
+                max-width: 100%;
                 border-radius: 16px;
+                box-sizing: border-box;
             }
 
             .cliente-reserva-conteudo {
