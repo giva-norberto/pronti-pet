@@ -301,295 +301,289 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
-                  /* ===========================
-           MEUS AGENDAMENTOS
-        =========================== */
+/* ===========================
+   MEUS AGENDAMENTOS
+=========================== */
 
-        #menu-visualizacao {
-            background: #eef2f7 !important;
-            overflow-x: hidden !important;
-        }
-
-        #menu-visualizacao .content-card {
-            padding: 14px !important;
-            margin-bottom: 12px !important;
-            border-radius: 20px !important;
-        }
-
-        #menu-visualizacao .content-card h2 {
-            font-size: 1.55rem !important;
-            margin-bottom: 8px !important;
-        }
-
-        #menu-visualizacao .content-card .btn-toggle {
-            padding: 10px 14px !important;
-            min-width: 104px !important;
-        }
-
-        #lista-agendamentos-visualizacao {
-            display: grid;
-            gap: 14px;
-            justify-items: center;
-            background: #eef2f7;
-            padding: 10px;
-            border-radius: 18px;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            overflow-x: hidden;
-        }
-
-        .cliente-reserva-card {
-            background: #ffffff;
-            border-radius: 18px;
-            padding: 0;
-            width: 100%;
-            max-width: 420px;
-            overflow: hidden;
-            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
-            border: 1px solid #dbe3ef;
-            color: #1e293b;
-            box-sizing: border-box;
-        }
-
-        .cliente-reserva-cabecalho {
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
-            color: #ffffff;
-            padding: 9px 14px;
-            font-weight: 900;
-            font-size: .95rem;
-            line-height: 1.2;
-        }
-
-        .cliente-reserva-conteudo {
-            padding: 12px;
-        }
-
-        .cliente-reserva-topo {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .cliente-reserva-foto,
-        .cliente-reserva-foto-placeholder {
-            width: 64px;
-            height: 64px;
-            min-width: 64px;
-            max-width: 64px;
-            max-height: 64px;
-            border-radius: 14px;
-            object-fit: cover;
-            overflow: hidden;
-            background: #eef2ff;
-            border: 1px solid #e0e7ff;
-        }
-
-        .cliente-reserva-foto-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-        }
-
-        .cliente-reserva-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .cliente-reserva-linha-nome {
-            display: none;
-        }
-
-        .cliente-reserva-sub {
-            color: #64748b;
-            font-size: .82rem;
-            margin-top: 2px;
-            font-weight: 700;
-        }
-
-        .cliente-reserva-servico,
-        .cliente-reserva-data,
-        .cliente-reserva-profissional {
-            margin-top: 4px;
-            font-size: .82rem;
-            color: #334155;
-            line-height: 1.25;
-        }
-
-        .cliente-reserva-status {
-            font-size: .72rem;
-            font-weight: 900;
-            border-radius: 999px;
-            padding: 5px 10px;
-            white-space: nowrap;
-        }
-
-        .cliente-status-ativo {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .cliente-status-cancelado {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .cliente-status-falta {
-            background: #ffedd5;
-            color: #c2410c;
-        }
-
-        .cliente-status-realizado {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .cliente-reserva-observacao {
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 10px;
-            background: #fff7ed;
-            border: 1px solid #fed7aa;
-            font-size: .78rem;
-            line-height: 1.35;
-            color: #7c2d12;
-            font-weight: 700;
-        }
-
-        .cliente-reserva-footer {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #edf2f7;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .cliente-reserva-cancelar {
-            border: none;
-            background: #ef4444;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .cliente-reserva-cancelar:hover {
-            background: #dc2626;
-        }
-
-        @media (max-width: 560px) {
-            #servicos-por-categoria {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .card-servico {
-                padding: 9px;
-                border-radius: 14px;
-            }
-
-            .servico-foto,
-            .servico-foto-placeholder {
-                width: 54px;
-                height: 54px;
-                min-width: 54px;
-                border-radius: 12px;
-            }
-
-            .servico-nome {
-                font-size: 0.9rem;
-            }
-
-            .servico-detalhes {
-                font-size: 0.8rem;
-            }
-
-            .servico-info-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .servico-info-item span {
-                text-align: left;
-            }
-
-            #menu-visualizacao .content-card {
-                padding: 14px !important;
-                margin-bottom: 10px !important;
-                border-radius: 18px !important;
-            }
-
-            #menu-visualizacao .content-card h2 {
-                font-size: 1.45rem !important;
-                margin-bottom: 8px !important;
-            }
-
-            #menu-visualizacao .content-card .btn-toggle {
-                padding: 10px 12px !important;
-                min-width: 98px !important;
-            }
-
-            #lista-agendamentos-visualizacao {
-                padding: 10px;
-                border-radius: 16px;
-                width: 100%;
-                max-width: 100%;
-                box-sizing: border-box;
-                overflow-x: hidden;
-            }
-
-            .cliente-reserva-card {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 16px;
-                box-sizing: border-box;
-            }
-
-            .cliente-reserva-conteudo {
-                padding: 10px;
-            }
-
-            .cliente-reserva-foto,
-            .cliente-reserva-foto-placeholder {
-                width: 56px;
-                height: 56px;
-                min-width: 56px;
-                max-width: 56px;
-                max-height: 56px;
-                border-radius: 12px;
-            }
-
-            .cliente-reserva-sub,
-            .cliente-reserva-servico,
-            .cliente-reserva-data,
-            .cliente-reserva-profissional {
-                font-size: .78rem;
-            }
-        }
-    `;
-
-    document.head.appendChild(style);
+#menu-visualizacao {
+    background: #eef2f7 !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-function montarImagemServicoHtml(servico) {
-    const foto = obterFotoServico(servico);
+#menu-visualizacao .card,
+#menu-visualizacao .content-card {
+    padding: 10px !important;
+    margin: 0 auto 10px auto !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    transform: none !important;
+}
 
-    if (foto) {
-        return `
-            <img
-                class="servico-foto"
-                src="${foto}"
-                alt="${escapeHTML(servico?.nome || 'Serviço')}"
-                onerror="this.outerHTML='<div class=&quot;servico-foto-placeholder&quot;>🐾</div>'"
-            >
-        `;
+#menu-visualizacao .card:hover,
+#menu-visualizacao .content-card:hover {
+    transform: none !important;
+}
+
+#menu-visualizacao .content-card h2,
+#menu-visualizacao h2 {
+    font-size: 1.15rem !important;
+    margin: 0 0 6px 0 !important;
+    padding-bottom: 6px !important;
+    line-height: 1.2 !important;
+}
+
+#menu-visualizacao .botoes-agendamento {
+    display: flex !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+#menu-visualizacao .content-card .btn-toggle,
+#menu-visualizacao .botoes-agendamento .btn-toggle {
+    padding: 7px 10px !important;
+    min-width: auto !important;
+    font-size: 0.82rem !important;
+    border-radius: 10px !important;
+}
+
+#lista-agendamentos-visualizacao {
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+    background: #eef2f7;
+    padding: 6px;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.cliente-reserva-card {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-shadow: 0 5px 16px rgba(15, 23, 42, 0.10);
+    border: 1px solid #dbe3ef;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+.cliente-reserva-cabecalho {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    padding: 7px 11px;
+    font-weight: 900;
+    font-size: .88rem;
+    line-height: 1.2;
+}
+
+.cliente-reserva-conteudo {
+    padding: 9px;
+}
+
+.cliente-reserva-topo {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+}
+
+.cliente-reserva-foto,
+.cliente-reserva-foto-placeholder {
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    max-height: 54px;
+    border-radius: 11px;
+    object-fit: cover;
+    overflow: hidden;
+    background: #eef2ff;
+    border: 1px solid #e0e7ff;
+}
+
+.cliente-reserva-foto-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.cliente-reserva-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cliente-reserva-linha-nome {
+    display: none;
+}
+
+.cliente-reserva-sub {
+    color: #64748b;
+    font-size: .76rem;
+    margin-top: 1px;
+    font-weight: 700;
+}
+
+.cliente-reserva-servico,
+.cliente-reserva-data,
+.cliente-reserva-profissional {
+    margin-top: 3px;
+    font-size: .76rem;
+    color: #334155;
+    line-height: 1.25;
+}
+
+.cliente-reserva-status {
+    font-size: .68rem;
+    font-weight: 900;
+    border-radius: 999px;
+    padding: 5px 8px;
+    white-space: nowrap;
+}
+
+.cliente-status-ativo {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.cliente-status-cancelado {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.cliente-status-falta {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.cliente-status-realizado {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.cliente-reserva-observacao {
+    margin-top: 7px;
+    padding: 7px;
+    border-radius: 9px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    font-size: .74rem;
+    line-height: 1.35;
+    color: #7c2d12;
+    font-weight: 700;
+}
+
+.cliente-reserva-footer {
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1px solid #edf2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.cliente-reserva-cancelar {
+    border: none;
+    background: #ef4444;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 9px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: .76rem;
+}
+
+.cliente-reserva-cancelar:hover {
+    background: #dc2626;
+}
+
+@media (max-width: 560px) {
+    #menu-visualizacao .card,
+    #menu-visualizacao .content-card {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        border-radius: 14px !important;
     }
 
-    return `<div class="servico-foto-placeholder">🐾</div>`;
+    #menu-visualizacao .content-card h2,
+    #menu-visualizacao h2 {
+        font-size: 1.05rem !important;
+        margin-bottom: 5px !important;
+        padding-bottom: 5px !important;
+    }
+
+    #menu-visualizacao .content-card .btn-toggle,
+    #menu-visualizacao .botoes-agendamento .btn-toggle {
+        padding: 6px 8px !important;
+        font-size: 0.78rem !important;
+    }
+
+    #lista-agendamentos-visualizacao {
+        padding: 5px;
+        gap: 9px;
+        border-radius: 13px;
+    }
+
+    .cliente-reserva-card {
+        border-radius: 13px;
+    }
+
+    .cliente-reserva-cabecalho {
+        padding: 7px 10px;
+        font-size: .82rem;
+    }
+
+    .cliente-reserva-conteudo {
+        padding: 8px;
+    }
+
+    .cliente-reserva-topo {
+        gap: 8px;
+    }
+
+    .cliente-reserva-foto,
+    .cliente-reserva-foto-placeholder {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        max-width: 50px;
+        max-height: 50px;
+        border-radius: 10px;
+    }
+
+    .cliente-reserva-sub,
+    .cliente-reserva-servico,
+    .cliente-reserva-data,
+    .cliente-reserva-profissional {
+        font-size: .73rem;
+    }
+
+    .cliente-reserva-observacao {
+        font-size: .72rem;
+        padding: 6px;
+    }
+
+    .cliente-reserva-status {
+        font-size: .66rem;
+        padding: 4px 7px;
+    }
+
+    .cliente-reserva-cancelar {
+        font-size: .72rem;
+        padding: 6px 8px;
+    }
 }
 // ======================================================================
 // LOADER
