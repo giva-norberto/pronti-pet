@@ -301,6 +301,144 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
+        /* ===========================
+           MEUS AGENDAMENTOS
+        =========================== */
+
+        #lista-agendamentos-visualizacao {
+            display: grid;
+            gap: 12px;
+        }
+
+        .cliente-reserva-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+
+        .cliente-reserva-topo {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .cliente-reserva-foto,
+        .cliente-reserva-foto-placeholder {
+            width: 64px;
+            height: 64px;
+            min-width: 64px;
+            max-width: 64px;
+            max-height: 64px;
+            border-radius: 14px;
+            object-fit: cover;
+            overflow: hidden;
+            background: #eef2ff;
+            border: 1px solid #e0e7ff;
+        }
+
+        .cliente-reserva-foto-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .cliente-reserva-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cliente-reserva-linha-nome {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cliente-reserva-linha-nome strong {
+            color: #0f172a;
+            font-size: 0.98rem;
+            line-height: 1.2;
+        }
+
+        .cliente-reserva-sub {
+            color: #64748b;
+            font-size: .82rem;
+            margin-top: 2px;
+        }
+
+        .cliente-reserva-servico,
+        .cliente-reserva-data,
+        .cliente-reserva-profissional {
+            margin-top: 4px;
+            font-size: .82rem;
+            color: #334155;
+            line-height: 1.25;
+        }
+
+        .cliente-reserva-status {
+            font-size: .72rem;
+            font-weight: 900;
+            border-radius: 999px;
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+
+        .cliente-status-ativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .cliente-status-cancelado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .cliente-status-falta {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .cliente-status-realizado {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .cliente-reserva-observacao {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 10px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            font-size: .78rem;
+            line-height: 1.35;
+            color: #7c2d12;
+            font-weight: 700;
+        }
+
+        .cliente-reserva-footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .cliente-reserva-cancelar {
+            border: none;
+            background: #ef4444;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .cliente-reserva-cancelar:hover {
+            background: #dc2626;
+        }
+
         @media (max-width: 560px) {
             #servicos-por-categoria {
                 grid-template-columns: 1fr;
@@ -335,6 +473,32 @@ function injetarEstilosPetCards() {
 
             .servico-info-item span {
                 text-align: left;
+            }
+
+            .cliente-reserva-card {
+                padding: 10px;
+                border-radius: 14px;
+            }
+
+            .cliente-reserva-foto,
+            .cliente-reserva-foto-placeholder {
+                width: 56px;
+                height: 56px;
+                min-width: 56px;
+                max-width: 56px;
+                max-height: 56px;
+                border-radius: 12px;
+            }
+
+            .cliente-reserva-linha-nome strong {
+                font-size: 0.92rem;
+            }
+
+            .cliente-reserva-sub,
+            .cliente-reserva-servico,
+            .cliente-reserva-data,
+            .cliente-reserva-profissional {
+                font-size: .78rem;
             }
         }
     `;
