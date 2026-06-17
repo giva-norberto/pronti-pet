@@ -352,7 +352,7 @@ function injetarEstilosPetCards() {
             border-radius: 10px !important;
         }
 
-        #lista-agendamentos-visualizacao {
+       #lista-agendamentos-visualizacao {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -372,14 +372,14 @@ function injetarEstilosPetCards() {
             border-radius: 15px;
             padding: 0;
             width: 100%;
-            max-width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
             overflow: hidden;
             box-shadow: 0 5px 16px rgba(15, 23, 42, 0.10);
             border: 1px solid #dbe3ef;
             color: #1e293b;
             box-sizing: border-box;
         }
-
         .cliente-reserva-cabecalho {
             background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: #ffffff;
