@@ -301,25 +301,45 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
-        /* ===========================
+               /* ===========================
            MEUS AGENDAMENTOS
         =========================== */
+
+        #menu-visualizacao {
+            background: #eef2f7 !important;
+        }
+
+        #menu-visualizacao .content-card {
+            padding: 22px !important;
+            margin-bottom: 18px !important;
+        }
+
+        #menu-visualizacao .content-card h2 {
+            font-size: 2rem !important;
+            margin-bottom: 14px !important;
+        }
+
+        #menu-visualizacao .content-card .btn-toggle {
+            padding: 14px 22px !important;
+            min-width: 128px !important;
+        }
 
         #lista-agendamentos-visualizacao {
             display: grid;
             gap: 14px;
             justify-items: center;
             background: #eef2f7;
-            padding: 14px;
+            padding: 12px 0 18px;
             border-radius: 18px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .cliente-reserva-card {
             background: #ffffff;
             border-radius: 18px;
             padding: 0;
-            width: 100%;
-            max-width: 420px;
+            width: min(100%, 520px);
             overflow: hidden;
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
             border: 1px solid #dbe3ef;
@@ -329,7 +349,7 @@ function injetarEstilosPetCards() {
         .cliente-reserva-cabecalho {
             background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: #ffffff;
-            padding: 12px 16px;
+            padding: 10px 16px;
             font-weight: 900;
             font-size: .96rem;
             line-height: 1.2;
@@ -491,13 +511,29 @@ function injetarEstilosPetCards() {
                 text-align: left;
             }
 
+            #menu-visualizacao .content-card {
+                padding: 18px !important;
+                margin-bottom: 14px !important;
+            }
+
+            #menu-visualizacao .content-card h2 {
+                font-size: 1.75rem !important;
+                margin-bottom: 10px !important;
+            }
+
+            #menu-visualizacao .content-card .btn-toggle {
+                padding: 12px 16px !important;
+                min-width: 112px !important;
+            }
+
             #lista-agendamentos-visualizacao {
-                padding: 12px;
+                padding: 10px 0 16px;
                 border-radius: 16px;
             }
 
             .cliente-reserva-card {
-                max-width: 100%;
+                width: calc(100vw - 24px);
+                max-width: none;
                 border-radius: 16px;
             }
 
