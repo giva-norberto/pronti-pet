@@ -881,41 +881,131 @@ export function renderizarAgendamentosComoCards(agendamentos, modo) {
     if (!container) return;
 
     container.innerHTML = '';
-    console.log("PRIMEIRO AGENDAMENTO", agendamentos[0]);
-    alert(JSON.stringify(agendamentos[0], null, 2));
 
     if (!agendamentos || agendamentos.length === 0) {
         container.innerHTML = `<p>Você não tem agendamentos ${modo === 'ativos' ? 'futuros' : 'passados'}.</p>`;
         return;
     }
 
+    const formatarDataCurta = (dataISO) => {
+        if (!dataISO) return 'Data não informada';
+
+        return new Date(`${dataISO}T12:00:00Z`).toLocaleDateString('pt-BR', {
+            timeZone: 'UTC',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    const formatarPorte = (porte) => {
+        if (!porte) return '';
+        return String(porte).charAt(0).toUpperCase() + String(porte).slice(1).toLowerCase();
+    };
+
+    const statusTexto = (status) => {
+        if (status === 'cancelado_pelo_cliente') return 'Cancelado';
+        if (status === 'cancelado_pelo_gestor') return 'Cancelado';
+        if (status === 'cancelado') return 'Cancelado';
+        if (status === 'nao_compareceu') return 'Falta';
+        if (status === 'realizado') return 'Realizado';
+        return 'Ativo';
+    };
+
+    const statusClasse = (status) => {
+        if (status === 'cancelado_pelo_cliente' || status === 'cancelado_pelo_gestor' || status === 'cancelado') {
+            return 'cliente-status-cancelado';
+        }
+
+        if (status === 'nao_compareceu') return 'cliente-status-falta';
+        if (status === 'realizado') return 'cliente-status-realizado';
+
+        return 'cliente-status-ativo';
+    };
+
     agendamentos.sort((a, b) => new Date(`${a.data}T${a.horario}`) - new Date(`${b.data}T${b.horario}`));
 
     agendamentos.forEach(ag => {
-        const dataFormatada = new Date(`${ag.data}T12:00:00Z`).toLocaleDateString('pt-BR', {
-            timeZone: 'UTC',
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        const petNome = ag.petNome || ag.pet?.nome || '';
+        const petNome = ag.petNome || ag.pet?.nome || 'Pet';
         const petPorte = ag.petPorte || ag.pet?.porte || '';
+        const petRaca = ag.petRaca || ag.racaPet || ag.raca || ag.pet?.raca || '';
+        const petFotoUrl = ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || ag.pet?.fotoUrl || '';
+        const servicoNome = ag.servicoNome || ag.servico?.nome || 'Serviço';
+        const profissionalNome = ag.profissionalNome || ag.profissional?.nome || 'Profissional';
+        const observacaoPet = String(ag.observacaoPet || '').trim();
+        const observacaoAgendamento = String(ag.observacaoAgendamento || '').trim();
+        const dataFormatada = formatarDataCurta(ag.data);
+        const horario = ag.horario || '--:--';
+        const status = ag.status || 'ativo';
+
+        const porteFormatado = formatarPorte(petPorte);
+
+        const subtituloPet = petRaca && porteFormatado
+            ? `${escapeHTML(petRaca)} • ${escapeHTML(porteFormatado)}`
+            : escapeHTML(petRaca || porteFormatado || 'Porte não informado');
+
+        const fotoPetHtml = petFotoUrl
+            ? `
+                <img
+                    src="${escapeHTML(petFotoUrl)}"
+                    alt="Foto de ${escapeHTML(petNome)}"
+                    class="cliente-reserva-foto"
+                    onerror="this.outerHTML='<div class=&quot;cliente-reserva-foto-placeholder&quot;>🐾</div>'"
+                >
+            `
+            : `<div class="cliente-reserva-foto-placeholder">🐾</div>`;
+
+        const podeCancelar = modo === 'ativos'
+            && status !== 'cancelado_pelo_cliente'
+            && status !== 'cancelado_pelo_gestor'
+            && status !== 'cancelado'
+            && status !== 'realizado'
+            && status !== 'nao_compareceu';
+
+        const obsResumo = observacaoAgendamento || observacaoPet;
 
         container.innerHTML += `
-            <div class="card-agendamento status-${ag.status || 'ativo'}">
-                <div class="agendamento-info">
-                    ${petNome ? `<strong>🐾 ${escapeHTML(petNome)}</strong>` : ''}
-                    <span>${escapeHTML(ag.servicoNome || 'Serviço')}</span>
-                    ${petPorte ? `<small>Porte: ${escapeHTML(petPorte)}</small>` : ''}
-                    <span>com ${escapeHTML(ag.profissionalNome || 'Profissional')}</span>
-                    <small>${dataFormatada} às ${ag.horario}</small>
+            <div class="cliente-reserva-card">
+                <div class="cliente-reserva-topo">
+                    ${fotoPetHtml}
+
+                    <div class="cliente-reserva-info">
+                        <div class="cliente-reserva-linha-nome">
+                            <strong>${escapeHTML(petNome)}</strong>
+                            <span class="cliente-reserva-status ${statusClasse(status)}">
+                                ${statusTexto(status)}
+                            </span>
+                        </div>
+
+                        <div class="cliente-reserva-sub">${subtituloPet}</div>
+                        <div class="cliente-reserva-servico">✂️ ${escapeHTML(servicoNome)}</div>
+                        <div class="cliente-reserva-data">📅 ${escapeHTML(dataFormatada)} • 🕘 ${escapeHTML(horario)}</div>
+                        <div class="cliente-reserva-profissional">🧑‍🔧 ${escapeHTML(profissionalNome)}</div>
+                    </div>
                 </div>
 
-                ${(modo === 'ativos' && ag.status !== 'cancelado_pelo_cliente')
-                    ? `<button class="btn-cancelar" data-id="${ag.id}">Cancelar</button>`
-                    : ''
+                ${
+                    obsResumo
+                        ? `
+                            <div class="cliente-reserva-observacao">
+                                ${observacaoAgendamento ? `⚠️ ${escapeHTML(observacaoAgendamento)}` : ''}
+                                ${observacaoAgendamento && observacaoPet ? '<br>' : ''}
+                                ${observacaoPet ? `📌 ${escapeHTML(observacaoPet)}` : ''}
+                            </div>
+                        `
+                        : ''
+                }
+
+                ${
+                    podeCancelar
+                        ? `
+                            <div class="cliente-reserva-footer">
+                                <button class="btn-cancelar cliente-reserva-cancelar" data-id="${ag.id}">
+                                    Cancelar
+                                </button>
+                            </div>
+                        `
+                        : ''
                 }
             </div>
         `;
