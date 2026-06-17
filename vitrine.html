@@ -678,6 +678,13 @@
     }
 
     showContentSection(`menu-${menuKey}`);
+
+if (menuKey === 'visualizacao') {
+    setTimeout(() => {
+        const btnAtivos = document.getElementById('btn-ver-ativos');
+        if (btnAtivos) btnAtivos.click();
+    }, 200);
+}
 });
             document.querySelectorAll('.btn-voltar').forEach(button => { 
                 button.addEventListener('click', showMainMenu);
