@@ -31,6 +31,23 @@ function obterFotoServico(servico) {
     );
 }
 
+function montarImagemServicoHtml(servico) {
+    const foto = obterFotoServico(servico);
+
+    if (foto) {
+        return `
+            <img
+                class="servico-foto"
+                src="${foto}"
+                alt="${escapeHTML(servico?.nome || 'Serviço')}"
+                onerror="this.outerHTML='<div class=&quot;servico-foto-placeholder&quot;>🐾</div>'"
+            >
+        `;
+    }
+
+    return `<div class="servico-foto-placeholder">🐾</div>`;
+}
+
 function obterPrecoDuracaoBase(servico) {
     if (Array.isArray(servico?.precos) && servico.precos.length > 0) {
         const validos = servico.precos
