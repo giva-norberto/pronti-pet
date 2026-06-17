@@ -444,7 +444,13 @@ export async function buscarAgendamentosDoCliente(empresaId, currentUser, modo) 
             q = query(
                 agendamentosRef,
                 where("clienteId", "==", currentUser.uid),
-                where("data", "<", hoje)
+                where("status", "in", [
+                    "realizado",
+                    "cancelado",
+                    "cancelado_pelo_cliente",
+                    "cancelado_pelo_gestor",
+                    "nao_compareceu"
+                ])
             );
         }
 
@@ -467,7 +473,6 @@ export async function buscarAgendamentosDoCliente(empresaId, currentUser, modo) 
         throw error;
     }
 }
-
 export async function cancelarAgendamento(empresaId, agendamentoId) {
     try {
         const agendamentoRef = doc(db, 'empresarios', empresaId, 'agendamentos', agendamentoId);
