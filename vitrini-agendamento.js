@@ -360,6 +360,8 @@ export async function salvarAgendamento(empresaId, currentUser, agendamento) {
             petId: agendamento.pet?.id || null,
             petNome: agendamento.pet?.nome || "",
             petPorte: agendamento.pet?.porte || "",
+            petFotoUrl: agendamento.pet?.fotoUrl || "",
+            petFotoPath: agendamento.pet?.fotoPath || "",
             observacaoPet: observacaoPet || "",
             observacaoAgendamento: observacaoAgendamento || "",
 
