@@ -319,7 +319,7 @@ function injetarEstilosPetCards() {
 
         /* ===========================
            MEUS AGENDAMENTOS
-        =========================== */
+           =========================== */
 
         #menu-visualizacao {
             background: #eef2f7 !important;
@@ -327,19 +327,21 @@ function injetarEstilosPetCards() {
             width: 100% !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
+            padding: 12px !important;
+            border-radius: 18px !important;
         }
-
         #menu-visualizacao .card,
         #menu-visualizacao .content-card {
-            padding: 10px !important;
-            margin: 0 auto 10px auto !important;
-            border-radius: 16px !important;
+            padding: 12px !important;
+            margin: 0 auto 14px auto !important;
+            border-radius: 18px !important;
             background: #ffffff !important;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10) !important;
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: 540px !important;
             box-sizing: border-box !important;
             transform: none !important;
+            overflow: hidden !important;
         }
 
         #menu-visualizacao .card:hover,
