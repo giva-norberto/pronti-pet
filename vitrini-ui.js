@@ -301,7 +301,7 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
-              /* ===========================
+        /* ===========================
            MEUS AGENDAMENTOS
         =========================== */
 
@@ -528,6 +528,21 @@ function injetarEstilosPetCards() {
 }
 
 function montarImagemServicoHtml(servico) {
+    const foto = obterFotoServico(servico);
+
+    if (foto) {
+        return `
+            <img
+                class="servico-foto"
+                src="${foto}"
+                alt="${escapeHTML(servico?.nome || 'Serviço')}"
+                onerror="this.outerHTML='<div class=&quot;servico-foto-placeholder&quot;>🐾</div>'"
+            >
+        `;
+    }
+
+    return `<div class="servico-foto-placeholder">🐾</div>`;
+}
 // ======================================================================
 // LOADER
 // ======================================================================
