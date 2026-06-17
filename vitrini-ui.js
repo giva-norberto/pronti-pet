@@ -881,6 +881,7 @@ export function renderizarAgendamentosComoCards(agendamentos, modo) {
     if (!container) return;
 
     container.innerHTML = '';
+    console.log("AGENDAMENTOS CLIENTE", agendamentos);
 
     if (!agendamentos || agendamentos.length === 0) {
         container.innerHTML = `<p>Você não tem agendamentos ${modo === 'ativos' ? 'futuros' : 'passados'}.</p>`;
