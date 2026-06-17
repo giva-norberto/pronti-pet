@@ -353,18 +353,20 @@ function injetarEstilosPetCards() {
         }
 
         #lista-agendamentos-visualizacao {
-            display: grid;
-            gap: 10px;
-            justify-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             background: #eef2f7;
-            padding: 6px;
+            padding: 8px;
             border-radius: 14px;
             width: 100%;
             max-width: 100%;
+            margin: 0 auto;
             box-sizing: border-box;
             overflow-x: hidden;
         }
-
+        
         .cliente-reserva-card {
             background: #ffffff;
             border-radius: 15px;
