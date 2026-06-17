@@ -301,22 +301,42 @@ function injetarEstilosPetCards() {
             text-align: right;
         }
 
-        /* ===========================
+              /* ===========================
            MEUS AGENDAMENTOS
         =========================== */
 
         #lista-agendamentos-visualizacao {
             display: grid;
-            gap: 12px;
+            gap: 14px;
+            justify-items: center;
+            background: #eef2f7;
+            padding: 14px;
+            border-radius: 18px;
         }
 
         .cliente-reserva-card {
             background: #ffffff;
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
-            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 0;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+            border: 1px solid #dbe3ef;
             color: #1e293b;
+        }
+
+        .cliente-reserva-cabecalho {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #ffffff;
+            padding: 12px 16px;
+            font-weight: 900;
+            font-size: .96rem;
+            line-height: 1.2;
+        }
+
+        .cliente-reserva-conteudo {
+            padding: 12px;
         }
 
         .cliente-reserva-topo {
@@ -352,22 +372,14 @@ function injetarEstilosPetCards() {
         }
 
         .cliente-reserva-linha-nome {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .cliente-reserva-linha-nome strong {
-            color: #0f172a;
-            font-size: 0.98rem;
-            line-height: 1.2;
+            display: none;
         }
 
         .cliente-reserva-sub {
             color: #64748b;
             font-size: .82rem;
             margin-top: 2px;
+            font-weight: 700;
         }
 
         .cliente-reserva-servico,
@@ -383,7 +395,7 @@ function injetarEstilosPetCards() {
             font-size: .72rem;
             font-weight: 900;
             border-radius: 999px;
-            padding: 4px 8px;
+            padding: 5px 10px;
             white-space: nowrap;
         }
 
@@ -421,8 +433,12 @@ function injetarEstilosPetCards() {
 
         .cliente-reserva-footer {
             margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #edf2f7;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
         .cliente-reserva-cancelar {
@@ -475,9 +491,18 @@ function injetarEstilosPetCards() {
                 text-align: left;
             }
 
+            #lista-agendamentos-visualizacao {
+                padding: 12px;
+                border-radius: 16px;
+            }
+
             .cliente-reserva-card {
+                max-width: 100%;
+                border-radius: 16px;
+            }
+
+            .cliente-reserva-conteudo {
                 padding: 10px;
-                border-radius: 14px;
             }
 
             .cliente-reserva-foto,
@@ -488,10 +513,6 @@ function injetarEstilosPetCards() {
                 max-width: 56px;
                 max-height: 56px;
                 border-radius: 12px;
-            }
-
-            .cliente-reserva-linha-nome strong {
-                font-size: 0.92rem;
             }
 
             .cliente-reserva-sub,
@@ -507,22 +528,6 @@ function injetarEstilosPetCards() {
 }
 
 function montarImagemServicoHtml(servico) {
-    const foto = obterFotoServico(servico);
-
-    if (foto) {
-        return `
-            <img
-                class="servico-foto"
-                src="${foto}"
-                alt="${escapeHTML(servico?.nome || 'Serviço')}"
-                onerror="this.outerHTML='<div class=&quot;servico-foto-placeholder&quot;>🐾</div>'"
-            >
-        `;
-    }
-
-    return `<div class="servico-foto-placeholder">🐾</div>`;
-}
-
 // ======================================================================
 // LOADER
 // ======================================================================
