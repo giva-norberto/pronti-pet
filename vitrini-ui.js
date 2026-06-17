@@ -1130,52 +1130,54 @@ export function renderizarAgendamentosComoCards(agendamentos, modo) {
 
         container.innerHTML += `
             <div class="cliente-reserva-card">
-                <div class="cliente-reserva-topo">
-                    ${fotoPetHtml}
-
-                    <div class="cliente-reserva-info">
-                        <div class="cliente-reserva-linha-nome">
-                            <strong>${escapeHTML(petNome)}</strong>
-                            <span class="cliente-reserva-status ${statusClasse(status)}">
-                                ${statusTexto(status)}
-                            </span>
-                        </div>
-
-                        <div class="cliente-reserva-sub">${subtituloPet}</div>
-                        <div class="cliente-reserva-servico">✂️ ${escapeHTML(servicoNome)}</div>
-                        <div class="cliente-reserva-data">📅 ${escapeHTML(dataFormatada)} • 🕘 ${escapeHTML(horario)}</div>
-                        <div class="cliente-reserva-profissional">🧑‍🔧 ${escapeHTML(profissionalNome)}</div>
-                    </div>
+                <div class="cliente-reserva-cabecalho">
+                    <span>🐾 ${escapeHTML(petNome)}</span>
                 </div>
 
-                ${
-                    obsResumo
-                        ? `
-                            <div class="cliente-reserva-observacao">
-                                ${observacaoAgendamento ? `⚠️ ${escapeHTML(observacaoAgendamento)}` : ''}
-                                ${observacaoAgendamento && observacaoPet ? '<br>' : ''}
-                                ${observacaoPet ? `📌 ${escapeHTML(observacaoPet)}` : ''}
-                            </div>
-                        `
-                        : ''
-                }
+                <div class="cliente-reserva-conteudo">
+                    <div class="cliente-reserva-topo">
+                        ${fotoPetHtml}
 
-                ${
-                    podeCancelar
-                        ? `
-                            <div class="cliente-reserva-footer">
-                                <button class="btn-cancelar cliente-reserva-cancelar" data-id="${ag.id}">
-                                    Cancelar
-                                </button>
-                            </div>
-                        `
-                        : ''
-                }
+                        <div class="cliente-reserva-info">
+                            <div class="cliente-reserva-sub">${subtituloPet}</div>
+                            <div class="cliente-reserva-servico">✂️ ${escapeHTML(servicoNome)}</div>
+                            <div class="cliente-reserva-data">📅 ${escapeHTML(dataFormatada)} • 🕘 ${escapeHTML(horario)}</div>
+                            <div class="cliente-reserva-profissional">🧑‍🔧 ${escapeHTML(profissionalNome)}</div>
+                        </div>
+                    </div>
+
+                    ${
+                        obsResumo
+                            ? `
+                                <div class="cliente-reserva-observacao">
+                                    ${observacaoAgendamento ? `⚠️ ${escapeHTML(observacaoAgendamento)}` : ''}
+                                    ${observacaoAgendamento && observacaoPet ? '<br>' : ''}
+                                    ${observacaoPet ? `📌 ${escapeHTML(observacaoPet)}` : ''}
+                                </div>
+                            `
+                            : ''
+                    }
+
+                    <div class="cliente-reserva-footer">
+                        <span class="cliente-reserva-status ${statusClasse(status)}">
+                            ${statusTexto(status)}
+                        </span>
+
+                        ${
+                            podeCancelar
+                                ? `
+                                    <button class="btn-cancelar cliente-reserva-cancelar" data-id="${ag.id}">
+                                        Cancelar
+                                    </button>
+                                `
+                                : ''
+                        }
+                    </div>
+                </div>
             </div>
         `;
     });
 }
-
 // ======================================================================
 // MODAIS
 // ======================================================================
