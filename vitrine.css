@@ -966,13 +966,13 @@ body {
         box-sizing: border-box !important;
     }
 }
-/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO */
+/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO / BOUNCE */
 html,
 body {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
+    overscroll-behavior: none !important;
 }
 
 #vitrine-content.vitrine-container,
@@ -983,31 +983,20 @@ body {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
-    box-sizing: border-box !important;
-}
-/* TRAVA BOUNCE / ELÁSTICO MOBILE */
-html,
-body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: none !important;
-}
-
-#vitrine-content.vitrine-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: none !important;
+    overscroll-behavior-x: none !important;
     box-sizing: border-box !important;
 }
 
-.main-content-vitrine,
-#main-navigation-container,
-.menu-content,
-.dashboard-grid-cards {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box !important;
+@media (max-width: 560px) {
+    #vitrine-content.vitrine-container,
+    .main-content-vitrine,
+    #main-navigation-container,
+    .menu-content,
+    .dashboard-grid-cards,
+    .card {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
 }
