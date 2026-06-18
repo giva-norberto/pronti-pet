@@ -1000,3 +1000,417 @@ body {
         box-sizing: border-box !important;
     }
 }
+/* ===========================
+   CSS INTERNO MIGRADO DA VITRINE.HTML
+=========================== */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+    color: #fff;
+    min-height: 100vh;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-auth-container {
+    background: white;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+    color: #333;
+}
+
+#modal-auth-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+#modal-auth-close-btn:hover {
+    background: #e2e8f0;
+    transform: rotate(90deg);
+}
+
+.modal-auth-step h2 {
+    font-size: 1.5rem;
+    color: #1e293b;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+
+.modal-auth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #d1d5db;
+}
+
+#modal-auth-btn-google {
+    background-color: #ffffff;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+#modal-auth-btn-google:hover {
+    background-color: #f9fafb;
+    border-color: #adb5bd;
+}
+
+.modal-auth-btn-submit {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+}
+
+.modal-auth-btn-submit:hover {
+    opacity: 0.9;
+}
+
+.modal-auth-step input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.modal-auth-step a {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.modal-auth-step a:hover {
+    text-decoration: underline;
+}
+
+.preco-original {
+    text-decoration: line-through;
+    color: #888;
+    margin-right: 6px;
+    font-size: 1em;
+}
+
+.preco-promocional {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.18em;
+}
+
+.badge-promocao {
+    background: #facc15;
+    color: #b45309;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 700;
+    padding: 2px 7px;
+    margin-left: 8px;
+}
+
+.dashboard-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.btn-voltar {
+    background: #eef2ff;
+    color: #4f46e5;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-vitrine-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 22px;
+    padding: 32px 28px 20px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto 32px auto;
+}
+
+.header-vitrine-card #logo-publico {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 16px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    background: #fff;
+}
+
+.header-vitrine-card #nome-negocio-publico {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.header-vitrine-card .boas-vindas-usuario {
+    font-size: 1.05rem;
+    color: #e0e7ff;
+    font-weight: 400;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.header-vitrine-card .usuario-logado-nome {
+    font-size: 1.02rem;
+    color: #fff;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+}
+
+.card {
+    background-color: #fff;
+    color: #374151;
+}
+
+.vitrine-card[data-menu-card="assinatura"] {
+    background: linear-gradient(135deg, #10b981 0%, #4f46e5 100%);
+    color: #fff;
+}
+
+.vitrine-card[data-menu-card="assinatura"] i {
+    color: #fff;
+}
+
+#menu-assinatura {
+    display: none;
+    margin-top: 36px;
+}
+
+#menu-assinatura h2 {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#cards-planos-vitrine {
+    display: grid;
+    gap: 25px;
+    padding: 0 15px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.card-plano-vitrine {
+    background-color: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    padding: 25px;
+    text-align: center;
+    color: #333;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-plano-vitrine:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+}
+
+.card-plano-vitrine h3 {
+    color: #4f46e5;
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.card-plano-vitrine .preco {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.4em;
+    margin-bottom: 15px;
+}
+
+.card-plano-vitrine p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.card-plano-vitrine ul {
+    list-style: none;
+    padding-left: 0;
+    text-align: left;
+    margin-bottom: 25px;
+}
+
+.card-plano-vitrine ul li {
+    list-style: '✅ ';
+    padding-left: 10px;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+.card-plano-vitrine .btn-assinar-plano {
+    background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 25px;
+    margin-top: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.card-plano-vitrine .btn-assinar-plano:hover {
+    opacity: 0.9;
+}
+
+.badge-incluso {
+    background: #10b981;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 700;
+    padding: 2px 7px;
+    margin-left: 8px;
+}
+
+.servico-card {
+    background: #fff;
+    color: #374151;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+#vitrine-content.vitrine-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 20px 12px 90px 12px !important;
+    box-sizing: border-box !important;
+}
+
+.main-content-vitrine {
+    width: 100% !important;
+    max-width: 540px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#main-navigation-container,
+.menu-content,
+.dashboard-grid-cards {
+    width: 100% !important;
+    max-width: 540px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO / BOUNCE */
+html,
+body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: none !important;
+}
+
+#vitrine-content.vitrine-container,
+.main-content-vitrine,
+#main-navigation-container,
+.menu-content,
+.dashboard-grid-cards {
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 560px) {
+    #vitrine-content.vitrine-container,
+    .main-content-vitrine,
+    #main-navigation-container,
+    .menu-content,
+    .dashboard-grid-cards,
+    .card {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+}
