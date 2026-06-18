@@ -966,3 +966,22 @@ body {
         box-sizing: border-box !important;
     }
 }
+/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO */
+html,
+body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none !important;
+}
+
+#vitrine-content.vitrine-container,
+.main-content-vitrine,
+#main-navigation-container,
+.menu-content,
+.dashboard-grid-cards {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
