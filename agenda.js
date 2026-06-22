@@ -17,7 +17,7 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-
+import { abrirPainelAtendimento } from "./painel-atendimento.js";
 let empresaId = localStorage.getItem("empresaAtivaId");
 if (!empresaId) {
   window.location.href = "selecionar-empresa.html";
