@@ -13,6 +13,22 @@
  - Mostra botão para baixar/abrir foto
  - Não altera status
  - Não usa Cloud Functions para status
+
+ Fluxo padrão:
+ Aguardando Atendimento
+ ↓
+ Em Atendimento
+ ↓
+ Finalizado
+ ↓
+ Liberado para Retirada
+
+ Futuro:
+ O pet shop poderá definir quais status deseja usar.
+ Exemplo:
+ ["em_atendimento", "liberado"]
+ ou
+ ["aguardando", "em_atendimento", "finalizado", "liberado"]
 =========================================================
 */
 
@@ -29,29 +45,23 @@ import {
 
 const CONTAINER_ID = "acompanhamento-atendimento-container";
 
-const STATUS_FLUXO = [
-    "recebido",
-    "em_banho",
-    "em_tosa",
+const STATUS_FLUXO_PADRAO = [
+    "aguardando",
+    "em_atendimento",
     "finalizado",
     "liberado"
 ];
 
 const STATUS_CONFIG = {
-    recebido: {
-        texto: "Recebido",
-        emoji: "🟡",
-        classe: "status-recebido"
+    aguardando: {
+        texto: "Aguardando Atendimento",
+        emoji: "⏳",
+        classe: "status-aguardando"
     },
-    em_banho: {
-        texto: "Em Banho",
+    em_atendimento: {
+        texto: "Em Atendimento",
         emoji: "🔵",
-        classe: "status-banho"
-    },
-    em_tosa: {
-        texto: "Em Tosa",
-        emoji: "🟣",
-        classe: "status-tosa"
+        classe: "status-em-atendimento"
     },
     finalizado: {
         texto: "Finalizado",
@@ -66,27 +76,36 @@ const STATUS_CONFIG = {
 };
 
 const STATUS_ALIASES = {
-    "recebido": "recebido",
-    "em_banho": "em_banho",
-    "banho": "em_banho",
-    "em banho": "em_banho",
-    "em_tosa": "em_tosa",
-    "tosa": "em_tosa",
-    "em tosa": "em_tosa",
+    "aguardando": "aguardando",
+    "aguardando_atendimento": "aguardando",
+    "aguardando atendimento": "aguardando",
+    "nao_iniciado": "aguardando",
+    "não_iniciado": "aguardando",
+    "pendente": "aguardando",
+
+    "em_atendimento": "em_atendimento",
+    "em atendimento": "em_atendimento",
+    "atendimento": "em_atendimento",
+    "iniciado": "em_atendimento",
+    "em_andamento": "em_atendimento",
+
     "finalizado": "finalizado",
     "concluido": "finalizado",
     "concluído": "finalizado",
+    "pronto": "finalizado",
+
     "liberado": "liberado",
     "liberado_para_retirada": "liberado",
     "liberado para retirada": "liberado",
-    "pronto": "liberado"
+    "retirada": "liberado",
+    "entregue": "liberado"
 };
 
 /* =====================================================
    FUNÇÃO PRINCIPAL
 ===================================================== */
 
-export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
+export function iniciarAcompanhamentoAtendimento(empresaId, currentUser, opcoes = {}) {
     const container = document.getElementById(CONTAINER_ID);
 
     if (!container) {
@@ -113,11 +132,6 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
         "agendamentos"
     );
 
-    /*
-      Busca agendamentos ativos do tutor.
-      Não usamos orderBy aqui para evitar necessidade de índice composto.
-      A escolha do atendimento mais recente é feita no JavaScript.
-    */
     const q = query(
         agendamentosRef,
         where("clienteId", "==", currentUser.uid),
@@ -138,14 +152,14 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
                 ...docSnap.data()
             }));
 
-            const atendimentoAtivo = escolherAtendimentoParaExibir(atendimentos);
+            const atendimentoAtivo = escolherAtendimentoParaExibir(atendimentos, opcoes);
 
             if (!atendimentoAtivo) {
                 renderizarEstadoVazio(container);
                 return;
             }
 
-            renderizarAcompanhamento(container, atendimentoAtivo);
+            renderizarAcompanhamento(container, atendimentoAtivo, opcoes);
         },
         (error) => {
             console.error("[Pronti Pet] Erro ao escutar acompanhamento:", error);
@@ -160,11 +174,12 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
    ESCOLHA DO ATENDIMENTO
 ===================================================== */
 
-function escolherAtendimentoParaExibir(atendimentos) {
+function escolherAtendimentoParaExibir(atendimentos, opcoes = {}) {
     const comAcompanhamento = atendimentos.filter((atendimento) => {
+        const fluxo = obterFluxoAtendimento(atendimento, opcoes);
         const status = normalizarStatus(atendimento.statusAtendimento);
 
-        return STATUS_FLUXO.includes(status);
+        return fluxo.includes(status);
     });
 
     if (comAcompanhamento.length === 0) return null;
@@ -195,12 +210,40 @@ function obterDataOrdenacao(atendimento) {
 }
 
 /* =====================================================
+   FLUXO CONFIGURÁVEL
+===================================================== */
+
+function obterFluxoAtendimento(atendimento, opcoes = {}) {
+    const fluxoDoAtendimento =
+        atendimento.fluxoAtendimento ||
+        atendimento.etapasAtendimento ||
+        atendimento.statusPermitidos;
+
+    const fluxoDasOpcoes =
+        opcoes.fluxoAtendimento ||
+        opcoes.etapasAtendimento ||
+        opcoes.statusPermitidos;
+
+    const fluxoEscolhido =
+        Array.isArray(fluxoDoAtendimento) && fluxoDoAtendimento.length > 0
+            ? fluxoDoAtendimento
+            : Array.isArray(fluxoDasOpcoes) && fluxoDasOpcoes.length > 0
+                ? fluxoDasOpcoes
+                : STATUS_FLUXO_PADRAO;
+
+    return fluxoEscolhido
+        .map((status) => normalizarStatus(status))
+        .filter((status) => STATUS_CONFIG[status]);
+}
+
+/* =====================================================
    RENDERIZAÇÃO PRINCIPAL
 ===================================================== */
 
-function renderizarAcompanhamento(container, atendimento) {
+function renderizarAcompanhamento(container, atendimento, opcoes = {}) {
+    const fluxo = obterFluxoAtendimento(atendimento, opcoes);
     const statusAtual = normalizarStatus(atendimento.statusAtendimento);
-    const statusInfo = STATUS_CONFIG[statusAtual] || STATUS_CONFIG.recebido;
+    const statusInfo = STATUS_CONFIG[statusAtual] || STATUS_CONFIG.aguardando;
 
     const nomePet =
         atendimento.petNome ||
@@ -257,7 +300,8 @@ function renderizarAcompanhamento(container, atendimento) {
 
             ${renderizarTimeline(
                 statusAtual,
-                atendimento.timelineAtendimento
+                atendimento.timelineAtendimento,
+                fluxo
             )}
 
             ${
@@ -301,12 +345,12 @@ function renderizarStatusPrincipal(statusInfo, ultimaAtualizacao) {
    LINHA DO TEMPO
 ===================================================== */
 
-function renderizarTimeline(statusAtual, timelineAtendimento = []) {
-    const indiceAtual = STATUS_FLUXO.indexOf(statusAtual);
+function renderizarTimeline(statusAtual, timelineAtendimento = [], fluxo = STATUS_FLUXO_PADRAO) {
+    const indiceAtual = fluxo.indexOf(statusAtual);
 
-    const itens = STATUS_FLUXO.map((status, index) => {
+    const itens = fluxo.map((status, index) => {
         const config = STATUS_CONFIG[status];
-        const concluido = index <= indiceAtual;
+        const concluido = indiceAtual >= 0 && index <= indiceAtual;
         const dataStatus = buscarDataNaTimeline(status, timelineAtendimento);
 
         return `
@@ -538,7 +582,6 @@ function escaparAtributo(texto) {
 
 /* =====================================================
    CSS INJETADO
-   Fica dentro do arquivo para não precisar criar outro CSS agora.
 ===================================================== */
 
 function aplicarCssAcompanhamento() {
