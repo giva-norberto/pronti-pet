@@ -2,23 +2,17 @@
 =========================================================
  PRONTI PET — acompanhamento-atendimento.js
 =========================================================
+ Módulo separado da vitrine.
 
-Módulo separado para acompanhamento do atendimento do pet.
-
-Função:
-- Escutar o Firestore em tempo real.
-- Mostrar status atual.
-- Mostrar linha do tempo.
-- Mostrar observação da equipe.
-- Mostrar foto do atendimento, se existir.
-- Esconder foto expirada após 24h.
-- Não altera status.
-- Não depende de Cloud Functions para status.
-
-A vitrine apenas chama:
-
-iniciarAcompanhamentoAtendimento(empresaId, currentUser);
-
+ Faz:
+ - Escuta atendimento em tempo real no Firestore
+ - Mostra status atual
+ - Mostra linha do tempo
+ - Mostra observação da equipe
+ - Mostra foto do atendimento por 24h
+ - Mostra botão para baixar/abrir foto
+ - Não altera status
+ - Não usa Cloud Functions para status
 =========================================================
 */
 
@@ -28,7 +22,6 @@ import {
     collection,
     query,
     where,
-    orderBy,
     limit,
     onSnapshot,
     Timestamp
@@ -72,6 +65,23 @@ const STATUS_CONFIG = {
     }
 };
 
+const STATUS_ALIASES = {
+    "recebido": "recebido",
+    "em_banho": "em_banho",
+    "banho": "em_banho",
+    "em banho": "em_banho",
+    "em_tosa": "em_tosa",
+    "tosa": "em_tosa",
+    "em tosa": "em_tosa",
+    "finalizado": "finalizado",
+    "concluido": "finalizado",
+    "concluído": "finalizado",
+    "liberado": "liberado",
+    "liberado_para_retirada": "liberado",
+    "liberado para retirada": "liberado",
+    "pronto": "liberado"
+};
+
 /* =====================================================
    FUNÇÃO PRINCIPAL
 ===================================================== */
@@ -80,7 +90,7 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
     const container = document.getElementById(CONTAINER_ID);
 
     if (!container) {
-        console.warn(`Container #${CONTAINER_ID} não encontrado.`);
+        console.warn(`[Pronti Pet] Container #${CONTAINER_ID} não encontrado.`);
         return null;
     }
 
@@ -103,12 +113,16 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
         "agendamentos"
     );
 
+    /*
+      Busca agendamentos ativos do tutor.
+      Não usamos orderBy aqui para evitar necessidade de índice composto.
+      A escolha do atendimento mais recente é feita no JavaScript.
+    */
     const q = query(
         agendamentosRef,
         where("clienteId", "==", currentUser.uid),
-        where("statusAtendimento", "in", STATUS_FLUXO),
-        orderBy("data", "desc"),
-        limit(1)
+        where("status", "==", "ativo"),
+        limit(20)
     );
 
     const unsubscribe = onSnapshot(
@@ -119,22 +133,65 @@ export function iniciarAcompanhamentoAtendimento(empresaId, currentUser) {
                 return;
             }
 
-            const docSnap = snapshot.docs[0];
-
-            const atendimento = {
+            const atendimentos = snapshot.docs.map((docSnap) => ({
                 id: docSnap.id,
                 ...docSnap.data()
-            };
+            }));
 
-            renderizarAcompanhamento(container, atendimento);
+            const atendimentoAtivo = escolherAtendimentoParaExibir(atendimentos);
+
+            if (!atendimentoAtivo) {
+                renderizarEstadoVazio(container);
+                return;
+            }
+
+            renderizarAcompanhamento(container, atendimentoAtivo);
         },
         (error) => {
-            console.error("Erro ao escutar acompanhamento:", error);
+            console.error("[Pronti Pet] Erro ao escutar acompanhamento:", error);
             renderizarErro(container);
         }
     );
 
     return unsubscribe;
+}
+
+/* =====================================================
+   ESCOLHA DO ATENDIMENTO
+===================================================== */
+
+function escolherAtendimentoParaExibir(atendimentos) {
+    const comAcompanhamento = atendimentos.filter((atendimento) => {
+        const status = normalizarStatus(atendimento.statusAtendimento);
+
+        return STATUS_FLUXO.includes(status);
+    });
+
+    if (comAcompanhamento.length === 0) return null;
+
+    return comAcompanhamento.sort((a, b) => {
+        const dataA = obterDataOrdenacao(a);
+        const dataB = obterDataOrdenacao(b);
+
+        return dataB - dataA;
+    })[0];
+}
+
+function obterDataOrdenacao(atendimento) {
+    const candidatos = [
+        atendimento.ultimaAtualizacaoStatus,
+        atendimento.dataHora,
+        atendimento.criadoEm,
+        atendimento.createdAt,
+        atendimento.data
+    ];
+
+    for (const valor of candidatos) {
+        const data = converterParaDate(valor);
+        if (data) return data.getTime();
+    }
+
+    return 0;
 }
 
 /* =====================================================
@@ -149,12 +206,32 @@ function renderizarAcompanhamento(container, atendimento) {
         atendimento.petNome ||
         atendimento.nomePet ||
         atendimento.nomeAnimal ||
+        atendimento.pet?.nome ||
         "Seu pet";
 
-    const observacao = limparTexto(atendimento.observacaoEquipe);
+    const observacao = limparTexto(
+        atendimento.observacaoEquipe ||
+        atendimento.observacaoAtendimento ||
+        atendimento.recadoEquipe
+    );
 
-    const fotoUrl = atendimento.fotoAtendimentoUrl || "";
-    const fotoExpiraEm = atendimento.fotoAtendimentoExpiraEm || null;
+    const fotoUrl =
+        atendimento.fotoAtendimentoUrl ||
+        atendimento.fotoUrl ||
+        atendimento.fotoFinalizacaoUrl ||
+        "";
+
+    const fotoCriadaEm =
+        atendimento.fotoAtendimentoCriadaEm ||
+        atendimento.fotoCriadaEm ||
+        atendimento.dataFotoAtendimento ||
+        null;
+
+    const fotoExpiraEm =
+        atendimento.fotoAtendimentoExpiraEm ||
+        atendimento.fotoExpiraEm ||
+        calcularExpiracaoFoto(fotoCriadaEm);
+
     const fotoEstaExpirada = fotoExpirada(fotoExpiraEm);
 
     container.innerHTML = `
@@ -184,7 +261,7 @@ function renderizarAcompanhamento(container, atendimento) {
             )}
 
             ${
-                !fotoEstaExpirada && fotoUrl
+                fotoUrl && !fotoEstaExpirada
                     ? renderizarFoto(fotoUrl, fotoExpiraEm)
                     : ""
             }
@@ -230,10 +307,7 @@ function renderizarTimeline(statusAtual, timelineAtendimento = []) {
     const itens = STATUS_FLUXO.map((status, index) => {
         const config = STATUS_CONFIG[status];
         const concluido = index <= indiceAtual;
-        const dataStatus = buscarDataNaTimeline(
-            status,
-            timelineAtendimento
-        );
+        const dataStatus = buscarDataNaTimeline(status, timelineAtendimento);
 
         return `
             <div class="pp-timeline-item ${concluido ? "concluido" : "pendente"}">
@@ -272,7 +346,7 @@ function buscarDataNaTimeline(status, timelineAtendimento) {
         return normalizarStatus(etapa?.status) === status;
     });
 
-    return item?.dataHora || item?.criadoEm || null;
+    return item?.dataHora || item?.criadoEm || item?.createdAt || null;
 }
 
 /* =====================================================
@@ -297,11 +371,11 @@ function renderizarFoto(fotoUrl, fotoExpiraEm) {
             <a
                 class="pp-foto-download"
                 href="${escaparAtributo(fotoUrl)}"
-                download
+                download="foto-pronti-pet.jpg"
                 target="_blank"
                 rel="noopener noreferrer"
             >
-                ⬇️ Baixar Foto
+                ⬇️ Baixar / Abrir Foto
             </a>
 
             ${
@@ -316,6 +390,14 @@ function renderizarFoto(fotoUrl, fotoExpiraEm) {
             }
         </div>
     `;
+}
+
+function calcularExpiracaoFoto(fotoCriadaEm) {
+    const data = converterParaDate(fotoCriadaEm);
+
+    if (!data) return null;
+
+    return new Date(data.getTime() + 24 * 60 * 60 * 1000);
 }
 
 function fotoExpirada(dataExpiracao) {
@@ -342,7 +424,7 @@ function renderizarObservacao(observacao) {
 }
 
 /* =====================================================
-   ESTADOS DA TELA
+   ESTADOS
 ===================================================== */
 
 function renderizarCarregando(container) {
@@ -382,15 +464,17 @@ function renderizarErro(container) {
 ===================================================== */
 
 function normalizarStatus(status) {
-    if (!status) return "recebido";
+    if (!status) return "";
 
-    return String(status)
+    const statusBase = String(status)
         .trim()
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, "_")
         .replace(/-/g, "_");
+
+    return STATUS_ALIASES[statusBase] || statusBase;
 }
 
 function limparTexto(texto) {
@@ -454,7 +538,7 @@ function escaparAtributo(texto) {
 
 /* =====================================================
    CSS INJETADO
-   Depois podemos separar em acompanhamento-atendimento.css
+   Fica dentro do arquivo para não precisar criar outro CSS agora.
 ===================================================== */
 
 function aplicarCssAcompanhamento() {
