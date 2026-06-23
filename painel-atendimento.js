@@ -14,7 +14,7 @@ Função:
 - Gerar timeline automática
 - Salvar observação da equipe
 - Enviar foto do atendimento
-- Deixar foto disponível por 24 horas
+- Deixar foto disponível para o tutor por 24 horas
 
 Fluxo padrão:
 Aguardando Atendimento
@@ -36,13 +36,13 @@ import {
     updateDoc,
     serverTimestamp,
     Timestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 import {
     ref,
     uploadBytes,
     getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
 const STATUS_FLUXO_PADRAO = [
     "aguardando",
