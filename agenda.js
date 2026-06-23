@@ -755,11 +755,23 @@ function configurarListeners() {
       const btnAusencia = e.target.closest(".btn-ausencia");
 
       if (btnAusencia) {
+        e.stopPropagation();
+
         const agendamentoId = btnAusencia.dataset.id;
 
         if (confirm("Marcar ausência deste cliente? Isso ficará registrado no histórico.")) {
           await marcarNaoCompareceu(agendamentoId);
         }
+
+        return;
+      }
+
+      const cardAtendimento = e.target.closest(".card--agenda[data-agendamento-id]");
+
+      if (cardAtendimento) {
+        const agendamentoId = cardAtendimento.dataset.agendamentoId;
+
+        await abrirPainelAtendimento(empresaId, agendamentoId);
       }
     });
   }
@@ -1111,6 +1123,12 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
     const cardElement = document.createElement("div");
     cardElement.className = "card card--agenda";
+
+    if (!isHistorico && ag.status === "ativo") {
+      cardElement.dataset.agendamentoId = ag.id;
+      cardElement.style.cursor = "pointer";
+      cardElement.title = "Clique para abrir o atendimento";
+    }
 
     cardElement.innerHTML = `
       <div class="agenda-pet-card-header">
