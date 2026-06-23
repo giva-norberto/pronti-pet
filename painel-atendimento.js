@@ -798,7 +798,7 @@ function aplicarCssPainelAtendimento() {
             position: fixed;
             inset: 0;
             z-index: 99999;
-            background: linear-gradient(180deg, #f7f0ff, #ffffff);
+            background: linear-gradient(180deg, #eef6ff 0%, #f8fbff 45%, #ffffff 100%);
             overflow-y: auto;
             font-family: inherit;
         }
@@ -813,25 +813,36 @@ function aplicarCssPainelAtendimento() {
         }
 
         .pp-painel-topo {
+            position: sticky;
+            top: 0;
+            z-index: 5;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 18px;
+            padding: 8px 0 14px;
+            background: linear-gradient(180deg, #eef6ff 70%, rgba(238, 246, 255, 0));
+            margin-bottom: 10px;
         }
 
         .pp-btn-fechar {
             border: none;
             background: #ffffff;
-            color: #4c1d95;
+            color: #0369a1;
             border-radius: 999px;
-            padding: 12px 18px;
-            font-weight: 800;
-            box-shadow: 0 8px 24px rgba(76, 29, 149, 0.14);
+            padding: 11px 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 22px rgba(14, 165, 233, 0.18);
         }
 
         .pp-painel-titulo {
-            font-weight: 900;
-            color: #4c1d95;
+            font-weight: 950;
+            color: #075985;
+            font-size: 0.95rem;
+        }
+
+        .pp-painel-main {
+            padding-bottom: 26px;
         }
 
         .pp-pet-card,
@@ -841,28 +852,32 @@ function aplicarCssPainelAtendimento() {
         .pp-foto-atendimento-card,
         .pp-corrigir-card {
             background: #ffffff;
-            border-radius: 28px;
+            border-radius: 26px;
             padding: 18px;
-            margin-bottom: 16px;
-            box-shadow: 0 12px 36px rgba(76, 29, 149, 0.12);
+            margin-bottom: 14px;
+            box-shadow: 0 12px 34px rgba(15, 23, 42, 0.10);
             box-sizing: border-box;
+            border: 1px solid rgba(14, 165, 233, 0.10);
         }
 
         .pp-pet-card {
             text-align: center;
+            padding-top: 22px;
         }
 
         .pp-pet-foto {
-            width: 180px;
-            height: 180px;
+            width: 178px;
+            height: 178px;
             border-radius: 34px;
             margin: 0 auto 14px;
-            background: #f1e9ff;
+            background: linear-gradient(135deg, #dbeafe, #f0f9ff);
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 4rem;
+            box-shadow: 0 10px 28px rgba(14, 165, 233, 0.20);
+            border: 4px solid #ffffff;
         }
 
         .pp-pet-foto img {
@@ -873,34 +888,41 @@ function aplicarCssPainelAtendimento() {
 
         .pp-pet-card h1 {
             margin: 0;
-            color: #2b164c;
-            font-size: 2rem;
+            color: #0f172a;
+            font-size: 2.05rem;
+            font-weight: 950;
+            line-height: 1.1;
         }
 
         .pp-pet-card p {
-            margin: 6px 0 10px;
-            color: #6b6475;
-            font-weight: 700;
+            margin: 7px 0 8px;
+            color: #0369a1;
+            font-weight: 900;
         }
 
         .pp-pet-info {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            color: #6b6475;
-            font-size: 0.95rem;
+            color: #475569;
+            font-size: 0.92rem;
+            font-weight: 700;
         }
 
         .pp-status-card {
             text-align: center;
-            background: linear-gradient(135deg, #6d28d9, #9333ea);
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
             color: #ffffff;
+            border: none;
+            box-shadow: 0 14px 34px rgba(14, 165, 233, 0.32);
         }
 
         .pp-status-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            opacity: 0.9;
+            font-size: 0.76rem;
+            font-weight: 900;
+            opacity: 0.92;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .pp-status-atual {
@@ -909,33 +931,50 @@ function aplicarCssPainelAtendimento() {
             align-items: center;
             gap: 10px;
             margin: 10px 0;
-            font-size: 1.8rem;
+            font-size: 1.65rem;
         }
 
         .pp-status-atual strong {
-            font-size: 1.6rem;
+            font-size: 1.55rem;
+            font-weight: 950;
         }
 
         .pp-status-card small {
-            opacity: 0.9;
+            opacity: 0.95;
+            font-weight: 700;
         }
 
         .pp-btn-principal {
             width: 100%;
             border: none;
-            border-radius: 26px;
-            padding: 24px 18px;
-            font-size: 1.25rem;
-            font-weight: 900;
-            background: #4c1d95;
+            border-radius: 24px;
+            padding: 23px 18px;
+            font-size: 1.18rem;
+            font-weight: 950;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
             color: #ffffff;
-            margin-bottom: 16px;
-            box-shadow: 0 14px 34px rgba(76, 29, 149, 0.28);
+            margin-bottom: 14px;
+            box-shadow: 0 14px 34px rgba(14, 165, 233, 0.35);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            letter-spacing: 0.02em;
+        }
+
+        .pp-btn-principal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 40px rgba(14, 165, 233, 0.42);
+        }
+
+        .pp-btn-principal:active {
+            transform: scale(0.98);
         }
 
         .pp-btn-principal:disabled {
-            background: #c4b5fd;
+            background: #cbd5e1;
+            color: #64748b;
             box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.85;
         }
 
         .pp-btn-secundario {
@@ -943,10 +982,33 @@ function aplicarCssPainelAtendimento() {
             border: none;
             border-radius: 18px;
             padding: 15px;
-            background: #f1e9ff;
-            color: #4c1d95;
-            font-weight: 900;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            color: #ffffff;
+            font-weight: 950;
             margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(14, 165, 233, 0.28);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        }
+
+        .pp-btn-secundario:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(14, 165, 233, 0.34);
+        }
+
+        .pp-btn-secundario:active {
+            transform: scale(0.98);
+        }
+
+        .pp-btn-secundario:disabled {
+            background: #cbd5e1;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .pp-corrigir-card {
+            padding: 14px;
         }
 
         .pp-opcoes-status {
@@ -960,93 +1022,122 @@ function aplicarCssPainelAtendimento() {
         }
 
         .pp-btn-status-manual {
-            border: 1px solid #e9d5ff;
-            background: #ffffff;
-            color: #4c1d95;
+            border: 1.5px solid #7dd3fc;
+            background: #f0f9ff;
+            color: #0369a1;
             border-radius: 18px;
             padding: 14px;
-            font-weight: 800;
+            font-weight: 900;
             text-align: left;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(14, 165, 233, 0.14);
+            transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .pp-btn-status-manual:hover {
+            background: #e0f2fe;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
         }
 
         .pp-btn-status-manual.ativo {
-            background: #6d28d9;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
             color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 10px 24px rgba(14, 165, 233, 0.32);
         }
 
         .pp-timeline-card h2,
         .pp-observacao-card h2,
         .pp-foto-atendimento-card h2 {
             margin: 0 0 12px;
-            color: #2b164c;
-            font-size: 1.1rem;
+            color: #0f172a;
+            font-size: 1.08rem;
+            font-weight: 950;
         }
 
         .pp-timeline-lista {
             display: grid;
-            gap: 10px;
+            gap: 12px;
         }
 
         .pp-timeline-item {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
+            padding: 8px 6px;
+            border-radius: 14px;
         }
 
         .pp-timeline-marcador {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
+            font-weight: 950;
+            flex-shrink: 0;
         }
 
         .pp-timeline-item.concluido .pp-timeline-marcador {
-            background: #6d28d9;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
             color: #ffffff;
+            box-shadow: 0 8px 18px rgba(14, 165, 233, 0.28);
         }
 
         .pp-timeline-item.pendente .pp-timeline-marcador {
-            background: #eee7f8;
-            color: #8b7ca8;
+            background: #e2e8f0;
+            color: #64748b;
         }
 
         .pp-timeline-item strong {
-            color: #2b164c;
+            color: #0f172a;
             display: block;
+            font-weight: 900;
         }
 
         .pp-timeline-item small {
-            color: #7c738d;
+            color: #64748b;
             font-size: 0.78rem;
+            font-weight: 700;
         }
 
         .pp-observacao-card textarea {
             width: 100%;
             min-height: 120px;
-            border: 1px solid #e9d5ff;
+            border: 1.5px solid #bae6fd;
             border-radius: 18px;
             padding: 14px;
             font-size: 1rem;
             resize: vertical;
             box-sizing: border-box;
             outline: none;
+            color: #0f172a;
+            background: #ffffff;
+        }
+
+        .pp-observacao-card textarea:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.18);
         }
 
         .pp-foto-atendimento-card p {
-            color: #6b6475;
+            color: #475569;
             margin-top: 0;
+            font-weight: 700;
         }
 
         .pp-foto-atendimento-card input {
             width: 100%;
             padding: 14px;
-            border: 1px dashed #c4b5fd;
+            border: 1.5px dashed #38bdf8;
             border-radius: 18px;
             box-sizing: border-box;
-            background: #faf7ff;
+            background: #f0f9ff;
+            color: #0369a1;
+            font-weight: 800;
+            cursor: pointer;
         }
 
         .pp-preview-foto-card {
@@ -1059,12 +1150,14 @@ function aplicarCssPainelAtendimento() {
             max-height: 360px;
             object-fit: cover;
             border-radius: 20px;
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
         }
 
         .pp-preview-foto-card small {
             display: block;
             margin-top: 8px;
-            color: #6b6475;
+            color: #475569;
+            font-weight: 700;
         }
 
         @media (max-width: 600px) {
@@ -1080,6 +1173,10 @@ function aplicarCssPainelAtendimento() {
 
             .pp-pet-card h1 {
                 font-size: 1.7rem;
+            }
+
+            .pp-status-atual strong {
+                font-size: 1.28rem;
             }
 
             .pp-btn-principal {
