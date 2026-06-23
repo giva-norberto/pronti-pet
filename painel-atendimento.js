@@ -385,59 +385,119 @@ function montarPreviewFoto(atendimento) {
 function configurarEventosPainel(empresaId, atendimento) {
     const modal = document.getElementById("pp-painel-atendimento-modal");
 
-    const btnFechar = document.getElementById("pp-fechar-painel");
-    const btnAvancar = document.getElementById("pp-btn-avancar-status");
-    const btnToggle = document.getElementById("pp-toggle-status");
-    const opcoesStatus = document.getElementById("pp-opcoes-status");
-    const btnSalvarObs = document.getElementById("pp-salvar-observacao");
-    const btnEnviarFoto = document.getElementById("pp-enviar-foto");
+    if (!modal) {
+        console.error("Modal do painel não encontrado.");
+        return;
+    }
 
-    btnFechar?.addEventListener("click", () => {
-        modal?.remove();
-    });
+    modal.addEventListener("click", async (e) => {
+        const btnFechar = e.target.closest("#pp-fechar-painel");
+        const btnAvancar = e.target.closest("#pp-btn-avancar-status");
+        const btnToggle = e.target.closest("#pp-toggle-status");
+        const btnStatusManual = e.target.closest("[data-status-manual]");
+        const btnSalvarObs = e.target.closest("#pp-salvar-observacao");
+        const btnEnviarFoto = e.target.closest("#pp-enviar-foto");
 
-    btnAvancar?.addEventListener("click", async () => {
-        const proximoStatus = btnAvancar.dataset.proximoStatus;
+        if (btnFechar) {
+            modal.remove();
+            return;
+        }
 
-        if (!proximoStatus) return;
+        if (btnToggle) {
+            const opcoesStatus = document.getElementById("pp-opcoes-status");
+            opcoesStatus?.classList.toggle("oculto");
+            return;
+        }
 
-        await atualizarStatusAtendimento(
-            empresaId,
-            atendimento.id,
-            proximoStatus,
-            atendimento
-        );
+        if (btnAvancar) {
+            const proximoStatus = btnAvancar.dataset.proximoStatus;
 
-        await recarregarPainel(empresaId, atendimento.id);
-    });
+            if (!proximoStatus) return;
 
-    btnToggle?.addEventListener("click", () => {
-        opcoesStatus?.classList.toggle("oculto");
-    });
+            btnAvancar.disabled = true;
+            btnAvancar.textContent = "Salvando...";
 
-    document.querySelectorAll("[data-status-manual]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-            const status = btn.dataset.statusManual;
+            try {
+                await atualizarStatusAtendimento(
+                    empresaId,
+                    atendimento.id,
+                    proximoStatus,
+                    atendimento
+                );
 
-            await atualizarStatusAtendimento(
-                empresaId,
-                atendimento.id,
-                status,
-                atendimento
-            );
+                await recarregarPainel(empresaId, atendimento.id);
+            } catch (error) {
+                console.error("Erro ao avançar status:", error);
+                alert("Erro ao atualizar o status do atendimento.");
 
-            await recarregarPainel(empresaId, atendimento.id);
-        });
-    });
+                btnAvancar.disabled = false;
+                btnAvancar.textContent = "Tentar novamente";
+            }
 
-    btnSalvarObs?.addEventListener("click", async () => {
-        await salvarObservacao(empresaId, atendimento.id);
-        await recarregarPainel(empresaId, atendimento.id);
-    });
+            return;
+        }
 
-    btnEnviarFoto?.addEventListener("click", async () => {
-        await enviarFotoAtendimento(empresaId, atendimento.id);
-        await recarregarPainel(empresaId, atendimento.id);
+        if (btnStatusManual) {
+            const status = btnStatusManual.dataset.statusManual;
+
+            if (!status) return;
+
+            btnStatusManual.disabled = true;
+
+            try {
+                await atualizarStatusAtendimento(
+                    empresaId,
+                    atendimento.id,
+                    status,
+                    atendimento
+                );
+
+                await recarregarPainel(empresaId, atendimento.id);
+            } catch (error) {
+                console.error("Erro ao definir status manual:", error);
+                alert("Erro ao definir status manual.");
+
+                btnStatusManual.disabled = false;
+            }
+
+            return;
+        }
+
+        if (btnSalvarObs) {
+            btnSalvarObs.disabled = true;
+            btnSalvarObs.textContent = "Salvando...";
+
+            try {
+                await salvarObservacao(empresaId, atendimento.id);
+                await recarregarPainel(empresaId, atendimento.id);
+            } catch (error) {
+                console.error("Erro ao salvar observação:", error);
+                alert("Erro ao salvar observação.");
+
+                btnSalvarObs.disabled = false;
+                btnSalvarObs.textContent = "Salvar Observação";
+            }
+
+            return;
+        }
+
+        if (btnEnviarFoto) {
+            btnEnviarFoto.disabled = true;
+            btnEnviarFoto.textContent = "Enviando...";
+
+            try {
+                await enviarFotoAtendimento(empresaId, atendimento.id);
+                await recarregarPainel(empresaId, atendimento.id);
+            } catch (error) {
+                console.error("Erro ao enviar foto:", error);
+                alert("Erro ao enviar foto do atendimento.");
+
+                btnEnviarFoto.disabled = false;
+                btnEnviarFoto.textContent = "Enviar Foto";
+            }
+
+            return;
+        }
     });
 }
 
