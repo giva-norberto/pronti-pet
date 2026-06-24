@@ -408,7 +408,18 @@ function aplicarEstiloAgendaPet() {
       font-size: .82rem;
     }
 
-    .status-ativo { background: #dcfce7; color: #15803d; }
+        .status-ativo {
+      width: 14px;
+      height: 14px;
+      padding: 0;
+      border-radius: 999px;
+      background: #22c55e;
+      color: transparent;
+      font-size: 0;
+      box-shadow: 0 0 0 4px #dcfce7;
+      flex-shrink: 0;
+    }
+
     .status-cancelado { background: #fee2e2; color: #b91c1c; }
     .status-falta { background: #ffedd5; color: #c2410c; }
     .status-realizado { background: #e0f2fe; color: #0369a1; }
@@ -530,6 +541,10 @@ function aplicarEstiloAgendaPet() {
 
       .status-label {
         padding: 9px 13px;
+      }
+      
+      .status-label.status-ativo {
+        padding: 0;
       }
     }
   `;
