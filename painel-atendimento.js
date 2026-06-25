@@ -38,17 +38,12 @@ import {
     Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-import {
-    ref,
-    uploadBytes,
-    getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
-
 const STATUS_FLUXO_PADRAO = [
     "aguardando",
     "em_atendimento",
     "finalizado",
-    "liberado"
+    "liberado",
+    "retirado"
 ];
 
 const STATUS_CONFIG = {
@@ -70,10 +65,14 @@ const STATUS_CONFIG = {
     liberado: {
         texto: "Liberado para Retirada",
         emoji: "✅",
-        botao: "ATENDIMENTO CONCLUÍDO"
+        botao: "🐾 CONFIRMAR RETIRADA DO PET"
+    },
+    retirado: {
+        texto: "Pet Retirado",
+        emoji: "🏁",
+        botao: "ATENDIMENTO ENCERRADO"
     }
 };
-
 /* =====================================================
    ABRIR PAINEL
 ===================================================== */
@@ -153,7 +152,7 @@ function montarHtmlPainel(atendimento) {
 
     const textoBotao = proximoStatus
         ? STATUS_CONFIG[statusAtual]?.botao || "AVANÇAR"
-        : "ATENDIMENTO CONCLUÍDO";
+        : STATUS_CONFIG[statusAtual]?.botao || "ATENDIMENTO ENCERRADO";
 
     const nomePet =
         atendimento.petNome ||
