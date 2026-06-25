@@ -565,6 +565,15 @@ async function atualizarStatusAtendimento(
         ultimaAtualizacaoStatus: serverTimestamp(),
         timelineAtendimento: novaTimeline
     });
+
+    window.dispatchEvent(
+        new CustomEvent("pronti-atendimento-atualizado", {
+            detail: {
+                agendamentoId,
+                statusAtendimento: statusNormalizado
+            }
+        })
+    );
 }
 
 function montarTimelineAutomatica(
