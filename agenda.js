@@ -986,6 +986,7 @@ async function inicializarPaginaAgenda() {
 }
 
 /* ============================================================
+ /* ============================================================
    EVENTOS DA TELA
 ============================================================ */
 
@@ -1093,6 +1094,10 @@ function configurarListeners() {
       }
     });
   }
+
+  window.addEventListener("pronti-atendimento-atualizado", () => {
+    carregarAgendamentosConformeModo();
+  });
 }
 
 /* ============================================================
