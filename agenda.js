@@ -408,7 +408,7 @@ function aplicarEstiloAgendaPet() {
       font-size: .82rem;
     }
 
-        .status-ativo {
+    .status-ativo {
       width: 14px;
       height: 14px;
       padding: 0;
@@ -423,6 +423,31 @@ function aplicarEstiloAgendaPet() {
     .status-cancelado { background: #fee2e2; color: #b91c1c; }
     .status-falta { background: #ffedd5; color: #c2410c; }
     .status-realizado { background: #e0f2fe; color: #0369a1; }
+
+    .status-atendimento {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: .82rem;
+      white-space: nowrap;
+    }
+
+    .status-atendimento-andamento {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-atendimento-atendido {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .status-atendimento-retirado {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
 
     #filtro-profissional,
     #data-semana,
@@ -542,9 +567,14 @@ function aplicarEstiloAgendaPet() {
       .status-label {
         padding: 9px 13px;
       }
-      
+
       .status-label.status-ativo {
         padding: 0;
+      }
+
+      .status-atendimento {
+        padding: 8px 12px;
+        font-size: .78rem;
       }
     }
   `;
