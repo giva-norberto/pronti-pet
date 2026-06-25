@@ -1,11 +1,51 @@
 /**
  * agenda.js - Pronti Pet
- * - Agenda com fundo cinza e card pet compacto.
- * - Mantém menu lateral original do Pronti.
- * - Mostra Pet, Tutor, Profissional, observações e foto preparada.
+ *
+ * Responsabilidade deste arquivo:
+ * - Carregar os agendamentos da empresa ativa.
+ * - Exibir a agenda em modo Dia, Semana e Histórico.
+ * - Renderizar os cards visuais dos atendimentos.
+ * - Permitir abertura do Painel de Atendimento ao clicar no card.
+ * - Permitir marcação de ausência.
+ * - Controlar o fechamento automático de dias pendentes.
+ *
+ * IMPORTANTE SOBRE STATUS:
+ *
+ * 1. Campo `status`
+ * Controla o agendamento na agenda/histórico.
+ *
+ * Exemplos:
+ * - ativo
+ * - realizado
+ * - nao_compareceu
+ * - cancelado
+ * - cancelado_pelo_gestor
+ *
+ * Este campo NÃO deve ser alterado pelo painel de atendimento.
+ * Quem muda `status: "ativo"` para `status: "realizado"` é a rotina
+ * de fechamento do dia.
+ *
+ * 2. Campo `statusAtendimento`
+ * Controla a vida do pet dentro do atendimento.
+ *
+ * Exemplos:
+ * - aguardando
+ * - em_atendimento
+ * - finalizado
+ * - liberado
+ * - retirado
+ *
+ * Este campo é alterado pelo painel de atendimento.
+ *
+ * Exibição no card:
+ * - status = ativo -> bolinha verde.
+ * - statusAtendimento = em_atendimento -> selo "Em Atendimento".
+ * - statusAtendimento = finalizado/liberado -> selo "Atendido".
+ * - statusAtendimento = retirado -> selo "Retirado".
  */
 
 import { db, auth } from "./firebase-config.js";
+
 import {
   collection,
   getDocs,
@@ -16,13 +56,27 @@ import {
   updateDoc,
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
 import { abrirPainelAtendimento } from "./painel-atendimento.js";
+
+/* ============================================================
+   EMPRESA ATIVA
+============================================================ */
+
 let empresaId = localStorage.getItem("empresaAtivaId");
+
 if (!empresaId) {
   window.location.href = "selecionar-empresa.html";
   throw new Error("Nenhuma empresa ativa encontrada.");
 }
+
+/* ============================================================
+   ELEMENTOS DA TELA
+============================================================ */
 
 const listaAgendamentosDiv = document.getElementById("lista-agendamentos");
 const filtroProfissionalEl = document.getElementById("filtro-profissional");
@@ -37,6 +91,10 @@ const dataInicialEl = document.getElementById("data-inicial");
 const dataFinalEl = document.getElementById("data-final");
 const btnAplicarHistorico = document.getElementById("btn-aplicar-historico");
 const btnMesAtual = document.getElementById("btn-mes-atual");
+
+/* ============================================================
+   ESTADO DA PÁGINA
+============================================================ */
 
 let modalFinalizarDia = null;
 let perfilUsuario = "dono";
@@ -53,6 +111,10 @@ const diasDaSemanaArr = [
   "sabado",
 ];
 
+/* ============================================================
+   UTILITÁRIOS GERAIS
+============================================================ */
+
 function mostrarToast(texto, cor = "#38bdf8") {
   if (typeof Toastify !== "undefined") {
     Toastify({
@@ -60,7 +122,11 @@ function mostrarToast(texto, cor = "#38bdf8") {
       duration: 4000,
       gravity: "top",
       position: "center",
-      style: { background: cor, color: "white", borderRadius: "8px" },
+      style: {
+        background: cor,
+        color: "white",
+        borderRadius: "8px",
+      },
     }).showToast();
   } else {
     alert(texto);
@@ -75,6 +141,7 @@ function formatarDataISO(data) {
 
 function formatarDataBrasileira(dataISO) {
   if (!dataISO || dataISO.length !== 10) return dataISO;
+
   const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
 }
@@ -86,6 +153,67 @@ function escaparHTML(valor) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+/* ============================================================
+   STATUS DO ATENDIMENTO NO CARD
+============================================================ */
+
+function normalizarStatusAtendimento(status) {
+  if (!status) return "";
+
+  return String(status)
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+}
+
+function obterSeloStatusAtendimento(ag) {
+  if (!ag || ag.status !== "ativo") return "";
+
+  const statusAtendimento = normalizarStatusAtendimento(
+    ag.statusAtendimento || ""
+  );
+
+  if (!statusAtendimento || statusAtendimento === "aguardando") {
+    return "";
+  }
+
+  if (statusAtendimento === "em_atendimento") {
+    return `
+      <span class="status-atendimento status-atendimento-andamento">
+        Em Atendimento
+      </span>
+    `;
+  }
+
+  if (
+    statusAtendimento === "finalizado" ||
+    statusAtendimento === "liberado" ||
+    statusAtendimento === "liberado_para_retirada"
+  ) {
+    return `
+      <span class="status-atendimento status-atendimento-atendido">
+        Atendido
+      </span>
+    `;
+  }
+
+  if (
+    statusAtendimento === "retirado" ||
+    statusAtendimento === "pet_retirado"
+  ) {
+    return `
+      <span class="status-atendimento status-atendimento-retirado">
+        Retirado
+      </span>
+    `;
+  }
+
+  return "";
 }
 
 function montarCaminhoFotoPet(ag) {
@@ -102,11 +230,16 @@ function montarCaminhoFotoPet(ag) {
   return "";
 }
 
+/* ============================================================
+   ESTILO VISUAL DA AGENDA
+============================================================ */
+
 function aplicarEstiloAgendaPet() {
   if (document.getElementById("style-agenda-pet-cards")) return;
 
   const style = document.createElement("style");
   style.id = "style-agenda-pet-cards";
+
   style.textContent = `
     body {
       background: #eef2f7;
@@ -175,7 +308,7 @@ function aplicarEstiloAgendaPet() {
       flex-shrink: 0;
       border: 3px solid rgba(255, 255, 255, .75);
       box-shadow: 0 8px 18px rgba(15, 23, 42, .20);
-      background: rgba(255,255,255,.16);
+      background: rgba(255, 255, 255, .16);
     }
 
     .agenda-pet-foto {
@@ -234,7 +367,7 @@ function aplicarEstiloAgendaPet() {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255,255,255,.16);
+      background: rgba(255, 255, 255, .16);
       flex-shrink: 0;
     }
 
@@ -305,7 +438,7 @@ function aplicarEstiloAgendaPet() {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255,255,255,.55);
+      background: rgba(255, 255, 255, .55);
       font-size: 1.25rem;
       flex-shrink: 0;
     }
@@ -420,9 +553,20 @@ function aplicarEstiloAgendaPet() {
       flex-shrink: 0;
     }
 
-    .status-cancelado { background: #fee2e2; color: #b91c1c; }
-    .status-falta { background: #ffedd5; color: #c2410c; }
-    .status-realizado { background: #e0f2fe; color: #0369a1; }
+    .status-cancelado {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-falta {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .status-realizado {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
 
     .status-atendimento {
       display: inline-flex;
@@ -582,43 +726,93 @@ function aplicarEstiloAgendaPet() {
   document.head.appendChild(style);
 }
 
+/* ============================================================
+   EXPEDIENTE E FECHAMENTO DE DIA
+============================================================ */
+
 async function expedienteAcabou(empresaId, dataISO) {
-  const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
+  const profs = await getDocs(
+    collection(db, "empresarios", empresaId, "profissionais")
+  );
+
   let maxFim = null;
   const dt = new Date(`${dataISO}T00:00:00`);
   const nomeDia = diasDaSemanaArr[dt.getDay()];
 
   for (const docProf of profs.docs) {
-    const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
+    const horariosRef = doc(
+      db,
+      "empresarios",
+      empresaId,
+      "profissionais",
+      docProf.id,
+      "configuracoes",
+      "horarios"
+    );
+
     const horariosSnap = await getDoc(horariosRef);
     if (!horariosSnap.exists()) continue;
 
     const conf = horariosSnap.data();
-    if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
+
+    if (
+      conf[nomeDia] &&
+      conf[nomeDia].ativo &&
+      conf[nomeDia].blocos &&
+      conf[nomeDia].blocos.length > 0
+    ) {
       for (const bloco of conf[nomeDia].blocos) {
-        if (!maxFim || bloco.fim > maxFim) maxFim = bloco.fim;
+        if (!maxFim || bloco.fim > maxFim) {
+          maxFim = bloco.fim;
+        }
       }
     }
   }
 
   if (!maxFim) return true;
+
   const [h, m] = maxFim.split(":").map(Number);
-  const fimExpediente = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), h, m);
+  const fimExpediente = new Date(
+    dt.getFullYear(),
+    dt.getMonth(),
+    dt.getDate(),
+    h,
+    m
+  );
+
   return Date.now() > fimExpediente.getTime();
 }
 
 async function diaTemExpediente(empresaId, dataISO) {
-  const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
+  const profs = await getDocs(
+    collection(db, "empresarios", empresaId, "profissionais")
+  );
+
   const dt = new Date(`${dataISO}T00:00:00`);
   const nomeDia = diasDaSemanaArr[dt.getDay()];
 
   for (const docProf of profs.docs) {
-    const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
+    const horariosRef = doc(
+      db,
+      "empresarios",
+      empresaId,
+      "profissionais",
+      docProf.id,
+      "configuracoes",
+      "horarios"
+    );
+
     const horariosSnap = await getDoc(horariosRef);
     if (!horariosSnap.exists()) continue;
 
     const conf = horariosSnap.data();
-    if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
+
+    if (
+      conf[nomeDia] &&
+      conf[nomeDia].ativo &&
+      conf[nomeDia].blocos &&
+      conf[nomeDia].blocos.length > 0
+    ) {
       return true;
     }
   }
@@ -631,15 +825,32 @@ async function encontrarProximoDiaComExpediente(empresaId, dataInicialISO) {
 
   for (let i = 0; i < 14; i++) {
     const nomeDia = diasDaSemanaArr[data.getDay()];
-    const profs = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
+    const profs = await getDocs(
+      collection(db, "empresarios", empresaId, "profissionais")
+    );
 
     for (const docProf of profs.docs) {
-      const horariosRef = doc(db, "empresarios", empresaId, "profissionais", docProf.id, "configuracoes", "horarios");
+      const horariosRef = doc(
+        db,
+        "empresarios",
+        empresaId,
+        "profissionais",
+        docProf.id,
+        "configuracoes",
+        "horarios"
+      );
+
       const horariosSnap = await getDoc(horariosRef);
       if (!horariosSnap.exists()) continue;
 
       const conf = horariosSnap.data();
-      if (conf[nomeDia] && conf[nomeDia].ativo && conf[nomeDia].blocos && conf[nomeDia].blocos.length > 0) {
+
+      if (
+        conf[nomeDia] &&
+        conf[nomeDia].ativo &&
+        conf[nomeDia].blocos &&
+        conf[nomeDia].blocos.length > 0
+      ) {
         return data.toISOString().split("T")[0];
       }
     }
@@ -656,13 +867,18 @@ function getFimSemana(dataBaseStr) {
   const diaDaSemana = inicio.getDay();
   const diasAteDomingo = 7 - diaDaSemana;
   const fim = new Date(inicio);
+
   fim.setDate(inicio.getDate() + diasAteDomingo - 1);
+
   return formatarDataISO(fim);
 }
 
 function atualizarLegendaSemana(inicioISO, fimISO) {
   if (legendaSemana) {
-    legendaSemana.innerHTML = `Mostrando de <strong>${formatarDataBrasileira(inicioISO)}</strong> a <strong>${formatarDataBrasileira(fimISO)}</strong>`;
+    legendaSemana.innerHTML = `
+      Mostrando de <strong>${formatarDataBrasileira(inicioISO)}</strong>
+      a <strong>${formatarDataBrasileira(fimISO)}</strong>
+    `;
   }
 }
 
@@ -672,7 +888,17 @@ function agendamentoJaVenceu(dataISO, horarioStr, horarioFimExpediente) {
   if (horarioFimExpediente) {
     const [ano, mes, dia] = dataISO.split("-").map(Number);
     const [horaFim, minFim] = horarioFimExpediente.split(":").map(Number);
-    const dataFimExp = new Date(ano, mes - 1, dia, horaFim, minFim, 0, 0);
+
+    const dataFimExp = new Date(
+      ano,
+      mes - 1,
+      dia,
+      horaFim,
+      minFim,
+      0,
+      0
+    );
+
     return Date.now() > dataFimExp.getTime();
   }
 
@@ -680,7 +906,17 @@ function agendamentoJaVenceu(dataISO, horarioStr, horarioFimExpediente) {
 
   const [ano, mes, dia] = dataISO.split("-").map(Number);
   const [hora, min] = horarioStr.split(":").map(Number);
-  const dataAg = new Date(ano, mes - 1, dia, hora, min, 0, 0);
+
+  const dataAg = new Date(
+    ano,
+    mes - 1,
+    dia,
+    hora,
+    min,
+    0,
+    0
+  );
+
   return dataAg.getTime() < Date.now();
 }
 
@@ -689,8 +925,16 @@ function isDataAnteriorOuHoje(dataISO) {
   return dataISO <= hojeISO;
 }
 
+/* ============================================================
+   AUTENTICAÇÃO E INICIALIZAÇÃO
+============================================================ */
+
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return (window.location.href = "login.html");
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
   meuUid = user.uid;
 
   try {
@@ -724,49 +968,71 @@ async function inicializarPaginaAgenda() {
     if (filtroItem) filtroItem.style.display = "none";
   }
 
-  let hojeISO = formatarDataISO(new Date());
-  let acabou = await expedienteAcabou(empresaId, hojeISO);
+  const hojeISO = formatarDataISO(new Date());
+  const acabou = await expedienteAcabou(empresaId, hojeISO);
+
   let dataFiltrar = hojeISO;
 
   if (acabou) {
     dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
   }
 
-  if (inputDataSemana) inputDataSemana.value = dataFiltrar;
+  if (inputDataSemana) {
+    inputDataSemana.value = dataFiltrar;
+  }
+
   configurarListeners();
   ativarModoAgenda("dia");
 }
 
+/* ============================================================
+   EVENTOS DA TELA
+============================================================ */
+
 function configurarListeners() {
   if (btnAgendaDia) {
     btnAgendaDia.addEventListener("click", async () => {
-      let hojeISO = formatarDataISO(new Date());
-      let acabou = await expedienteAcabou(empresaId, hojeISO);
+      const hojeISO = formatarDataISO(new Date());
+      const acabou = await expedienteAcabou(empresaId, hojeISO);
+
       let dataFiltrar = hojeISO;
 
       if (acabou) {
         dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
       }
 
-      if (inputDataSemana) inputDataSemana.value = dataFiltrar;
+      if (inputDataSemana) {
+        inputDataSemana.value = dataFiltrar;
+      }
+
       ativarModoAgenda("dia");
     });
   }
 
   if (btnAgendaSemana) {
-    btnAgendaSemana.addEventListener("click", () => ativarModoAgenda("semana"));
+    btnAgendaSemana.addEventListener("click", () => {
+      ativarModoAgenda("semana");
+    });
   }
 
   if (btnHistorico) {
-    btnHistorico.addEventListener("click", () => ativarModoAgenda("historico"));
+    btnHistorico.addEventListener("click", () => {
+      ativarModoAgenda("historico");
+    });
   }
 
   if (filtroProfissionalEl) {
-    filtroProfissionalEl.addEventListener("change", carregarAgendamentosConformeModo);
+    filtroProfissionalEl.addEventListener(
+      "change",
+      carregarAgendamentosConformeModo
+    );
   }
 
   if (inputDataSemana) {
-    inputDataSemana.addEventListener("change", carregarAgendamentosConformeModo);
+    inputDataSemana.addEventListener(
+      "change",
+      carregarAgendamentosConformeModo
+    );
   }
 
   if (btnSemanaProxima) {
@@ -775,14 +1041,16 @@ function configurarListeners() {
 
       const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
       const dataAtual = new Date(ano, mes - 1, dia);
+
       dataAtual.setDate(dataAtual.getDate() + 7);
+
       inputDataSemana.value = formatarDataISO(dataAtual);
       carregarAgendamentosConformeModo();
     });
   }
 
   if (btnAplicarHistorico) {
-    btnAplicarHistorico.addEventListener("click", function(e) {
+    btnAplicarHistorico.addEventListener("click", function (e) {
       e.preventDefault();
       carregarAgendamentosHistorico();
     });
@@ -804,23 +1072,32 @@ function configurarListeners() {
 
         const agendamentoId = btnAusencia.dataset.id;
 
-        if (confirm("Marcar ausência deste cliente? Isso ficará registrado no histórico.")) {
+        if (
+          confirm(
+            "Marcar ausência deste cliente? Isso ficará registrado no histórico."
+          )
+        ) {
           await marcarNaoCompareceu(agendamentoId);
         }
 
         return;
       }
 
-      const cardAtendimento = e.target.closest(".card--agenda[data-agendamento-id]");
+      const cardAtendimento = e.target.closest(
+        ".card--agenda[data-agendamento-id]"
+      );
 
       if (cardAtendimento) {
         const agendamentoId = cardAtendimento.dataset.agendamentoId;
-
         await abrirPainelAtendimento(empresaId, agendamentoId);
       }
     });
   }
 }
+
+/* ============================================================
+   FECHAMENTO DE DIAS PENDENTES
+============================================================ */
 
 async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
   const hojeISO = formatarDataISO(new Date());
@@ -839,7 +1116,11 @@ async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
 
     snapshotRetroativos.docs.forEach((docSnap) => {
       const ag = docSnap.data();
-      if (!diasPendentes[ag.data]) diasPendentes[ag.data] = [];
+
+      if (!diasPendentes[ag.data]) {
+        diasPendentes[ag.data] = [];
+      }
+
       diasPendentes[ag.data].push(docSnap);
     });
 
@@ -847,7 +1128,10 @@ async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
     const dataPend = diasOrdenados[0];
     const docsPend = diasPendentes[dataPend];
 
-    if (await expedienteAcabou(empresaId, dataPend) && await diaTemExpediente(empresaId, dataPend)) {
+    if (
+      await expedienteAcabou(empresaId, dataPend) &&
+      await diaTemExpediente(empresaId, dataPend)
+    ) {
       exibirCardsAgendamento(docsPend, false);
 
       exibirModalFinalizarDia(docsPend, dataPend, async () => {
@@ -862,19 +1146,36 @@ async function checarFechamentoDiasPendentes(callbackQuandoFinalizar) {
 
   window._finalizouDiasRetroativos = false;
 
-  if (typeof callbackQuandoFinalizar === "function") callbackQuandoFinalizar();
+  if (typeof callbackQuandoFinalizar === "function") {
+    callbackQuandoFinalizar();
+  }
 }
 
 async function marcarNaoCompareceu(agendamentoId) {
   try {
-    const agRef = doc(db, "empresarios", empresaId, "agendamentos", agendamentoId);
-    await updateDoc(agRef, { status: "nao_compareceu" });
+    const agRef = doc(
+      db,
+      "empresarios",
+      empresaId,
+      "agendamentos",
+      agendamentoId
+    );
+
+    await updateDoc(agRef, {
+      status: "nao_compareceu",
+    });
+
     mostrarToast("Agendamento marcado como ausência.", "#f59e42");
     carregarAgendamentosConformeModo();
   } catch (error) {
+    console.error("Erro ao marcar ausência:", error);
     mostrarToast("Erro ao marcar ausência.", "#ef4444");
   }
 }
+
+/* ============================================================
+   MODOS DA AGENDA
+============================================================ */
 
 function carregarAgendamentosConformeModo() {
   if (modoAgenda === "semana") {
@@ -889,7 +1190,9 @@ function carregarAgendamentosConformeModo() {
 function ativarModoAgenda(modo) {
   modoAgenda = modo;
 
-  const filtrosSemanaContainer = document.getElementById("filtros-semana-container");
+  const filtrosSemanaContainer = document.getElementById(
+    "filtros-semana-container"
+  );
 
   if (filtrosSemanaContainer) {
     filtrosSemanaContainer.style.display =
@@ -897,36 +1200,72 @@ function ativarModoAgenda(modo) {
   }
 
   if (filtrosHistoricoDiv) {
-    filtrosHistoricoDiv.style.display = modo === "historico" ? "flex" : "none";
+    filtrosHistoricoDiv.style.display =
+      modo === "historico" ? "flex" : "none";
   }
 
-  if (btnAgendaDia) btnAgendaDia.classList.toggle("active", modo === "dia");
-  if (btnAgendaSemana) btnAgendaSemana.classList.toggle("active", modo === "semana");
-  if (btnHistorico) btnHistorico.classList.toggle("active", modo === "historico");
+  if (btnAgendaDia) {
+    btnAgendaDia.classList.toggle("active", modo === "dia");
+  }
+
+  if (btnAgendaSemana) {
+    btnAgendaSemana.classList.toggle("active", modo === "semana");
+  }
+
+  if (btnHistorico) {
+    btnHistorico.classList.toggle("active", modo === "historico");
+  }
 
   carregarAgendamentosConformeModo();
 }
 
 async function popularFiltroProfissionais() {
   try {
-    const snapshot = await getDocs(collection(db, "empresarios", empresaId, "profissionais"));
-    filtroProfissionalEl.innerHTML = '<option value="todos">Todos os Profissionais</option>';
+    const snapshot = await getDocs(
+      collection(db, "empresarios", empresaId, "profissionais")
+    );
 
-    snapshot.forEach((doc) => {
-      filtroProfissionalEl.appendChild(new Option(doc.data().nome, doc.id));
+    filtroProfissionalEl.innerHTML =
+      '<option value="todos">Todos os Profissionais</option>';
+
+    snapshot.forEach((docProf) => {
+      filtroProfissionalEl.appendChild(
+        new Option(docProf.data().nome, docProf.id)
+      );
     });
   } catch (error) {
+    console.error("Erro ao buscar profissionais:", error);
     mostrarToast("Erro ao buscar profissionais.", "#ef4444");
   }
 }
 
-async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico = false) {
+/* ============================================================
+   BUSCA DOS AGENDAMENTOS
+============================================================ */
+
+async function buscarEExibirAgendamentos(
+  constraints,
+  mensagemVazio,
+  isHistorico = false
+) {
   listaAgendamentosDiv.innerHTML = `<p>Carregando agendamentos...</p>`;
 
   try {
     await checarFechamentoDiasPendentes(async () => {
-      const ref = collection(db, "empresarios", empresaId, "agendamentos");
-      const q = query(ref, ...constraints, orderBy("data"), orderBy("horario"));
+      const ref = collection(
+        db,
+        "empresarios",
+        empresaId,
+        "agendamentos"
+      );
+
+      const q = query(
+        ref,
+        ...constraints,
+        orderBy("data"),
+        orderBy("horario")
+      );
+
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
@@ -934,22 +1273,34 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
         return;
       }
 
-      let profConfigs = {};
-      let profissionaisIds = new Set();
+      const profConfigs = {};
+      const profissionaisIds = new Set();
 
       snapshot.docs.forEach((docSnap) => {
         const ag = docSnap.data();
-        if (ag.profissionalId) profissionaisIds.add(ag.profissionalId);
+
+        if (ag.profissionalId) {
+          profissionaisIds.add(ag.profissionalId);
+        }
       });
 
       const profConfigsArr = await Promise.all(
         Array.from(profissionaisIds).map(async (profId) => {
-          const horariosRef = doc(db, "empresarios", empresaId, "profissionais", profId, "configuracoes", "horarios");
+          const horariosRef = doc(
+            db,
+            "empresarios",
+            empresaId,
+            "profissionais",
+            profId,
+            "configuracoes",
+            "horarios"
+          );
+
           const horariosSnap = await getDoc(horariosRef);
 
           return {
             profId,
-            horarios: horariosSnap.exists() ? horariosSnap.data() : null
+            horarios: horariosSnap.exists() ? horariosSnap.data() : null,
           };
         })
       );
@@ -978,6 +1329,7 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
             profHorarios[nomeDia].ativo
           ) {
             const blocos = profHorarios[nomeDia].blocos || [];
+
             if (blocos.length > 0) {
               horarioFim = blocos[blocos.length - 1].fim;
             }
@@ -988,13 +1340,19 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
 
         if (
           ag.status === "ativo" &&
-          agendamentoJaVenceu(ag.data, ag.horario, ag.horarioFimExpediente)
+          agendamentoJaVenceu(
+            ag.data,
+            ag.horario,
+            ag.horarioFimExpediente
+          )
         ) {
           docsVencidos.push(docSnap);
         }
 
         if (!isHistorico && ag.data) {
-          if (!dataReferencia) dataReferencia = ag.data;
+          if (!dataReferencia) {
+            dataReferencia = ag.data;
+          }
 
           if (ag.data === dataReferencia) {
             if (!ultimoHorarioDia || ag.horario > ultimoHorarioDia) {
@@ -1003,8 +1361,10 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
 
             if (
               ag.horarioFimExpediente &&
-              (!horarioFimExpediente ||
-                ag.horarioFimExpediente > horarioFimExpediente)
+              (
+                !horarioFimExpediente ||
+                ag.horarioFimExpediente > horarioFimExpediente
+              )
             ) {
               horarioFimExpediente = ag.horarioFimExpediente;
             }
@@ -1014,23 +1374,39 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
 
       if (
         docsVencidos.length > 0 &&
-        ((dataReferencia &&
-          isDataAnteriorOuHoje(dataReferencia) &&
-          agendamentoJaVenceu(
-            dataReferencia,
-            ultimoHorarioDia,
-            horarioFimExpediente
-          ) &&
-          await expedienteAcabou(empresaId, dataReferencia) &&
-          await diaTemExpediente(empresaId, dataReferencia)) ||
-          (dataReferencia && dataReferencia < formatarDataISO(new Date())))
+        (
+          (
+            dataReferencia &&
+            isDataAnteriorOuHoje(dataReferencia) &&
+            agendamentoJaVenceu(
+              dataReferencia,
+              ultimoHorarioDia,
+              horarioFimExpediente
+            ) &&
+            await expedienteAcabou(empresaId, dataReferencia) &&
+            await diaTemExpediente(empresaId, dataReferencia)
+          ) ||
+          (
+            dataReferencia &&
+            dataReferencia < formatarDataISO(new Date())
+          )
+        )
       ) {
-        exibirCardsAgendamento(snapshot.docs, isHistorico, horarioFimExpediente);
+        exibirCardsAgendamento(
+          snapshot.docs,
+          isHistorico,
+          horarioFimExpediente
+        );
+
         exibirModalFinalizarDia(docsVencidos, dataReferencia);
         return;
       }
 
-      exibirCardsAgendamento(snapshot.docs, isHistorico, horarioFimExpediente);
+      exibirCardsAgendamento(
+        snapshot.docs,
+        isHistorico,
+        horarioFimExpediente
+      );
     });
   } catch (error) {
     exibirMensagemDeErro("Ocorreu um erro ao carregar os agendamentos.");
@@ -1038,34 +1414,71 @@ async function buscarEExibirAgendamentos(constraints, mensagemVazio, isHistorico
   }
 }
 
+/* ============================================================
+   MODAL DE FINALIZAÇÃO DO DIA
+============================================================ */
+
 function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
-  if (modalFinalizarDia) modalFinalizarDia.remove();
+  if (modalFinalizarDia) {
+    modalFinalizarDia.remove();
+  }
 
   modalFinalizarDia = document.createElement("div");
   modalFinalizarDia.className = "modal-finalizar-dia";
+
   modalFinalizarDia.innerHTML = `
-        <div class="modal-finalizar-dia__content">
-            <h3>Finalizar dia ${formatarDataBrasileira(dataReferencia)}</h3>
-            <p>Você deseja marcar alguma ausência para os agendamentos deste dia antes de finalizar? Todos os agendamentos ainda "ativos" serão marcados como "realizado" após a finalização.</p>
-            <button id="btn-finalizar-dia">Finalizar dia</button>
-            <button id="btn-fechar-modal">Fechar</button>
-        </div>
-        <style>
-        .modal-finalizar-dia {
-            position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;
-        }
-        .modal-finalizar-dia__content {
-            background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 8px 32px #0003; max-width: 370px;
-            text-align: center;
-        }
-        .modal-finalizar-dia__content button {
-            margin: 10px 8px 0 8px; padding: 8px 20px; font-size: 1rem; border-radius: 6px; border: none;
-            background: #38bdf8; color: #fff; cursor: pointer;
-        }
-        #btn-fechar-modal { background: #aaa; }
-        </style>
-    `;
+    <div class="modal-finalizar-dia__content">
+      <h3>Finalizar dia ${formatarDataBrasileira(dataReferencia)}</h3>
+
+      <p>
+        Você deseja marcar alguma ausência para os agendamentos deste dia antes
+        de finalizar? Todos os agendamentos ainda "ativos" serão marcados como
+        "realizado" após a finalização.
+      </p>
+
+      <button id="btn-finalizar-dia">Finalizar dia</button>
+      <button id="btn-fechar-modal">Fechar</button>
+    </div>
+
+    <style>
+      .modal-finalizar-dia {
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-finalizar-dia__content {
+        background: #fff;
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 8px 32px #0003;
+        max-width: 370px;
+        text-align: center;
+      }
+
+      .modal-finalizar-dia__content button {
+        margin: 10px 8px 0 8px;
+        padding: 8px 20px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: none;
+        background: #38bdf8;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      #btn-fechar-modal {
+        background: #aaa;
+      }
+    </style>
+  `;
 
   document.body.appendChild(modalFinalizarDia);
 
@@ -1077,7 +1490,11 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
 
       if (
         ag.status === "ativo" &&
-        agendamentoJaVenceu(ag.data, ag.horario, ag.horarioFimExpediente) &&
+        agendamentoJaVenceu(
+          ag.data,
+          ag.horario,
+          ag.horarioFimExpediente
+        ) &&
         ag.status !== "nao_compareceu" &&
         ag.status !== "cancelado" &&
         ag.status !== "cancelado_pelo_gestor"
@@ -1091,18 +1508,24 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
               "agendamentos",
               docSnap.id
             ),
-            { status: "realizado" }
+            {
+              status: "realizado",
+            }
           )
         );
       }
     }
 
-    if (updates.length > 0) await Promise.all(updates);
+    if (updates.length > 0) {
+      await Promise.all(updates);
+    }
 
     mostrarToast("Agendamentos finalizados como 'realizado'.");
     modalFinalizarDia.remove();
 
-    if (typeof onFinalizarDia === "function") await onFinalizarDia();
+    if (typeof onFinalizarDia === "function") {
+      await onFinalizarDia();
+    }
   };
 
   document.getElementById("btn-fechar-modal").onclick = () => {
@@ -1110,11 +1533,18 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
   };
 }
 
+/* ============================================================
+   RENDERIZAÇÃO DOS CARDS
+============================================================ */
+
 function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
   listaAgendamentosDiv.innerHTML = "";
 
-  docs.forEach((doc) => {
-    const ag = { id: doc.id, ...doc.data() };
+  docs.forEach((docSnap) => {
+    const ag = {
+      id: docSnap.id,
+      ...docSnap.data(),
+    };
 
     if (!isHistorico && ag.status !== "ativo") {
       return;
@@ -1123,15 +1553,25 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     let statusLabel = "<span class='status-label status-ativo'>Ativo</span>";
 
     if (ag.status === "cancelado_pelo_gestor" || ag.status === "cancelado") {
-      statusLabel = "<span class='status-label status-cancelado'>Cancelado</span>";
+      statusLabel =
+        "<span class='status-label status-cancelado'>Cancelado</span>";
     } else if (ag.status === "nao_compareceu") {
-      statusLabel = "<span class='status-label status-falta'>Falta</span>";
+      statusLabel =
+        "<span class='status-label status-falta'>Falta</span>";
     } else if (ag.status === "realizado") {
-      statusLabel = "<span class='status-label status-realizado'>Realizado</span>";
+      statusLabel =
+        "<span class='status-label status-realizado'>Realizado</span>";
     }
 
-    const observacaoPet = escaparHTML(String(ag.observacaoPet || "").trim());
-    const observacaoAgendamento = escaparHTML(String(ag.observacaoAgendamento || "").trim());
+    const statusAtendimentoLabel = obterSeloStatusAtendimento(ag);
+
+    const observacaoPet = escaparHTML(
+      String(ag.observacaoPet || "").trim()
+    );
+
+    const observacaoAgendamento = escaparHTML(
+      String(ag.observacaoAgendamento || "").trim()
+    );
 
     const quantidadeObservacoes =
       (observacaoAgendamento ? 1 : 0) +
@@ -1146,7 +1586,9 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     const petPorte = escaparHTML(ag.petPorte || "");
     const petRaca = escaparHTML(ag.petRaca || ag.racaPet || ag.raca || "");
     const clienteNome = escaparHTML(ag.clienteNome || "Tutor não informado");
-    const profissionalNome = escaparHTML(ag.profissionalNome || "Profissional não informado");
+    const profissionalNome = escaparHTML(
+      ag.profissionalNome || "Profissional não informado"
+    );
     const servicoNome = escaparHTML(ag.servicoNome || "Serviço não informado");
     const horarioTexto = escaparHTML(ag.horario || "Horário não informado");
     const dataTexto = formatarDataBrasileira(ag.data);
@@ -1155,16 +1597,37 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
       ? petPorte.charAt(0).toUpperCase() + petPorte.slice(1).toLowerCase()
       : "";
 
-    const subtituloPet = petRaca && porteFormatado
-      ? `${petRaca} • ${porteFormatado}`
-      : petRaca || porteFormatado || "Porte não informado";
+    const subtituloPet =
+      petRaca && porteFormatado
+        ? `${petRaca} • ${porteFormatado}`
+        : petRaca || porteFormatado || "Porte não informado";
 
-    const petFotoUrl = String(ag.petFotoUrl || ag.fotoPetUrl || ag.petFoto || "").trim();
+    const petFotoUrl = String(
+      ag.petFotoUrl ||
+      ag.fotoPetUrl ||
+      ag.petFoto ||
+      ""
+    ).trim();
+
     const petFotoPath = montarCaminhoFotoPet(ag);
 
     const fotoPetHtml = petFotoUrl
-      ? `<img src="${escaparHTML(petFotoUrl)}" alt="Foto de ${petNome}" title="${escaparHTML(petFotoPath)}" class="agenda-pet-foto">`
-      : `<div title="${escaparHTML(petFotoPath)}" class="agenda-pet-foto-placeholder">🐾</div>`;
+      ? `
+        <img
+          src="${escaparHTML(petFotoUrl)}"
+          alt="Foto de ${petNome}"
+          title="${escaparHTML(petFotoPath)}"
+          class="agenda-pet-foto"
+        >
+      `
+      : `
+        <div
+          title="${escaparHTML(petFotoPath)}"
+          class="agenda-pet-foto-placeholder"
+        >
+          🐾
+        </div>
+      `;
 
     const cardElement = document.createElement("div");
     cardElement.className = "card card--agenda";
@@ -1180,6 +1643,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
         <div class="agenda-pet-header-grid">
           <div class="agenda-pet-identidade">
             ${fotoPetHtml}
+
             <div style="min-width:0;">
               <div class="agenda-pet-kicker">PET</div>
               <div class="agenda-pet-nome">${petNome}</div>
@@ -1191,14 +1655,22 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
             <span class="agenda-pet-servico-icone">
               <i class="fa-solid fa-scissors"></i>
             </span>
+
             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               ${servicoNome}
             </span>
           </div>
 
           <div class="agenda-pet-data-hora">
-            <span><i class="fa-solid fa-calendar-day"></i> ${dataTexto}</span>
-            <span><i class="fa-solid fa-clock"></i> ${horarioTexto}</span>
+            <span>
+              <i class="fa-solid fa-calendar-day"></i>
+              ${dataTexto}
+            </span>
+
+            <span>
+              <i class="fa-solid fa-clock"></i>
+              ${horarioTexto}
+            </span>
           </div>
         </div>
       </div>
@@ -1213,11 +1685,18 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
                     ? `
                       <div class="agenda-pet-alerta">
                         <div class="agenda-pet-alert-icon">⚠️</div>
+
                         <div>
-                          <div class="agenda-pet-box-title">Observação do atendimento</div>
-                          <div class="agenda-pet-box-text">${observacaoAgendamento}</div>
+                          <div class="agenda-pet-box-title">
+                            Observação do atendimento
+                          </div>
+
+                          <div class="agenda-pet-box-text">
+                            ${observacaoAgendamento}
+                          </div>
                         </div>
-                      </div>`
+                      </div>
+                    `
                     : ""
                 }
 
@@ -1226,14 +1705,22 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
                     ? `
                       <div class="agenda-pet-info">
                         <div class="agenda-pet-alert-icon">📌</div>
+
                         <div>
-                          <div class="agenda-pet-box-title">Informações do Pet</div>
-                          <div class="agenda-pet-box-text">${observacaoPet}</div>
+                          <div class="agenda-pet-box-title">
+                            Informações do Pet
+                          </div>
+
+                          <div class="agenda-pet-box-text">
+                            ${observacaoPet}
+                          </div>
                         </div>
-                      </div>`
+                      </div>
+                    `
                     : ""
                 }
-              </div>`
+              </div>
+            `
             : ""
         }
 
@@ -1244,8 +1731,16 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
           </div>
 
           <div class="agenda-pet-profissional">
-            <div class="agenda-pet-mini-label" style="color:#15803d;">🧑‍🔧 Banhista/Tosador</div>
-            <div class="agenda-pet-mini-value">${profissionalNome}</div>
+            <div
+              class="agenda-pet-mini-label"
+              style="color:#15803d;"
+            >
+              🧑‍🔧 Banhista/Tosador
+            </div>
+
+            <div class="agenda-pet-mini-value">
+              ${profissionalNome}
+            </div>
           </div>
         </div>
 
@@ -1253,19 +1748,32 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
           <div class="agenda-pet-status-linha">
             ${
               ag.horarioFimExpediente
-                ? `<span><b>Fim do expediente:</b> ${escaparHTML(ag.horarioFimExpediente)}</span>`
+                ? `
+                  <span>
+                    <b>Fim do expediente:</b>
+                    ${escaparHTML(ag.horarioFimExpediente)}
+                  </span>
+                `
                 : ""
             }
           </div>
 
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;">
-            <span>${statusLabel}</span>
+            ${statusLabel}
+            ${statusAtendimentoLabel}
 
             ${
               !isHistorico && ag.status === "ativo"
-                ? `<button class="btn-ausencia agenda-pet-botao-ausencia" data-id="${ag.id}" title="Marcar ausência">
-                    <i class="fa-solid fa-user-slash"></i> Marcar ausência
-                  </button>`
+                ? `
+                  <button
+                    class="btn-ausencia agenda-pet-botao-ausencia"
+                    data-id="${ag.id}"
+                    title="Marcar ausência"
+                  >
+                    <i class="fa-solid fa-user-slash"></i>
+                    Marcar ausência
+                  </button>
+                `
                 : ""
             }
           </div>
@@ -1273,7 +1781,12 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
         ${
           petFotoPath
-            ? `<p style="display:none;" data-pet-foto-path="${escaparHTML(petFotoPath)}"></p>`
+            ? `
+              <p
+                style="display:none;"
+                data-pet-foto-path="${escaparHTML(petFotoPath)}"
+              ></p>
+            `
             : ""
         }
       </div>
@@ -1284,19 +1797,35 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
 
   if (listaAgendamentosDiv.childElementCount === 0) {
     const cardPadrao = document.createElement("div");
-    cardPadrao.className = "card card--agenda card--padrao-pronti";
+
+    cardPadrao.className =
+      "card card--agenda card--padrao-pronti";
 
     cardPadrao.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
-        <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;"><i class="fa-solid fa-calendar-check"></i></div>
-        <div class="card-title" style="color:#38bdf8;text-align:center;">Nenhum agendamento encontrado</div>
+        <div style="font-size:3em;margin-bottom:8px;color:#38bdf8;">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+
+        <div
+          class="card-title"
+          style="color:#38bdf8;text-align:center;"
+        >
+          Nenhum agendamento encontrado
+        </div>
+
         <div class="card-info" style="text-align:center;">
-          <p style="margin:8px 0 0 0;">Sua agenda está livre para o período selecionado.<br>Que tal criar um novo agendamento? 😎</p>
+          <p style="margin:8px 0 0 0;">
+            Sua agenda está livre para o período selecionado.
+            <br>
+            Que tal criar um novo agendamento? 😎
+          </p>
         </div>
       </div>
     `;
 
-    cardPadrao.style.background = "linear-gradient(135deg, #e0f7fa 60%, #b2ebf2 100%)";
+    cardPadrao.style.background =
+      "linear-gradient(135deg, #e0f7fa 60%, #b2ebf2 100%)";
     cardPadrao.style.borderRadius = "14px";
     cardPadrao.style.boxShadow = "0 4px 20px #0001";
     cardPadrao.style.padding = "36px 18px 28px 18px";
@@ -1307,23 +1836,41 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
   }
 }
 
+/* ============================================================
+   CARREGAMENTOS POR MODO
+============================================================ */
+
 function carregarAgendamentosDiaAtual() {
-  const diaSelecionado = inputDataSemana?.value || formatarDataISO(new Date());
+  const diaSelecionado =
+    inputDataSemana?.value || formatarDataISO(new Date());
+
   atualizarLegendaSemana(diaSelecionado, diaSelecionado);
 
-  const constraints = [where("data", "==", diaSelecionado)];
-  const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+  const constraints = [
+    where("data", "==", diaSelecionado),
+  ];
+
+  const profissionalId =
+    perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
 
   if (profissionalId !== "todos") {
-    constraints.push(where("profissionalId", "==", profissionalId));
+    constraints.push(
+      where("profissionalId", "==", profissionalId)
+    );
   }
 
-  buscarEExibirAgendamentos(constraints, "Nenhum agendamento ativo para este dia.");
+  buscarEExibirAgendamentos(
+    constraints,
+    "Nenhum agendamento ativo para este dia."
+  );
 }
 
 function carregarAgendamentosSemana() {
-  const diaSelecionado = inputDataSemana?.value || formatarDataISO(new Date());
+  const diaSelecionado =
+    inputDataSemana?.value || formatarDataISO(new Date());
+
   const fimISO = getFimSemana(diaSelecionado);
+
   atualizarLegendaSemana(diaSelecionado, fimISO);
 
   const constraints = [
@@ -1331,13 +1878,19 @@ function carregarAgendamentosSemana() {
     where("data", "<=", fimISO),
   ];
 
-  const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+  const profissionalId =
+    perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
 
   if (profissionalId !== "todos") {
-    constraints.push(where("profissionalId", "==", profissionalId));
+    constraints.push(
+      where("profissionalId", "==", profissionalId)
+    );
   }
 
-  buscarEExibirAgendamentos(constraints, "Nenhum agendamento ativo para este período.");
+  buscarEExibirAgendamentos(
+    constraints,
+    "Nenhum agendamento ativo para este período."
+  );
 }
 
 function carregarAgendamentosHistorico() {
@@ -1345,7 +1898,10 @@ function carregarAgendamentosHistorico() {
   const dataFim = dataFinalEl?.value;
 
   if (!dataIni || !dataFim) {
-    mostrarToast("Por favor, selecione as datas de início e fim.", "#ef4444");
+    mostrarToast(
+      "Por favor, selecione as datas de início e fim.",
+      "#ef4444"
+    );
     return;
   }
 
@@ -1356,10 +1912,13 @@ function carregarAgendamentosHistorico() {
     where("data", "<=", dataFim),
   ];
 
-  const profissionalId = perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
+  const profissionalId =
+    perfilUsuario === "dono" ? filtroProfissionalEl.value : meuUid;
 
   if (profissionalId !== "todos") {
-    constraints.push(where("profissionalId", "==", profissionalId));
+    constraints.push(
+      where("profissionalId", "==", profissionalId)
+    );
   }
 
   buscarEExibirAgendamentos(
@@ -1371,15 +1930,33 @@ function carregarAgendamentosHistorico() {
 
 function preencherCamposMesAtual() {
   const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  const primeiroDia = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    1
+  );
 
-  if (dataInicialEl) dataInicialEl.value = formatarDataISO(primeiroDia);
-  if (dataFinalEl) dataFinalEl.value = formatarDataISO(ultimoDia);
+  const ultimoDia = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth() + 1,
+    0
+  );
+
+  if (dataInicialEl) {
+    dataInicialEl.value = formatarDataISO(primeiroDia);
+  }
+
+  if (dataFinalEl) {
+    dataFinalEl.value = formatarDataISO(ultimoDia);
+  }
 }
 
 function exibirMensagemDeErro(mensagem) {
   if (listaAgendamentosDiv) {
-    listaAgendamentosDiv.innerHTML = `<p style='color: #ef4444; text-align: center;'>${mensagem}</p>`;
+    listaAgendamentosDiv.innerHTML = `
+      <p style="color:#ef4444;text-align:center;">
+        ${escaparHTML(mensagem)}
+      </p>
+    `;
   }
 }
