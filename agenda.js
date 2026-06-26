@@ -246,20 +246,18 @@ function aplicarEstiloAgendaPet() {
   style.textContent = `
     /* =====================================================
        FUNDO GERAL DA AGENDA
-       Força o fundo azul/lilás mesmo contra style.css.
+       Mesmo fundo do index.html.
     ====================================================== */
     html,
-    body {
-      background:
-        radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
-        radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
-        linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
+    body,
+    body.agenda-body {
+      background: linear-gradient(135deg, #4f46e5 0%, #222664 100%) !important;
+      background-attachment: fixed !important;
       overflow-x: hidden !important;
       min-height: 100% !important;
     }
 
     body {
-      background-attachment: fixed !important;
       position: relative;
     }
 
@@ -269,10 +267,7 @@ function aplicarEstiloAgendaPet() {
       inset: 0;
       z-index: -1;
       pointer-events: none;
-      background:
-        radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
-        radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
-        linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
+      background: linear-gradient(135deg, #4f46e5 0%, #222664 100%) !important;
     }
 
     *,
@@ -288,20 +283,26 @@ function aplicarEstiloAgendaPet() {
     .dashboard-content,
     .dashboard-main,
     .app-content {
-      background:
-        radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 30%),
-        linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
+      background: transparent !important;
     }
 
+    /* =====================================================
+       LISTA DE AGENDAMENTOS
+       Sem padding lateral para o card ficar na mesma largura
+       do cabeçalho, filtros e legenda.
+    ====================================================== */
     #lista-agendamentos,
     #lista-agendamentos.dashboard-cards,
     .dashboard-cards {
       background: transparent !important;
-      padding: 18px;
+      padding: 18px 0 !important;
       border-radius: 20px;
-      width: 100%;
-      max-width: 100%;
+      width: 100% !important;
+      max-width: none !important;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     #agendamentos-placeholder {
@@ -312,17 +313,22 @@ function aplicarEstiloAgendaPet() {
       font-weight: 700 !important;
       text-align: center !important;
       padding: 36px 18px !important;
+      width: 100% !important;
     }
 
+    /* =====================================================
+       CARD PRINCIPAL DO AGENDAMENTO
+       Ocupa 100% da largura útil da tela.
+    ====================================================== */
     .card--agenda {
       background: #ffffff !important;
       border: 1px solid #dbe3ef !important;
       border-radius: 18px !important;
       box-shadow: 0 14px 34px rgba(15, 23, 42, 0.13) !important;
       overflow: hidden !important;
-      margin: 0 auto 18px auto !important;
-      max-width: 1180px;
-      width: 100%;
+      margin: 0 0 18px 0 !important;
+      max-width: none !important;
+      width: 100% !important;
     }
 
     .agenda-pet-card-header {
@@ -678,6 +684,10 @@ function aplicarEstiloAgendaPet() {
       border-color: transparent;
     }
 
+    /* =====================================================
+       MOBILE
+       Mantém o card na mesma largura do cabeçalho/filtros.
+    ====================================================== */
     @media (max-width: 900px) {
       body {
         background-attachment: scroll !important;
@@ -687,13 +697,16 @@ function aplicarEstiloAgendaPet() {
       #lista-agendamentos.dashboard-cards,
       .dashboard-cards {
         background: transparent !important;
-        padding: 12px;
+        padding: 12px 0 !important;
+        width: 100% !important;
+        max-width: none !important;
       }
 
       .card--agenda {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 0 14px 0 !important;
         border-radius: 16px !important;
-        margin-bottom: 14px !important;
-        max-width: 100% !important;
       }
 
       .agenda-pet-header-grid {
@@ -733,6 +746,19 @@ function aplicarEstiloAgendaPet() {
     }
 
     @media (max-width: 520px) {
+      #lista-agendamentos,
+      #lista-agendamentos.dashboard-cards,
+      .dashboard-cards {
+        padding: 10px 0 !important;
+      }
+
+      .card--agenda {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 0 14px 0 !important;
+        border-radius: 18px !important;
+      }
+
       .agenda-pet-card-header {
         padding: 13px;
       }
