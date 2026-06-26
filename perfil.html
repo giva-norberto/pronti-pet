@@ -5,6 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meu Perfil - Pronti Pet</title>
 
+  <!--
+  =====================================================================
+  PERFIL.HTML — PRONTI PET
+
+  OBJETIVO DESTA VERSÃO:
+  - Alterar somente o layout visual da tela de Perfil.
+  - Transformar o cadastro da empresa em cards/sanfona.
+  - Deixar o cadastro mais guiado e menos confuso.
+  - Manter toda a lógica principal no perfil.js.
+
+  REGRAS DE SEGURANÇA:
+  - NÃO renomear IDs dos campos.
+  - NÃO remover o form id="form-perfil".
+  - NÃO alterar a chamada do perfil.js no final.
+  - NÃO alterar Firebase por este arquivo.
+  - NÃO alterar lógica de salvar, slug, logo, WhatsApp, Instagram ou PIX.
+  - NÃO alterar o menu lateral agora.
+
+  ARQUIVOS RELACIONADOS:
+  - perfil.js controla a lógica principal.
+  - menu-lateral.html controla o menu.
+  - style.css pode conter estilos globais.
+  =====================================================================
+  -->
+
+  <!-- =====================================================
+       BLOCO 01 — FONTES E BIBLIOTECAS VISUAIS
+  ====================================================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -12,27 +40,50 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
+    /* =====================================================
+       BLOCO 02 — VARIÁVEIS VISUAIS
+       Pode mudar cores, sombras e espaçamentos aqui.
+       Não interfere na lógica do perfil.js.
+    ====================================================== */
     :root {
       --primary: #4f46e5;
       --primary-dark: #4338ca;
-      --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 48%, #8b5cf6 100%);
+      --primary-soft: #eef2ff;
+      --primary-border: #c7d2fe;
+
+      --bg-page: #f8fafc;
       --card-bg: #ffffff;
-      --text-main: #1e293b;
+      --text-main: #111827;
       --text-secondary: #64748b;
+      --text-muted: #94a3b8;
       --border: #e2e8f0;
-      --input-bg: #f8fafc;
+      --input-bg: #ffffff;
+
       --success: #16a34a;
-      --shadow: 0 16px 42px rgba(15, 23, 42, 0.22);
+      --success-soft: #dcfce7;
+      --warning: #f59e0b;
+      --warning-soft: #fef3c7;
+
+      --shadow-card: 0 14px 32px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+
       --sidebar-width: 270px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: 'Inter', Arial, sans-serif;
-      background: var(--gradient-primary);
+      background: var(--bg-page);
       margin: 0;
       color: var(--text-main);
       min-height: 100vh;
@@ -40,14 +91,24 @@
       overflow-x: hidden;
     }
 
+    /* =====================================================
+       BLOCO 03 — MENU LATERAL
+       ATENÇÃO:
+       O menu lateral não está sendo alterado agora.
+       Apenas mantemos o placeholder existente.
+    ====================================================== */
     #sidebar-placeholder {
       position: relative;
       z-index: 20;
     }
 
+    /* =====================================================
+       BLOCO 04 — ÁREA PRINCIPAL DO PERFIL
+       Toda a alteração visual desta tela fica dentro daqui.
+    ====================================================== */
     .main-content {
       margin-left: var(--sidebar-width);
-      padding: 32px;
+      padding: 30px;
       flex-grow: 1;
       min-height: 100vh;
       width: 100%;
@@ -58,94 +119,52 @@
       margin: 0 auto;
     }
 
-    .hero-card {
-      background: rgba(255,255,255,0.16);
-      border: 1px solid rgba(255,255,255,0.26);
-      border-radius: 24px;
-      padding: 22px;
-      margin-bottom: 20px;
-      color: #fff;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.16);
-      backdrop-filter: blur(8px);
-    }
-
-    .hero-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .hero-icon {
-      width: 62px;
-      height: 62px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(255,255,255,0.28);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.9rem;
-      flex-shrink: 0;
-    }
-
-    .hero-card h1 {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 900;
-      line-height: 1.1;
-    }
-
-    .hero-card p {
-      margin: 7px 0 0;
-      color: rgba(255,255,255,0.86);
-      font-weight: 500;
-      line-height: 1.4;
-    }
-
-    .form-card {
-      background: var(--card-bg);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 26px;
-      border: 1px solid rgba(255,255,255,0.62);
-    }
-
-    .header-section {
+    /* =====================================================
+       BLOCO 05 — TOPO DA TELA
+       Mantém o id main-title, usado pelo perfil.js.
+    ====================================================== */
+    .perfil-topo {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 18px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
+      margin-bottom: 18px;
     }
 
-    .header-content h2 {
-      font-size: 1.45rem;
-      margin: 0 0 5px;
-      color: var(--text-main);
+    .perfil-topo-texto h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.75rem, 3vw, 2.35rem);
       font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: -0.04em;
     }
 
-    .header-content p {
+    .perfil-topo-texto p {
       margin: 0;
       color: var(--text-secondary);
-      font-size: 0.96rem;
-      line-height: 1.4;
+      font-size: 0.98rem;
+      line-height: 1.5;
+      max-width: 640px;
     }
 
-    .header-actions {
+    .perfil-topo-acoes {
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
+    /* =====================================================
+       BLOCO 06 — BOTÕES
+       Mantém os IDs dos botões usados pelo perfil.js.
+    ====================================================== */
     .btn-new,
     .btn-submit,
     .btn-copy,
     .btn-open,
-    .btn-upload {
+    .btn-upload,
+    .btn-step-next {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -163,14 +182,16 @@
     }
 
     .btn-new,
-    .btn-submit {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
+    .btn-submit,
+    .btn-step-next {
+      background: linear-gradient(135deg, #6d5dfc, #4f46e5);
       color: #fff;
-      box-shadow: 0 8px 18px rgba(79,70,229,0.24);
+      box-shadow: 0 10px 22px rgba(79, 70, 229, 0.26);
     }
 
     .btn-new:hover,
-    .btn-submit:hover {
+    .btn-submit:hover,
+    .btn-step-next:hover {
       transform: translateY(-1px);
       background: linear-gradient(135deg, #4f46e5, #4338ca);
     }
@@ -186,7 +207,7 @@
 
     .btn-copy:hover,
     .btn-open:hover {
-      background: #eef2ff;
+      background: var(--primary-soft);
     }
 
     .btn-upload {
@@ -198,94 +219,275 @@
     }
 
     .btn-upload:hover {
-      background: #eef2ff;
+      background: var(--primary-soft);
       border-color: var(--primary);
       color: var(--primary);
     }
 
-    .guia-campo {
-      background: linear-gradient(135deg, #eef2ff 0%, #f8faff 100%);
-      border: 1.5px solid #c7d2fe;
-      border-radius: 18px;
+    /* =====================================================
+       BLOCO 07 — SELETOR DE EMPRESA E MENSAGENS
+       IDs preservados:
+       - empresa-selector-group
+       - selectEmpresa
+       - mensagem-cadastro-sucesso
+       - mensagem-free
+    ====================================================== */
+    #empresa-selector-group {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       padding: 16px;
-      margin-bottom: 22px;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.08);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 14px;
     }
 
-    .guia-campo-topo {
+    #empresa-selector-group label {
+      display: block;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    #selectEmpresa {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 0.96rem;
+      background: var(--input-bg);
+      color: var(--text-main);
+      width: 100%;
+      font-family: 'Inter', Arial, sans-serif;
+      outline: none;
+    }
+
+    #mensagem-cadastro-sucesso {
+      display: none;
+      margin: 14px 0;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    #mensagem-free {
+      margin: 14px 0;
+      max-width: 100%;
+      background: var(--primary-soft) !important;
+      color: #3730a3 !important;
+      border: 1px solid var(--primary-border);
+      border-radius: 12px !important;
+      padding: 12px 16px !important;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    /* =====================================================
+       BLOCO 08 — FORMULÁRIO PRINCIPAL
+       ATENÇÃO:
+       O form id="form-perfil" é obrigatório para o perfil.js.
+    ====================================================== */
+    .form-card {
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      border: none;
+    }
+
+    #form-perfil {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* =====================================================
+       BLOCO 09 — CARD SANFONA
+       Apenas organização visual.
+       O JS visual só abre/fecha cards.
+       Não salva nada no Firebase.
+    ====================================================== */
+    .setup-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .setup-card.is-open {
+      box-shadow: var(--shadow-card);
+      border-color: rgba(79, 70, 229, 0.22);
+    }
+
+    .setup-card.is-complete {
+      border-color: rgba(22, 163, 74, 0.34);
+    }
+
+    .setup-card-header {
+      width: 100%;
+      border: none;
+      background: #fff;
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Inter', Arial, sans-serif;
     }
 
-    .guia-campo-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      background: var(--primary);
-      color: #fff;
+    .setup-card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .setup-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      font-size: 1.12rem;
+      color: var(--primary);
+      background: var(--primary-soft);
     }
 
-    .guia-campo-titulo {
+    .setup-icon.green {
+      color: #16a34a;
+      background: #dcfce7;
+    }
+
+    .setup-icon.blue {
+      color: #2563eb;
+      background: #dbeafe;
+    }
+
+    .setup-icon.orange {
+      color: #ea580c;
+      background: #ffedd5;
+    }
+
+    .setup-icon.purple {
+      color: #7c3aed;
+      background: #ede9fe;
+    }
+
+    .setup-card-title {
+      font-weight: 900;
+      color: var(--text-main);
       font-size: 1rem;
-      font-weight: 900;
-      color: #3730a3;
+      line-height: 1.2;
     }
 
-    .guia-campo-subtitulo {
-      font-size: 0.92rem;
+    .setup-card-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    .setup-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .setup-status.ok {
+      color: var(--success);
+    }
+
+    .setup-chevron {
+      color: var(--text-secondary);
+      transition: transform 0.18s ease;
+    }
+
+    .setup-card.is-open .setup-chevron {
+      transform: rotate(180deg);
+    }
+
+    .setup-card-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 26px 28px 28px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    }
+
+    .setup-card.is-open .setup-card-body {
+      display: block;
+    }
+
+    /* =====================================================
+       BLOCO 10 — CONTEÚDO INTERNO DOS CARDS
+    ====================================================== */
+    .step-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) 340px;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .step-content h2 {
+      margin: 0 0 10px;
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+    }
+
+    .step-content p {
+      margin: 0 0 22px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      font-size: 0.96rem;
+    }
+
+    .step-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    .step-actions-hint {
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .step-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-top: 16px;
       color: #475569;
+      font-size: 0.86rem;
       line-height: 1.45;
-      margin-bottom: 9px;
     }
 
-    .guia-campo-exemplo {
-      background: rgba(255,255,255,0.8);
-      border: 1px dashed #c7d2fe;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.88rem;
-      color: #334155;
-      line-height: 1.38;
-    }
-
-    .guia-campo-exemplo strong {
-      color: #4338ca;
-    }
-
-    .form-section {
-      margin-top: 8px;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 24px 0 16px;
+    .step-tip i {
       color: var(--primary);
-      font-weight: 900;
-      font-size: 1.08rem;
-      padding-bottom: 10px;
-      border-bottom: 1.5px solid var(--border);
+      margin-top: 2px;
     }
 
-    .section-title i {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: #eef2ff;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    /* =====================================================
+       BLOCO 11 — CAMPOS DO FORMULÁRIO
+       ATENÇÃO:
+       Não alterar os IDs dos inputs.
+    ====================================================== */
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -305,45 +507,44 @@
       font-size: 0.92rem;
       color: var(--text-main);
       margin-bottom: 7px;
-      font-weight: 800;
+      font-weight: 900;
       display: block;
     }
 
     .form-group input[type="text"],
     .form-group textarea,
-    #selectEmpresa,
     .form-group input[type="number"],
     .form-group select {
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      padding: 12px 13px;
+      padding: 13px 14px;
       font-size: 0.96rem;
       background: var(--input-bg);
       color: var(--text-main);
-      transition: border 0.2s, box-shadow 0.2s, transform 0.12s;
+      transition: border 0.2s, box-shadow 0.2s;
       width: 100%;
       font-family: 'Inter', Arial, sans-serif;
       outline: none;
     }
 
     .form-group textarea {
-      min-height: 92px;
+      min-height: 110px;
       resize: vertical;
       line-height: 1.45;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
-    #selectEmpresa:focus,
-    .form-group select:focus {
+    .form-group select:focus,
+    #selectEmpresa:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.14);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
       background: #fff;
     }
 
     .campo-ativo {
       border-color: var(--primary) !important;
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.14) !important;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14) !important;
       background: #fff !important;
     }
 
@@ -354,24 +555,20 @@
       line-height: 1.35;
     }
 
-    .form-actions {
-      text-align: right;
-      margin-top: 26px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-    }
-
-    .btn-submit {
-      padding: 14px 22px;
-      font-size: 1rem;
-    }
-
+    /* =====================================================
+       BLOCO 12 — LINK DA VITRINE
+       IDs preservados:
+       - container-link-vitrine
+       - url-vitrine-display
+       - btn-copiar-link
+       - btn-abrir-vitrine-inline
+    ====================================================== */
     .vitrine-link-container {
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 12px;
-      background: var(--input-bg);
+      background: #f8fafc;
       padding: 12px;
       border-radius: 14px;
       border: 1.5px solid var(--border);
@@ -380,7 +577,7 @@
     .vitrine-url {
       font-size: 0.92rem;
       color: #2563eb;
-      font-weight: 700;
+      font-weight: 800;
       background: transparent;
       border: none;
       padding: 0;
@@ -395,6 +592,13 @@
       justify-content: flex-end;
     }
 
+    /* =====================================================
+       BLOCO 13 — LOGO DO PET SHOP
+       IDs preservados:
+       - logoNegocio
+       - logo-preview
+       - btn-upload-logo
+    ====================================================== */
     .logo-upload-container {
       display: flex;
       align-items: center;
@@ -406,13 +610,13 @@
     }
 
     .logo-upload-container img#logo-preview {
-      width: 86px;
-      height: 86px;
-      min-width: 86px;
+      width: 96px;
+      height: 96px;
+      min-width: 96px;
       object-fit: cover;
-      border-radius: 22px;
+      border-radius: 24px;
       border: 2px solid #e0e7ff;
-      background: #eef2ff;
+      background: var(--primary-soft);
     }
 
     .logo-upload-actions {
@@ -424,34 +628,158 @@
 
     .logo-small-text {
       color: var(--text-secondary);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       line-height: 1.35;
     }
 
-    #mensagem-cadastro-sucesso {
-      display: none;
-      margin: 14px 0;
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #86efac;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-weight: 800;
+    /* =====================================================
+       BLOCO 14 — PRÉVIA DO APP DO CLIENTE
+       Apenas visual.
+       Não grava nada.
+    ====================================================== */
+    .cliente-preview-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
       text-align: center;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    #mensagem-free {
-      margin: 14px 0;
-      max-width: 100%;
-      background: #eef2ff !important;
-      color: #3730a3 !important;
-      border: 1px solid #c7d2fe;
-      border-radius: 12px !important;
-      padding: 12px 16px !important;
-      text-align: center;
+    .cliente-preview-card h3 {
+      margin: 0 0 12px;
+      font-size: 0.96rem;
       font-weight: 900;
+      color: var(--text-main);
     }
 
+    .phone-preview {
+      width: 210px;
+      height: 310px;
+      margin: 0 auto;
+      border: 10px solid #111827;
+      border-radius: 32px 32px 0 0;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.20);
+      position: relative;
+    }
+
+    .phone-preview-top {
+      height: 52px;
+      background: linear-gradient(135deg, #6d5dfc, #4f46e5);
+    }
+
+    .phone-preview-body {
+      padding: 28px 14px 18px;
+      text-align: center;
+    }
+
+    .phone-preview-logo {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6d5dfc, #4f46e5);
+      color: #fff;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      overflow: hidden;
+    }
+
+    .phone-preview-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .phone-preview-title {
+      font-weight: 900;
+      color: #111827;
+      font-size: 1.12rem;
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+
+    .phone-preview-subtitle {
+      color: #64748b;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .phone-preview-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48px;
+      border-top: 1px solid #e5e7eb;
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+
+    .phone-preview-nav div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .phone-preview-nav i {
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+
+    .preview-note {
+      margin-top: 14px;
+      background: var(--primary-soft);
+      color: #3730a3;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    /* =====================================================
+       BLOCO 15 — REVISÃO E BOTÃO SALVAR
+       O botão submit é o salvamento real feito pelo perfil.js.
+    ====================================================== */
+    .review-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .form-actions {
+      text-align: right;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-submit {
+      padding: 14px 22px;
+      font-size: 1rem;
+    }
+
+    /* =====================================================
+       BLOCO 16 — BOTÃO VOLTAR MOBILE
+       Mantido do arquivo anterior.
+    ====================================================== */
     .floating-back-btn {
       position: fixed;
       left: 16px;
@@ -481,6 +809,11 @@
       }
     }
 
+    /* =====================================================
+       BLOCO 17 — RESPONSIVO
+       Ajustes para tablet e celular.
+       Não altera lógica.
+    ====================================================== */
     @media (max-width: 900px) {
       body {
         flex-direction: column;
@@ -492,57 +825,39 @@
         padding-top: 76px;
       }
 
-      .hero-card {
-        border-radius: 20px;
-        padding: 18px;
+      .perfil-topo {
+        flex-direction: column;
+        align-items: stretch;
       }
 
-      .hero-content {
-        align-items: flex-start;
+      .perfil-topo-acoes {
+        justify-content: stretch;
+        flex-direction: column;
       }
 
-      .hero-icon {
-        width: 54px;
-        height: 54px;
-        border-radius: 17px;
-        font-size: 1.55rem;
+      .perfil-topo-acoes .btn-new {
+        width: 100%;
       }
 
-      .hero-card h1 {
-        font-size: 1.45rem;
-      }
-
-      .hero-card p {
-        font-size: 0.9rem;
-      }
-
-      .form-card {
+      .setup-card-header {
         padding: 16px;
-        border-radius: 20px;
       }
 
-      .header-section {
-        flex-direction: column;
-        align-items: stretch;
+      .setup-card-body {
+        padding: 20px 16px;
       }
 
-      .header-actions {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
+      .step-layout {
+        grid-template-columns: 1fr;
       }
 
-      .header-actions .btn-new {
-        width: 100%;
+      .cliente-preview-card {
+        display: none;
       }
 
       .form-grid {
         grid-template-columns: 1fr;
         gap: 0;
-      }
-
-      .form-group {
-        margin-bottom: 14px;
       }
 
       .vitrine-link-container {
@@ -558,15 +873,12 @@
         flex: 1;
       }
 
-      .logo-upload-container {
-        align-items: flex-start;
-      }
-
       .form-actions {
         text-align: stretch;
       }
 
-      .btn-submit {
+      .btn-submit,
+      .btn-step-next {
         width: 100%;
       }
     }
@@ -578,21 +890,31 @@
         padding-top: 70px;
       }
 
-      .form-card {
-        padding: 12px;
+      .perfil-topo-texto h1 {
+        font-size: 1.55rem;
       }
 
-      .hero-card {
-        padding: 14px;
+      .setup-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
       }
 
-      .hero-icon {
-        width: 48px;
-        height: 48px;
+      .setup-card-title {
+        font-size: 0.94rem;
+      }
+
+      .setup-card-subtitle {
+        font-size: 0.76rem;
+      }
+
+      .setup-status {
+        display: none;
       }
 
       .logo-upload-container {
         flex-direction: column;
+        align-items: flex-start;
       }
 
       .logo-upload-container img#logo-preview {
@@ -611,187 +933,491 @@
 </head>
 
 <body>
+  <!-- =====================================================
+       BLOCO 18 — MENU LATERAL
+       Não alterar nesta etapa.
+       O conteúdo vem do arquivo menu-lateral.html.
+  ====================================================== -->
   <div id="sidebar-placeholder"></div>
 
+  <!-- =====================================================
+       BLOCO 19 — CONTEÚDO PRINCIPAL DO PERFIL
+       Mudança visual aplicada apenas nesta área.
+  ====================================================== -->
   <main class="main-content">
     <div class="profile-shell">
 
-      <section class="hero-card">
-        <div class="hero-content">
-          <div class="hero-icon">
-            <i class="fa-solid fa-paw"></i>
-          </div>
-          <div>
-            <h1 id="main-title">Meu Perfil e Configurações</h1>
-            <p>Configure as informações do seu pet shop, vitrine pública, contatos e identidade visual.</p>
-          </div>
+      <!-- =====================================================
+           BLOCO 20 — TOPO DO PERFIL
+           Mantém o id main-title usado pelo perfil.js.
+      ====================================================== -->
+      <div class="perfil-topo">
+        <div class="perfil-topo-texto">
+          <h1 id="main-title">Configuração da sua vitrine</h1>
+          <p>
+            Vamos configurar o perfil da sua empresa passo a passo para criar uma vitrine
+            mais clara, profissional e fácil de divulgar para seus clientes.
+          </p>
         </div>
-      </section>
 
+        <div class="perfil-topo-acoes">
+          <a id="btn-abrir-vitrine" href="#" target="_blank" class="btn-new" style="display: none;">
+            <i class="fa-solid fa-store"></i>
+            Ver minha vitrine
+          </a>
+
+          <button id="btn-criar-nova-empresa" class="btn-new" type="button">
+            <i class="fa-solid fa-plus"></i>
+            Criar Nova Empresa
+          </button>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           BLOCO 21 — SELETOR DE EMPRESA
+           IDs usados pelo perfil.js:
+           - empresa-selector-group
+           - selectEmpresa
+      ====================================================== -->
+      <div class="form-group" id="empresa-selector-group" style="display:none;">
+        <label for="selectEmpresa">
+          <i class="fa-solid fa-building"></i>
+          Selecione sua empresa
+        </label>
+        <select id="selectEmpresa"></select>
+      </div>
+
+      <!-- =====================================================
+           BLOCO 22 — MENSAGENS DO PERFIL
+           IDs usados pelo perfil.js.
+      ====================================================== -->
+      <div id="mensagem-cadastro-sucesso"></div>
+
+      <div id="mensagem-free" style="display:none;">
+        Plano atual: FREE
+      </div>
+
+      <!-- =====================================================
+           BLOCO 23 — FORMULÁRIO PRINCIPAL
+           ATENÇÃO:
+           O id form-perfil precisa continuar igual.
+           O perfil.js usa esse formulário para salvar os dados.
+      ====================================================== -->
       <div class="form-card">
-        <div class="header-section">
-          <div class="header-content">
-            <h2>Dados do Pet Shop</h2>
-            <p>Essas informações aparecem na sua vitrine e ajudam o cliente a conhecer seu negócio.</p>
-          </div>
-
-          <div class="header-actions">
-            <a id="btn-abrir-vitrine" href="#" target="_blank" class="btn-new" style="display: none;">
-              <i class="fa-solid fa-store"></i>
-              Abrir Minha Vitrine
-            </a>
-
-            <button id="btn-criar-nova-empresa" class="btn-new" type="button">
-              <i class="fa-solid fa-plus"></i>
-              Criar Nova Empresa
-            </button>
-          </div>
-        </div>
-
-        <div id="guia-campo" class="guia-campo">
-          <div class="guia-campo-topo">
-            <div id="guia-campo-icon" class="guia-campo-icon">
-              <i class="fa-solid fa-circle-info"></i>
-            </div>
-            <div id="guia-campo-titulo" class="guia-campo-titulo">
-              Preencha seu perfil passo a passo
-            </div>
-          </div>
-
-          <div id="guia-campo-subtitulo" class="guia-campo-subtitulo">
-            Clique em qualquer campo abaixo e o Pronti vai te explicar exatamente o que colocar.
-          </div>
-
-          <div id="guia-campo-exemplo" class="guia-campo-exemplo">
-            <strong>Dica:</strong> comece pelo nome do pet shop. Depois complete o link, descrição, contatos e horário.
-          </div>
-        </div>
-
-        <div class="form-group" id="empresa-selector-group" style="display:none;">
-          <label for="selectEmpresa">
-            <i class="fa-solid fa-building"></i>
-            Selecione sua empresa
-          </label>
-          <select id="selectEmpresa"></select>
-        </div>
-
-        <div id="mensagem-cadastro-sucesso"></div>
-
-        <div id="mensagem-free" style="display:none;">
-          Plano atual: FREE
-        </div>
-
         <form id="form-perfil">
-          <div class="form-section">
-            <div class="section-title">
-              <i class="fa-solid fa-store"></i>
-              Informações do Negócio
-            </div>
 
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="nomeNegocio">Nome do Pet Shop *</label>
-                <input type="text" id="nomeNegocio" placeholder="Ex: Pet Shop Amigos" required>
-              </div>
+          <!-- =====================================================
+               BLOCO 24 — CARD 1: NOME DA EMPRESA
+               Campo usado pelo perfil.js:
+               - nomeNegocio
+          ====================================================== -->
+          <section class="setup-card is-open" data-step="1">
+            <button class="setup-card-header" type="button" data-accordion-target="1">
+              <span class="setup-card-header-left">
+                <span class="setup-icon">
+                  <i class="fa-solid fa-store"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">1. Nome da Empresa</span>
+                  <span class="setup-card-subtitle">Como seus clientes vão te encontrar</span>
+                </span>
+              </span>
 
-              <div class="form-group">
-                <label for="slug">Link Personalizado</label>
-                <input type="text" id="slug" placeholder="Ex: pet-shop-amigos">
-                <div class="field-hint">Use um apelido curto, sem espaço. Ex: banho-e-tosa-amigos.</div>
-              </div>
+              <span class="setup-status" data-step-status="1">
+                <i class="fa-regular fa-circle"></i>
+                Pendente
+              </span>
 
-              <div class="form-group full" id="container-link-vitrine" style="display: none;">
-                <label>Link da sua Vitrine Pública</label>
-                <div class="vitrine-link-container">
-                  <div class="vitrine-url" id="url-vitrine-display"></div>
-                  <div class="vitrine-actions">
-                    <button type="button" id="btn-copiar-link" class="btn-copy">
-                      <i class="fa-regular fa-copy"></i>
-                      Copiar
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
+            </button>
+
+            <div class="setup-card-body">
+              <div class="step-layout">
+                <div class="step-content">
+                  <h2>Qual o nome do seu pet shop?</h2>
+                  <p>
+                    Este será o nome exibido na sua vitrine e também na experiência
+                    que seus clientes terão ao acessar seu link.
+                  </p>
+
+                  <div class="form-group">
+                    <label for="nomeNegocio">Nome do Pet Shop *</label>
+                    <input type="text" id="nomeNegocio" placeholder="Ex: Pet Show" required>
+                    <div class="field-hint">Use o nome que o cliente já conhece.</div>
+                  </div>
+
+                  <div class="step-tip">
+                    <i class="fa-regular fa-lightbulb"></i>
+                    <span>
+                      Dica: use um nome que represente bem seu negócio e seja fácil de lembrar.
+                    </span>
+                  </div>
+
+                  <div class="step-actions">
+                    <button type="button" class="btn-step-next" data-next-step="2">
+                      Continuar
+                      <i class="fa-solid fa-arrow-right"></i>
                     </button>
-                    <a href="#" target="_blank" class="btn-open" id="btn-abrir-vitrine-inline">
-                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                      Abrir
-                    </a>
+                    <span class="step-actions-hint">Você poderá voltar e editar depois.</span>
                   </div>
                 </div>
-              </div>
 
-              <div class="form-group full">
-                <label for="logoNegocio">Logo do Pet Shop</label>
-                <div class="logo-upload-container">
-                  <img id="logo-preview" src="https://placehold.co/80x80/eef2ff/4f46e5?text=Pet" alt="Pré-visualização do logotipo">
-                  <div class="logo-upload-actions">
-                    <input type="file" id="logoNegocio" accept="image/png, image/jpeg" style="display: none;">
-                    <button type="button" id="btn-upload-logo" class="btn-upload">
-                      <i class="fa-regular fa-image"></i>
-                      Escolher Arquivo
-                    </button>
-                    <div class="logo-small-text">
-                      Use uma imagem quadrada para ficar melhor na vitrine.
+                <aside class="cliente-preview-card">
+                  <h3>Prévia no app do cliente</h3>
+                  <div class="phone-preview">
+                    <div class="phone-preview-top"></div>
+                    <div class="phone-preview-body">
+                      <div class="phone-preview-logo" id="preview-logo-shell">
+                        <i class="fa-solid fa-paw"></i>
+                      </div>
+                      <div class="phone-preview-title" id="preview-nome-petshop">Seu Pet Shop</div>
+                      <div class="phone-preview-subtitle">Agendamento online</div>
+                    </div>
+                    <div class="phone-preview-nav">
+                      <div><i class="fa-solid fa-house"></i>Início</div>
+                      <div><i class="fa-solid fa-scissors"></i>Serviços</div>
+                      <div><i class="fa-regular fa-calendar"></i>Agendar</div>
+                      <div><i class="fa-solid fa-paw"></i>Pets</div>
+                    </div>
+                  </div>
+                  <div class="preview-note">
+                    Assim que configurar, seus clientes verão sua marca com mais confiança.
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </section>
+
+          <!-- =====================================================
+               BLOCO 25 — CARD 2: LINK DA VITRINE
+               Campos usados pelo perfil.js:
+               - slug
+               - container-link-vitrine
+               - url-vitrine-display
+               - btn-copiar-link
+               - btn-abrir-vitrine-inline
+          ====================================================== -->
+          <section class="setup-card" data-step="2">
+            <button class="setup-card-header" type="button" data-accordion-target="2">
+              <span class="setup-card-header-left">
+                <span class="setup-icon purple">
+                  <i class="fa-solid fa-link"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">2. Link da Vitrine</span>
+                  <span class="setup-card-subtitle">Defina o endereço da sua vitrine online</span>
+                </span>
+              </span>
+
+              <span class="setup-status" data-step-status="2">
+                <i class="fa-solid fa-lock"></i>
+                Pendente
+              </span>
+
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
+            </button>
+
+            <div class="setup-card-body">
+              <div class="step-content">
+                <h2>Escolha o link que seus clientes vão acessar</h2>
+                <p>
+                  Esse link será usado para divulgar sua vitrine no WhatsApp, Instagram
+                  e outros canais de atendimento.
+                </p>
+
+                <div class="form-group">
+                  <label for="slug">Link Personalizado</label>
+                  <input type="text" id="slug" placeholder="Ex: pet-shop-amigos">
+                  <div class="field-hint">Use um apelido curto, sem espaço. Ex: banho-e-tosa-amigos.</div>
+                </div>
+
+                <div class="form-group full" id="container-link-vitrine" style="display: none;">
+                  <label>Link da sua Vitrine Pública</label>
+                  <div class="vitrine-link-container">
+                    <div class="vitrine-url" id="url-vitrine-display"></div>
+                    <div class="vitrine-actions">
+                      <button type="button" id="btn-copiar-link" class="btn-copy">
+                        <i class="fa-regular fa-copy"></i>
+                        Copiar
+                      </button>
+                      <a href="#" target="_blank" class="btn-open" id="btn-abrir-vitrine-inline">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        Abrir
+                      </a>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="form-group full">
-                <label for="descricao">Descrição Curta</label>
-                <textarea id="descricao" rows="3" placeholder="Ex: Banho, tosa e cuidados especiais para seu pet com atendimento agendado."></textarea>
-              </div>
-            </div>
-
-            <div class="section-title">
-              <i class="fa-solid fa-phone"></i>
-              Contatos e Atendimento
-            </div>
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="whatsapp">WhatsApp Comercial</label>
-                <input type="text" id="whatsapp" placeholder="Ex: 31999999999">
-                <div class="field-hint">Será usado futuramente na vitrine e contatos rápidos.</div>
-              </div>
-
-              <div class="form-group">
-                <label for="instagram">Instagram</label>
-                <input type="text" id="instagram" placeholder="Ex: @petshopamigos">
-              </div>
-
-              <div class="form-group full">
-                <label for="localizacao">Endereço / Localização</label>
-                <input type="text" id="localizacao" placeholder="Ex: Rua das Flores, 123, Centro, Contagem - MG">
-              </div>
-
-              <div class="form-group">
-                <label for="horarioFuncionamento">Horário de Funcionamento</label>
-                <input type="text" id="horarioFuncionamento" placeholder="Ex: Seg a Sex, 9h às 18h | Sáb, 8h às 14h">
-              </div>
-
-              <div class="form-group">
-                <label for="chavePix">Chave PIX</label>
-                <input type="text" id="chavePix" placeholder="Digite sua chave PIX">
-                <div class="field-hint">Opcional. Pode ser usado futuramente para sinal, pacotes ou pagamento antecipado.</div>
+                <div class="step-actions">
+                  <button type="button" class="btn-step-next" data-next-step="3">
+                    Continuar
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="form-actions">
-            <button type="submit" class="btn-submit">
-              <i class="fa-solid fa-floppy-disk"></i>
-              Salvar Todas as Configurações
+          <!-- =====================================================
+               BLOCO 26 — CARD 3: LOGO E DESCRIÇÃO
+               Campos usados pelo perfil.js:
+               - logoNegocio
+               - logo-preview
+               - btn-upload-logo
+               - descricao
+          ====================================================== -->
+          <section class="setup-card" data-step="3">
+            <button class="setup-card-header" type="button" data-accordion-target="3">
+              <span class="setup-card-header-left">
+                <span class="setup-icon green">
+                  <i class="fa-regular fa-image"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">3. Logo e Descrição</span>
+                  <span class="setup-card-subtitle">Adicione sua marca e conte um pouco sobre seu pet shop</span>
+                </span>
+              </span>
+
+              <span class="setup-status" data-step-status="3">
+                <i class="fa-solid fa-lock"></i>
+                Pendente
+              </span>
+
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
             </button>
-          </div>
+
+            <div class="setup-card-body">
+              <div class="step-content">
+                <h2>Deixe sua vitrine com a cara do seu pet shop</h2>
+                <p>
+                  A logo e a descrição ajudam o cliente a reconhecer sua empresa
+                  e entender rapidamente o que você oferece.
+                </p>
+
+                <div class="form-group full">
+                  <label for="logoNegocio">Logo do Pet Shop</label>
+                  <div class="logo-upload-container">
+                    <img id="logo-preview" src="https://placehold.co/80x80/eef2ff/4f46e5?text=Pet" alt="Pré-visualização do logotipo">
+                    <div class="logo-upload-actions">
+                      <input type="file" id="logoNegocio" accept="image/png, image/jpeg" style="display: none;">
+                      <button type="button" id="btn-upload-logo" class="btn-upload">
+                        <i class="fa-regular fa-image"></i>
+                        Escolher Arquivo
+                      </button>
+                      <div class="logo-small-text">
+                        Use uma imagem quadrada para ficar melhor na vitrine e no app do cliente.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group full">
+                  <label for="descricao">Descrição Curta</label>
+                  <textarea id="descricao" rows="3" placeholder="Ex: Banho, tosa e cuidados especiais para seu pet com atendimento agendado."></textarea>
+                </div>
+
+                <div class="step-actions">
+                  <button type="button" class="btn-step-next" data-next-step="4">
+                    Continuar
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =====================================================
+               BLOCO 27 — CARD 4: CONTATO E LOCALIZAÇÃO
+               Campos usados pelo perfil.js:
+               - whatsapp
+               - instagram
+               - localizacao
+               - horarioFuncionamento
+          ====================================================== -->
+          <section class="setup-card" data-step="4">
+            <button class="setup-card-header" type="button" data-accordion-target="4">
+              <span class="setup-card-header-left">
+                <span class="setup-icon blue">
+                  <i class="fa-solid fa-location-dot"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">4. Contato e Localização</span>
+                  <span class="setup-card-subtitle">Informe como seus clientes podem entrar em contato e onde te encontrar</span>
+                </span>
+              </span>
+
+              <span class="setup-status" data-step-status="4">
+                <i class="fa-solid fa-lock"></i>
+                Pendente
+              </span>
+
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
+            </button>
+
+            <div class="setup-card-body">
+              <div class="step-content">
+                <h2>Como seus clientes falam com você?</h2>
+                <p>
+                  Preencha os principais canais de contato e as informações de atendimento.
+                </p>
+
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="whatsapp">WhatsApp Comercial</label>
+                    <input type="text" id="whatsapp" placeholder="Ex: 31999999999">
+                    <div class="field-hint">Será usado futuramente na vitrine e contatos rápidos.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="instagram">Instagram</label>
+                    <input type="text" id="instagram" placeholder="Ex: @petshopamigos">
+                  </div>
+
+                  <div class="form-group full">
+                    <label for="localizacao">Endereço / Localização</label>
+                    <input type="text" id="localizacao" placeholder="Ex: Rua das Flores, 123, Centro, Contagem - MG">
+                  </div>
+
+                  <div class="form-group full">
+                    <label for="horarioFuncionamento">Horário de Funcionamento</label>
+                    <input type="text" id="horarioFuncionamento" placeholder="Ex: Seg a Sex, 9h às 18h | Sáb, 8h às 14h">
+                  </div>
+                </div>
+
+                <div class="step-actions">
+                  <button type="button" class="btn-step-next" data-next-step="5">
+                    Continuar
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =====================================================
+               BLOCO 28 — CARD 5: PAGAMENTO OPCIONAL
+               Campo usado pelo perfil.js:
+               - chavePix
+          ====================================================== -->
+          <section class="setup-card" data-step="5">
+            <button class="setup-card-header" type="button" data-accordion-target="5">
+              <span class="setup-card-header-left">
+                <span class="setup-icon orange">
+                  <i class="fa-solid fa-credit-card"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">5. Pagamento opcional</span>
+                  <span class="setup-card-subtitle">Adicione sua chave PIX para recebimentos futuros, se quiser</span>
+                </span>
+              </span>
+
+              <span class="setup-status" data-step-status="5">
+                <i class="fa-solid fa-lock"></i>
+                Pendente
+              </span>
+
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
+            </button>
+
+            <div class="setup-card-body">
+              <div class="step-content">
+                <h2>Deseja informar uma chave PIX?</h2>
+                <p>
+                  Este campo é opcional. Ele pode ser usado futuramente para sinal,
+                  pacotes, pagamentos antecipados ou recebimentos pelo pet shop.
+                </p>
+
+                <div class="form-group">
+                  <label for="chavePix">Chave PIX</label>
+                  <input type="text" id="chavePix" placeholder="Digite sua chave PIX">
+                  <div class="field-hint">Opcional. Pode deixar em branco se ainda não quiser usar.</div>
+                </div>
+
+                <div class="step-actions">
+                  <button type="button" class="btn-step-next" data-next-step="6">
+                    Continuar
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =====================================================
+               BLOCO 29 — CARD 6: REVISÃO E PUBLICAÇÃO
+               ATENÇÃO:
+               O botão submit abaixo é o botão que salva de verdade.
+               O perfil.js continua controlando o salvamento.
+          ====================================================== -->
+          <section class="setup-card" data-step="6">
+            <button class="setup-card-header" type="button" data-accordion-target="6">
+              <span class="setup-card-header-left">
+                <span class="setup-icon purple">
+                  <i class="fa-regular fa-square-check"></i>
+                </span>
+                <span>
+                  <span class="setup-card-title">6. Revisão e Publicação</span>
+                  <span class="setup-card-subtitle">Revise todas as informações e publique sua vitrine</span>
+                </span>
+              </span>
+
+              <span class="setup-status" data-step-status="6">
+                <i class="fa-solid fa-lock"></i>
+                Pendente
+              </span>
+
+              <i class="fa-solid fa-chevron-down setup-chevron"></i>
+            </button>
+
+            <div class="setup-card-body">
+              <div class="step-content">
+                <h2>Agora é só salvar as configurações</h2>
+                <p>
+                  Revise as informações preenchidas. Ao salvar, o Pronti Pet atualiza
+                  o perfil da empresa e a vitrine pública.
+                </p>
+
+                <div class="review-box">
+                  <strong>Importante:</strong> este botão usa o salvamento original do perfil.
+                  Nenhuma lógica foi alterada neste layout.
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Salvar Todas as Configurações
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         </form>
       </div>
     </div>
   </main>
 
+  <!-- =====================================================
+       BLOCO 30 — BOTÃO VOLTAR MOBILE
+       Mantido do perfil anterior.
+  ====================================================== -->
   <button id="floating-back-btn" class="floating-back-btn" aria-label="Voltar" title="Voltar">
     <i class="fa-solid fa-arrow-left"></i>
   </button>
 
+  <!-- =====================================================
+       BLOCO 31 — MODAL EXTRA
+       Mantido para compatibilidade.
+  ====================================================== -->
   <div id="modal-add-profissional" class="modal-overlay" style="display: none;"></div>
 
+  <!-- =====================================================
+       BLOCO 32 — MODAL DE CONFIRMAÇÃO
+       IDs usados pelo perfil.js:
+       - modal-confirmacao-pronti
+       - modal-confirmacao-pronti-pergunta
+       - modal-confirmacao-pronti-ok
+       - modal-confirmacao-pronti-cancelar
+  ====================================================== -->
   <div id="modal-confirmacao-pronti" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;background:rgba(24,27,124,.35);align-items:center;justify-content:center;">
     <div style="background:#4f46e5;color:#fff;padding:30px 30px 22px;border-radius:18px;max-width:340px;box-shadow:0 2px 20px #0005;margin:auto;position:relative;">
       <div id="modal-confirmacao-pronti-pergunta" style="font-size:1.16em;font-weight:500;text-align:center;margin-bottom:13px;"></div>
@@ -802,8 +1428,23 @@
     </div>
   </div>
 
+  <!-- =====================================================
+       BLOCO 33 — JS VISUAL DA TELA
+       ATENÇÃO:
+       Este bloco é apenas visual.
+       - Carrega o menu lateral.
+       - Marca o menu Perfil como ativo.
+       - Controla abertura/fechamento dos cards.
+       - Atualiza a prévia visual do cliente.
+       - Não salva nada no Firebase.
+       - Não substitui o perfil.js.
+  ====================================================== -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
+      /* =====================================================
+         BLOCO 33.1 — CARREGAMENTO DO MENU LATERAL
+         Mantido do arquivo anterior.
+      ====================================================== */
       fetch('menu-lateral.html')
         .then(res => res.text())
         .then(html => {
@@ -818,6 +1459,10 @@
           }, 10);
         });
 
+      /* =====================================================
+         BLOCO 33.2 — BOTÃO VOLTAR MOBILE
+         Mantido do arquivo anterior.
+      ====================================================== */
       const backBtn = document.getElementById('floating-back-btn');
 
       if (backBtn) {
@@ -836,106 +1481,187 @@
         });
       }
 
-      const ajudaCampos = {
-        nomeNegocio: {
-          titulo: "Nome do Pet Shop",
-          subtitulo: "Digite o nome que seu cliente conhece. Esse nome aparece na vitrine e no painel.",
-          exemplo: "Exemplo: <strong>Pet Shop Amigos</strong>, <strong>Banho e Tosa da Mel</strong>",
-          icon: "fa-solid fa-store"
-        },
-        slug: {
-          titulo: "Link Personalizado",
-          subtitulo: "Esse apelido vira parte do link da sua vitrine pública. Use algo simples e fácil de lembrar.",
-          exemplo: "Exemplo: <strong>pet-shop-amigos</strong> ou <strong>banho-da-mel</strong>",
-          icon: "fa-solid fa-link"
-        },
-        logoNegocio: {
-          titulo: "Logo do Pet Shop",
-          subtitulo: "Escolha uma imagem para deixar sua vitrine mais profissional.",
-          exemplo: "Dica: use uma imagem quadrada e nítida.",
-          icon: "fa-regular fa-image"
-        },
-        descricao: {
-          titulo: "Descrição Curta",
-          subtitulo: "Explique rapidamente o que seu pet shop oferece.",
-          exemplo: "Exemplo: <strong>Banho, tosa e cuidados especiais com atendimento agendado.</strong>",
-          icon: "fa-solid fa-align-left"
-        },
-        whatsapp: {
-          titulo: "WhatsApp Comercial",
-          subtitulo: "Informe o número usado para atendimento aos clientes.",
-          exemplo: "Exemplo: <strong>31999999999</strong>",
-          icon: "fa-brands fa-whatsapp"
-        },
-        instagram: {
-          titulo: "Instagram",
-          subtitulo: "Informe o Instagram do pet shop para aparecer futuramente na vitrine.",
-          exemplo: "Exemplo: <strong>@petshopamigos</strong>",
-          icon: "fa-brands fa-instagram"
-        },
-        localizacao: {
-          titulo: "Endereço do Pet Shop",
-          subtitulo: "Coloque onde você atende para o cliente saber como chegar.",
-          exemplo: "Exemplo: <strong>Rua das Flores, 123, Centro, Contagem - MG</strong>",
-          icon: "fa-solid fa-location-dot"
-        },
-        horarioFuncionamento: {
-          titulo: "Horário de Funcionamento",
-          subtitulo: "Informe os dias e horários que seu pet shop costuma funcionar.",
-          exemplo: "Exemplo: <strong>Seg a Sex, 9h às 18h | Sáb, 8h às 14h</strong>",
-          icon: "fa-regular fa-clock"
-        },
-        chavePix: {
-          titulo: "Chave PIX",
-          subtitulo: "Campo opcional. Pode ser usado futuramente para sinal, pacotes ou pagamento antecipado.",
-          exemplo: "Exemplo: <strong>email@petshop.com</strong> ou <strong>31999999999</strong>",
-          icon: "fa-solid fa-money-bill-transfer"
-        }
-      };
+      /* =====================================================
+         BLOCO 33.3 — CONTROLE VISUAL DOS CARDS SANFONA
+         Apenas abre e fecha os cards.
+         Não altera campos, não grava e não interfere no perfil.js.
+      ====================================================== */
+      const cards = Array.from(document.querySelectorAll(".setup-card"));
 
-      const guiaTitulo = document.getElementById("guia-campo-titulo");
-      const guiaSubtitulo = document.getElementById("guia-campo-subtitulo");
-      const guiaExemplo = document.getElementById("guia-campo-exemplo");
-      const guiaIcon = document.getElementById("guia-campo-icon");
-
-      function limparCampoAtivo() {
-        document.querySelectorAll("#form-perfil input, #form-perfil textarea, #form-perfil select").forEach(el => {
-          el.classList.remove("campo-ativo");
+      function abrirCard(step) {
+        cards.forEach(card => {
+          const isTarget = card.dataset.step === String(step);
+          card.classList.toggle("is-open", isTarget);
         });
+
+        const cardAberto = document.querySelector(`.setup-card[data-step="${step}"]`);
+
+        if (cardAberto) {
+          setTimeout(() => {
+            cardAberto.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          }, 80);
+        }
       }
 
-      function atualizarAjudaCampo(id) {
-        const ajuda = ajudaCampos[id];
-        if (!ajuda) return;
+      function marcarConcluido(step) {
+        const card = document.querySelector(`.setup-card[data-step="${step}"]`);
+        const status = document.querySelector(`[data-step-status="${step}"]`);
 
-        if (guiaTitulo) guiaTitulo.textContent = ajuda.titulo;
-        if (guiaSubtitulo) guiaSubtitulo.textContent = ajuda.subtitulo;
-        if (guiaExemplo) guiaExemplo.innerHTML = ajuda.exemplo;
-        if (guiaIcon) guiaIcon.innerHTML = `<i class="${ajuda.icon}"></i>`;
+        if (card) card.classList.add("is-complete");
+
+        if (status) {
+          status.classList.add("ok");
+          status.innerHTML = '<i class="fa-solid fa-check"></i> Concluído';
+        }
       }
 
-      Object.keys(ajudaCampos).forEach((id) => {
-        const campo = document.getElementById(id);
-        if (!campo) return;
-
-        ["focus", "click"].forEach((evento) => {
-          campo.addEventListener(evento, () => {
-            limparCampoAtivo();
-            campo.classList.add("campo-ativo");
-            atualizarAjudaCampo(id);
-          });
+      document.querySelectorAll("[data-accordion-target]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          abrirCard(btn.dataset.accordionTarget);
         });
       });
 
-      const primeiroCampo = document.getElementById("nomeNegocio");
+      document.querySelectorAll("[data-next-step]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const cardAtual = btn.closest(".setup-card");
+          const stepAtual = cardAtual ? cardAtual.dataset.step : null;
+          const proximoStep = btn.dataset.nextStep;
 
-      if (primeiroCampo) {
-        primeiroCampo.classList.add("campo-ativo");
-        atualizarAjudaCampo("nomeNegocio");
+          if (stepAtual) marcarConcluido(stepAtual);
+          abrirCard(proximoStep);
+        });
+      });
+
+      /* =====================================================
+         BLOCO 33.4 — PRÉVIA VISUAL DO APP DO CLIENTE
+         Apenas visual.
+         Usa nome e logo digitados/carregados na tela.
+      ====================================================== */
+      const nomeInput = document.getElementById("nomeNegocio");
+      const previewNome = document.getElementById("preview-nome-petshop");
+      const logoInput = document.getElementById("logoNegocio");
+      const logoPreview = document.getElementById("logo-preview");
+      const previewLogoShell = document.getElementById("preview-logo-shell");
+
+      function atualizarPreviewNome() {
+        if (!previewNome || !nomeInput) return;
+
+        const nome = nomeInput.value.trim();
+        previewNome.textContent = nome || "Seu Pet Shop";
       }
+
+      function atualizarPreviewLogoPorSrc(src) {
+        if (!previewLogoShell || !src) return;
+
+        previewLogoShell.innerHTML = `<img src="${src}" alt="Logo do Pet Shop">`;
+      }
+
+      if (nomeInput) {
+        nomeInput.addEventListener("input", atualizarPreviewNome);
+        atualizarPreviewNome();
+      }
+
+      if (logoInput) {
+        logoInput.addEventListener("change", () => {
+          const file = logoInput.files && logoInput.files[0];
+
+          if (!file) return;
+
+          const reader = new FileReader();
+
+          reader.onload = (e) => {
+            atualizarPreviewLogoPorSrc(e.target.result);
+          };
+
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (logoPreview) {
+        const observer = new MutationObserver(() => {
+          if (logoPreview.src) {
+            atualizarPreviewLogoPorSrc(logoPreview.src);
+          }
+        });
+
+        observer.observe(logoPreview, {
+          attributes: true,
+          attributeFilter: ["src"]
+        });
+
+        if (logoPreview.src) {
+          atualizarPreviewLogoPorSrc(logoPreview.src);
+        }
+      }
+
+      /* =====================================================
+         BLOCO 33.5 — MARCAÇÃO VISUAL SIMPLES DOS CARDS
+         Apenas muda status visual quando o usuário preenche algo.
+         Não valida e não salva dados.
+      ====================================================== */
+      const camposPorStep = {
+        1: ["nomeNegocio"],
+        2: ["slug"],
+        3: ["descricao", "logoNegocio"],
+        4: ["whatsapp", "instagram", "localizacao", "horarioFuncionamento"],
+        5: ["chavePix"]
+      };
+
+      function campoTemValor(id) {
+        const campo = document.getElementById(id);
+
+        if (!campo) return false;
+
+        if (campo.type === "file") {
+          return campo.files && campo.files.length > 0;
+        }
+
+        return String(campo.value || "").trim() !== "";
+      }
+
+      function atualizarStatusCardsPorCampos() {
+        Object.keys(camposPorStep).forEach(step => {
+          const ids = camposPorStep[step];
+          const possuiValor = ids.some(id => campoTemValor(id));
+
+          if (possuiValor) {
+            marcarConcluido(step);
+          }
+        });
+      }
+
+      Object.values(camposPorStep).flat().forEach(id => {
+        const campo = document.getElementById(id);
+
+        if (!campo) return;
+
+        ["input", "change"].forEach(evento => {
+          campo.addEventListener(evento, atualizarStatusCardsPorCampos);
+        });
+      });
+
+      atualizarStatusCardsPorCampos();
     });
   </script>
 
+  <!-- =====================================================
+       BLOCO 34 — LÓGICA PRINCIPAL DO PERFIL
+       ATENÇÃO:
+       Não alterar.
+       O perfil.js continua responsável por:
+       - autenticação
+       - carregar empresa
+       - salvar empresa
+       - slug
+       - upload da logo
+       - link da vitrine
+       - WhatsApp
+       - Instagram
+       - PIX
+  ====================================================== -->
   <script src="perfil.js?v=pet2" type="module"></script>
 </body>
 </html>
