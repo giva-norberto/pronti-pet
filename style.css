@@ -411,6 +411,7 @@ textarea.form-input:focus {
     #sidebar-placeholder {
         display: none; /* Esconde o placeholder que empurra o conteúdo */
     }
+
     .main-content {
         margin-left: 0; /* Remove a margem para ocupar a tela toda */
         width: 100%;
@@ -434,13 +435,16 @@ textarea.form-input:focus {
         align-items: stretch;
         gap: 10px;
     }
+
     .filtro-item {
         min-width: 0;
         max-width: 100%;
     }
+
     .dashboard-cards {
         grid-template-columns: 1fr 1fr;
     }
+
     .dashboard-main-actions {
         grid-template-columns: 1fr 1fr;
         display: grid;
@@ -454,30 +458,36 @@ textarea.form-input:focus {
         align-items: stretch;
         gap: 12px;
     }
+
     .page-header h1 {
         font-size: 1.05rem;
         text-align: left;
     }
+
     .dashboard-cards {
         grid-template-columns: 1fr;
         gap: 10px;
     }
+
     .card {
         min-width: 0;
         max-width: 100%;
         font-size: 0.95rem;
     }
+
     .card-title,
     .card-info,
     .card-actions {
         padding-left: 10px;
         padding-right: 10px;
     }
+
     .dashboard-main-actions {
         grid-template-columns: 1fr;
         gap: 10px;
     }
 }
+
 .empty-state-bg {
   width: 100vw;
   min-height: 100vh;
@@ -486,6 +496,7 @@ textarea.form-input:focus {
   justify-content: center;
   background: var(--cor-fundo-app, #f6f7fb);
 }
+
 .card-empty-empresa {
   background: #fff;
   border-radius: 20px;
@@ -500,11 +511,13 @@ textarea.form-input:focus {
   align-items: center;
   animation: fadein 0.28s;
 }
+
 .card-empty-empresa img {
   width: 68px;
   margin-bottom: 0.8rem;
   opacity: 0.93;
 }
+
 .card-empty-empresa h2,
 .card-empty-empresa h1 {
   font-size: 1.25rem;
@@ -512,17 +525,20 @@ textarea.form-input:focus {
   color: #22223b;
   margin: 0.7rem 0 0.75rem 0;
 }
+
 .card-empty-empresa .descricao {
   color: #6b7280;
   margin-bottom: 0.8rem;
   font-size: 1.08em;
 }
+
 .card-empty-empresa .destaque {
   color: #189cf7;
   font-size: .98em;
   margin-bottom: 1.1rem;
   display: block;
 }
+
 .criar-empresa-card {
   color: #fff !important;
   background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
@@ -545,15 +561,18 @@ textarea.form-input:focus {
   border-width: 2px;
   border-color: transparent;
 }
+
 .criar-empresa-card:hover {
   background: linear-gradient(90deg, #2795e6 0%, #00d8ff 100%);
   color: #fff;
   box-shadow: 0 4px 24px #4facfe2a;
 }
+
 .criar-empresa-card i {
   font-size: 1.18em;
   margin-right: 0.4em;
 }
+
 .btn-logout {
   background: #fff;
   color: #ef4444;
@@ -568,21 +587,29 @@ textarea.form-input:focus {
   display: block;
   width: 100%;
 }
+
 .btn-logout:hover {
   background: #ef4444;
   color: #fff;
 }
+
 @keyframes fadein {
   from { opacity: 0; transform: scale(0.97);}
   to   { opacity: 1; transform: scale(1);}
 }
+
 @media (max-width: 600px) {
-  .card-empty-empresa { padding: 1.1rem 0.5rem; max-width: 96vw; }
+  .card-empty-empresa {
+    padding: 1.1rem 0.5rem;
+    max-width: 96vw;
+  }
 }
+
 /* Adicione esta classe ao seu CSS principal (ex: style.css) */
 .hidden {
     display: none !important;
 }
+
 /* ... (seu CSS existente) ... */
 
 /* CSS ESPECÍFICO PARA A LOGO DO SIDEBAR */
@@ -597,4 +624,297 @@ textarea.form-input:focus {
   box-shadow: 0 2px 12px rgba(79,70,229,0.08);
   border: 2px solid #e3eafc;
   object-fit: contain;
+}
+
+/* =================================================================== */
+/* BLINDAGEM ESPECÍFICA — TELA AGENDA                 */
+/* =================================================================== */
+/*
+   Esta parte foi adicionada para resolver conflito da agenda com o CSS global.
+
+   Para funcionar, a agenda.html precisa usar:
+   <body class="agenda-body">
+
+   Esta blindagem:
+   - Não altera lógica.
+   - Não altera JS.
+   - Não altera Firebase.
+   - Não mexe nas outras telas.
+   - Só aplica quando existir body.agenda-body.
+*/
+
+body.agenda-body {
+    background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.14), transparent 32%),
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.10), transparent 34%),
+        linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
+    background-attachment: fixed !important;
+    color: #1e293b !important;
+    overflow-x: hidden !important;
+}
+
+/* Corrige conflito do .main-content global */
+body.agenda-body .main-content {
+    margin-left: 270px !important;
+    width: calc(100% - 270px) !important;
+    max-width: calc(100% - 270px) !important;
+    padding: 32px !important;
+    background: transparent !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Cabeçalho e filtros como cards brancos */
+body.agenda-body .page-header,
+body.agenda-body .filtros-agenda,
+body.agenda-body #filtros-historico,
+body.agenda-body .agenda-livre-prof-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Cabeçalho da agenda */
+body.agenda-body .page-header {
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 24px !important;
+    border-radius: 14px !important;
+    margin-bottom: 24px !important;
+}
+
+body.agenda-body .page-header h1 {
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+}
+
+/* Botão Novo Agendamento */
+body.agenda-body .btn-pronti {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.20) !important;
+}
+
+body.agenda-body .btn-pronti:hover {
+    background: #4338ca !important;
+}
+
+/* Filtros da agenda */
+body.agenda-body .filtros-agenda {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+/* Corrige filtros herdados do style.css */
+body.agenda-body .filtro-item {
+    min-width: 0 !important;
+    max-width: 220px !important;
+}
+
+body.agenda-body .filtro-input,
+body.agenda-body .filtro-select {
+    min-width: 110px !important;
+    max-width: 180px !important;
+    font-size: 0.98rem !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    box-sizing: border-box !important;
+}
+
+/* Botões de filtro */
+body.agenda-body .btn-outline {
+    background: transparent !important;
+    color: #64748b !important;
+    border: 1.5px solid #e2e8f0 !important;
+    box-shadow: none !important;
+}
+
+body.agenda-body .btn-outline:hover {
+    background: #f8fafc !important;
+    color: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+body.agenda-body .btn-outline.active {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4f46e5 !important;
+}
+
+/* Neutraliza o grid do dashboard-cards na agenda */
+body.agenda-body #lista-agendamentos.dashboard-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    background: transparent !important;
+    overflow-x: hidden !important;
+}
+
+/* Placeholder da agenda */
+body.agenda-body #agendamentos-placeholder {
+    color: #64748b !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    padding: 40px !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+    border-radius: 14px !important;
+    border: 1px dashed #cbd5e1 !important;
+}
+
+/* Cards da agenda */
+body.agenda-body .agendamento-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Agenda Livre */
+body.agenda-body #agenda-livre-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+body.agenda-body .agenda-livre-prof-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Mobile — trava contra tela puxar para o lado */
+@media (max-width: 900px) {
+    body.agenda-body {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        background:
+            radial-gradient(circle at top left, rgba(79, 70, 229, 0.14), transparent 32%),
+            linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
+        background-attachment: scroll !important;
+    }
+
+    body.agenda-body .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
+        padding: 16px !important;
+        padding-top: 76px !important;
+        overflow-x: hidden !important;
+    }
+
+    body.agenda-body .page-header,
+    body.agenda-body .filtros-agenda,
+    body.agenda-body #filtros-historico,
+    body.agenda-body #lista-agendamentos,
+    body.agenda-body #agenda-livre-container,
+    body.agenda-body .agendamento-card,
+    body.agenda-body .agenda-livre-prof-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    body.agenda-body .page-header,
+    body.agenda-body .filtros-agenda {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    body.agenda-body .page-header {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+
+    body.agenda-body .page-header h1 {
+        font-size: 1.55rem !important;
+        line-height: 1.2 !important;
+    }
+
+    body.agenda-body #btn-novo-agendamento,
+    body.agenda-body .btn-outline,
+    body.agenda-body .btn-light,
+    body.agenda-body .btn-secondary {
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    body.agenda-body #filtros-semana-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    body.agenda-body .filtro-item,
+    body.agenda-body .filtro-input,
+    body.agenda-body .filtro-select {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    body.agenda-body .modal-card,
+    body.agenda-body .modal-box {
+        width: calc(100% - 28px) !important;
+        max-width: 420px !important;
+        padding: 22px !important;
+        box-sizing: border-box !important;
+    }
+
+    body.agenda-body .modal-botoes {
+        flex-direction: column !important;
+    }
+
+    body.agenda-body .modal-botoes .btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 430px) {
+    body.agenda-body .main-content {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 70px !important;
+    }
+
+    body.agenda-body .page-header,
+    body.agenda-body .filtros-agenda,
+    body.agenda-body #filtros-historico {
+        padding: 14px !important;
+        border-radius: 14px !important;
+    }
+
+    body.agenda-body .page-header h1 {
+        font-size: 1.45rem !important;
+    }
 }
