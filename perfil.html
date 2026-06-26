@@ -41,56 +41,66 @@
 
   <style>
     /* =====================================================
-       BLOCO 02 — VARIÁVEIS VISUAIS
-       Pode mudar cores, sombras e espaçamentos aqui.
-       Não interfere na lógica do perfil.js.
-    ====================================================== */
-    :root {
-      --primary: #4f46e5;
-      --primary-dark: #4338ca;
-      --primary-soft: #eef2ff;
-      --primary-border: #c7d2fe;
+   BLOCO 02 — VARIÁVEIS VISUAIS
+   Pode mudar cores, sombras e espaçamentos aqui.
+   Não interfere na lógica do perfil.js.
 
-      --bg-page: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #111827;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --border: #e2e8f0;
-      --input-bg: #ffffff;
+   ALTERAÇÃO ATUAL:
+   - Fundo da página alterado para o azul/roxo padrão Pronti.
+   - Cards continuam brancos para manter leitura e contraste.
+====================================================== */
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-soft: #eef2ff;
+  --primary-border: #c7d2fe;
 
-      --success: #16a34a;
-      --success-soft: #dcfce7;
-      --warning: #f59e0b;
-      --warning-soft: #fef3c7;
+  /* Fundo padrão Pronti */
+  --bg-page: linear-gradient(135deg, #4f46e5 0%, #6366f1 48%, #8b5cf6 100%);
 
-      --shadow-card: 0 14px 32px rgba(15, 23, 42, 0.08);
-      --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+  /* Cards e campos */
+  --card-bg: #ffffff;
+  --text-main: #111827;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --input-bg: #ffffff;
 
-      --sidebar-width: 270px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
-    }
+  /* Estados visuais */
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
 
-    * {
-      box-sizing: border-box;
-    }
+  /* Sombras */
+  --shadow-card: 0 18px 42px rgba(15, 23, 42, 0.18);
+  --shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.14);
 
-    html {
-      scroll-behavior: smooth;
-    }
+  /* Estrutura */
+  --sidebar-width: 270px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
 
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      background: var(--bg-page);
-      margin: 0;
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      overflow-x: hidden;
-    }
+* {
+  box-sizing: border-box;
+}
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: var(--bg-page);
+  background-attachment: fixed;
+  margin: 0;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
     /* =====================================================
        BLOCO 03 — MENU LATERAL
        ATENÇÃO:
