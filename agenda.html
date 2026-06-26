@@ -574,6 +574,26 @@
                 overflow-x: hidden !important;
             }
         }
+
+        /* =====================================================
+           BLOCO 14 — FUNDO FINAL DA AGENDA
+           Força o fundo azul/lilás leve mesmo se style.css ou agenda.js
+           tentarem aplicar outro fundo.
+           Não altera lógica.
+        ====================================================== */
+        html,
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
+                radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
+                linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
+        }
+
+        .main-content {
+            background:
+                radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 30%),
+                linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
+        }
     </style>
 </head>
 
