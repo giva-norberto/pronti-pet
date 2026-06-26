@@ -50,24 +50,32 @@
            Fundo leve em toda a agenda.
            Evita arrasto lateral.
         ====================================================== */
-        * {
+               * {
             box-sizing: border-box;
         }
-
+        
         html,
         body {
             width: 100%;
             min-height: 100%;
             margin: 0;
             overflow-x: hidden;
+            background:
+                radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
+                radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
+                linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
         }
-
+        
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--gradient-primary);
-            background-attachment: fixed;
             color: var(--text-main);
-            display: flex;
+            display: block !important;
+            background-attachment: fixed;
+        }
+        
+        /* Evita o container do menu cobrir o fundo da agenda */
+        #menu-container {
+            background: transparent !important;
         }
 
         /* =====================================================
