@@ -583,34 +583,31 @@
             }
         }
 
-               /* =====================================================
+                 /* =====================================================
            BLOCO 14 — FUNDO FINAL DA AGENDA
-           Mantido como reforço visual.
-           A blindagem principal vem do style.css via body.agenda-body.
+           Mesmo fundo do index.html.
+           Azul/Roxo padrão Pronti.
            Não altera lógica.
         ====================================================== */
         html,
         body,
         body.agenda-body {
-            background:
-                radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
-                radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
-                linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
-        }
-
-        body.agenda-body {
+            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%) !important;
             background-attachment: fixed !important;
         }
 
-        body.agenda-body .main-content {
+        body.agenda-body .main-content,
+        .main-content {
             background: transparent !important;
         }
 
-        body.agenda-body #menu-container {
+        body.agenda-body #menu-container,
+        #menu-container {
             background: transparent !important;
         }
 
-        body.agenda-body #lista-agendamentos {
+        body.agenda-body #lista-agendamentos,
+        #lista-agendamentos {
             background: transparent !important;
         }
     </style>
@@ -793,7 +790,6 @@
             document.getElementById('btn-agenda-livre').addEventListener('click', exibirAbaAgendaLivre);
             exibirAbaAgendaDia();
 
-            // CORREÇÃO 2: Mês Atual sempre preenche os campos e dispara o filtro
             document.getElementById('btn-mes-atual').addEventListener('click', function () {
                 var hoje = new Date();
                 var primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -803,7 +799,6 @@
                 document.getElementById('btn-aplicar-historico').click();
             });
 
-            // CORREÇÃO 3: Botão aplicar histórico dispara o evento [requisito de UX]
             document.getElementById('btn-aplicar-historico').addEventListener('click', function () {
                 // Aqui só dispara evento e espera a função do backend (agenda.js)
             });
@@ -892,6 +887,6 @@
     </script>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script type="module" src="agenda.js?v=6"></script>
+    <script type="module" src="agenda.js?v=7"></script>
 </body>
 </html>
