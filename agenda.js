@@ -235,12 +235,19 @@ function montarCaminhoFotoPet(ag) {
 ============================================================ */
 
 function aplicarEstiloAgendaPet() {
-  if (document.getElementById("style-agenda-pet-cards")) return;
+  const styleAntigo = document.getElementById("style-agenda-pet-cards");
+  if (styleAntigo) {
+    styleAntigo.remove();
+  }
 
   const style = document.createElement("style");
   style.id = "style-agenda-pet-cards";
 
   style.textContent = `
+    /* =====================================================
+       FUNDO GERAL DA AGENDA
+       Força o fundo azul/lilás mesmo contra style.css.
+    ====================================================== */
     html,
     body {
       background:
@@ -248,11 +255,24 @@ function aplicarEstiloAgendaPet() {
         radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
         linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
       overflow-x: hidden !important;
-      min-height: 100%;
+      min-height: 100% !important;
     }
 
     body {
       background-attachment: fixed !important;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
+        radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
+        linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
     }
 
     *,
@@ -265,19 +285,33 @@ function aplicarEstiloAgendaPet() {
     .main-content,
     .content,
     .page-content,
-    .dashboard-content {
+    .dashboard-content,
+    .dashboard-main,
+    .app-content {
       background:
         radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 30%),
         linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
     }
 
-    #lista-agendamentos {
+    #lista-agendamentos,
+    #lista-agendamentos.dashboard-cards,
+    .dashboard-cards {
       background: transparent !important;
       padding: 18px;
       border-radius: 20px;
       width: 100%;
       max-width: 100%;
       overflow-x: hidden;
+    }
+
+    #agendamentos-placeholder {
+      background: rgba(255, 255, 255, 0.72) !important;
+      border: 1px dashed #cbd5e1 !important;
+      border-radius: 16px !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+      padding: 36px 18px !important;
     }
 
     .card--agenda {
@@ -649,7 +683,10 @@ function aplicarEstiloAgendaPet() {
         background-attachment: scroll !important;
       }
 
-      #lista-agendamentos {
+      #lista-agendamentos,
+      #lista-agendamentos.dashboard-cards,
+      .dashboard-cards {
+        background: transparent !important;
         padding: 12px;
       }
 
