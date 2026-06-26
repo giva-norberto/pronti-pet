@@ -242,33 +242,38 @@ function aplicarEstiloAgendaPet() {
 
   style.textContent = `
     body {
-      background: #eef2f7;
-      overflow-x: hidden;
-    }
+    body {
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
+    radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
+    linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
+  overflow-x: hidden;
+}
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-    main,
-    .main-content,
-    .content,
-    .page-content,
-    .dashboard-content {
-      background: #eef2f7 !important;
-    }
+main,
+.main-content,
+.content,
+.page-content,
+.dashboard-content {
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 30%),
+    linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
+}
 
-    #lista-agendamentos {
-      background: #eef2f7;
-      padding: 18px;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
+#lista-agendamentos {
+  background: transparent !important;
+  padding: 18px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
     .card--agenda {
       background: #ffffff !important;
       border: 1px solid #dbe3ef !important;
