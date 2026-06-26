@@ -130,40 +130,46 @@ body {
     }
 
     /* =====================================================
-       BLOCO 05 — TOPO DA TELA
-       Mantém o id main-title, usado pelo perfil.js.
-    ====================================================== */
-    .perfil-topo {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
+   BLOCO 05 — TOPO DA TELA
+   Cabeçalho em card branco para não ficar solto no fundo azul.
+   Mantém o id main-title usado pelo perfil.js.
+====================================================== */
+.perfil-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.18);
+  padding: 22px 24px;
+}
 
-    .perfil-topo-texto h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.75rem, 3vw, 2.35rem);
-      font-weight: 900;
-      color: var(--text-main);
-      letter-spacing: -0.04em;
-    }
+.perfil-topo-texto h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 900;
+  color: var(--text-main);
+  letter-spacing: -0.04em;
+}
 
-    .perfil-topo-texto p {
-      margin: 0;
-      color: var(--text-secondary);
-      font-size: 0.98rem;
-      line-height: 1.5;
-      max-width: 640px;
-    }
+.perfil-topo-texto p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  max-width: 640px;
+}
 
-    .perfil-topo-acoes {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
+.perfil-topo-acoes {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 
     /* =====================================================
        BLOCO 06 — BOTÕES
