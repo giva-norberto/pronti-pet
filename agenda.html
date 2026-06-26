@@ -583,29 +583,40 @@
             }
         }
 
-        /* =====================================================
+               /* =====================================================
            BLOCO 14 — FUNDO FINAL DA AGENDA
-           Força o fundo azul/lilás leve mesmo se style.css ou agenda.js
-           tentarem aplicar outro fundo.
+           Mantido como reforço visual.
+           A blindagem principal vem do style.css via body.agenda-body.
            Não altera lógica.
         ====================================================== */
         html,
-        body {
+        body,
+        body.agenda-body {
             background:
                 radial-gradient(circle at top left, rgba(79, 70, 229, 0.16), transparent 32%),
                 radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 34%),
                 linear-gradient(180deg, #eef2ff 0%, #f8fafc 48%, #ffffff 100%) !important;
         }
 
-        .main-content {
-            background:
-                radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 30%),
-                linear-gradient(180deg, #eef2ff 0%, #f8fafc 55%, #ffffff 100%) !important;
+        body.agenda-body {
+            background-attachment: fixed !important;
+        }
+
+        body.agenda-body .main-content {
+            background: transparent !important;
+        }
+
+        body.agenda-body #menu-container {
+            background: transparent !important;
+        }
+
+        body.agenda-body #lista-agendamentos {
+            background: transparent !important;
         }
     </style>
 </head>
 
-<body>
+<body class="agenda-body">
     <div id="menu-container"></div>
 
     <main class="main-content">
@@ -776,7 +787,7 @@
             document.getElementById('btn-historico').addEventListener('click', function () {
                 ocultarTodasAbasAgenda();
                 setActiveAba('btn-historico');
-                document.getElementById('filtros-historico').style.display = 'flex'; // <----- CORRIGIDO!
+                document.getElementById('filtros-historico').style.display = 'flex';
             });
 
             document.getElementById('btn-agenda-livre').addEventListener('click', exibirAbaAgendaLivre);
@@ -881,6 +892,6 @@
     </script>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script type="module" src="agenda.js"></script>
+    <script type="module" src="agenda.js?v=6"></script>
 </body>
 </html>
