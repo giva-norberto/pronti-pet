@@ -1,22 +1,31 @@
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-brand">
-        <img src="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/config%2Flogo-pronti-app.png?alt=media&token=9a9983d1-bee4-4549-b878-8d3060792674"
-             alt="Logo Pronti" id="sidebar-logo">
+        <img 
+            src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b"
+            alt="Logo Pronti Pet" 
+            id="sidebar-logo"
+        >
     </a>
+
     <hr />
+
     <nav class="sidebar-links" id="sidebar-links">
         <a href="index.html" data-menu-id="inicio">
             <span><i class="fa-solid fa-house"></i></span> Início
         </a>
+
         <a href="dashboard.html" data-menu-id="dashboard">
             <span><i class="fa-solid fa-chart-pie"></i></span> Dashboard
         </a>
+
         <a href="agenda.html" data-menu-id="agenda">
             <span><i class="fa-solid fa-calendar-days"></i></span> Agenda
         </a>
+
         <a href="equipe.html" data-menu-id="equipe">
             <span><i class="fa-solid fa-users"></i></span> Equipe
         </a>
+
         <a href="servicos.html" data-menu-id="servicos">
             <span><i class="fa-solid fa-scissors"></i></span> Serviços
         </a>
@@ -25,6 +34,7 @@
         <a href="site/manual-pronti.html" data-menu-id="manual">
            <span><i class="fa-solid fa-book-open"></i></span> Manual
         </a>
+
         <a href="site/manual-editor.html" data-menu-id="manual-editor">
             <span><i class="fa-solid fa-pen-to-square"></i></span> Editor Manual
         </a>
@@ -32,22 +42,28 @@
         <a href="planos.html" data-menu-id="planos">
             <span><i class="fa-solid fa-file-invoice-dollar"></i></span> Planos
         </a>
+
         <a href="clientes.html" data-menu-id="clientes">
             <span><i class="fa-solid fa-user"></i></span> Clientes
         </a>
+
         <a href="perfil.html" data-menu-id="perfil">
             <span><i class="fa-solid fa-id-card"></i></span> Empresa
         </a>
+
         <a href="relatorios.html" data-menu-id="relatorios">
             <span><i class="fa-solid fa-chart-line"></i></span> Relatórios
         </a>
+
         <a href="admin-clientes.html" data-menu-id="administracao">
             <span><i class="fa-solid fa-shield"></i></span> Administração
         </a>
+
         <a href="permissoes.html" data-menu-id="permissoes">
             <span><i class="fa-solid fa-sliders"></i></span> Permissões
         </a>
     </nav>
+
     <div class="sidebar-footer">
         <button id="btn-logout" class="btn-logout">Sair</button>
     </div>
@@ -63,7 +79,9 @@
   color: #fff;
   box-shadow: 2px 0 8px rgba(0,0,0,0.05);
   position: fixed;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -71,6 +89,7 @@
   transition: transform 0.3s ease;
   box-sizing: border-box;
 }
+
 .sidebar-brand {
   display: block;
   padding: 0 32px 12px 32px;
@@ -78,21 +97,25 @@
   text-align: center;
   text-decoration: none;
 }
+
 .sidebar-brand img {
-    max-width: 150px;
-    height: auto;
-    min-height: 50px; 
-    display: block;
-    margin: 0 auto;
-    background-color: #fff;
-    padding: 4px;
-    border-radius: 8px;
+  max-width: 150px;
+  height: auto;
+  min-height: 50px;
+  display: block;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 6px;
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.16);
 }
+
 .sidebar hr {
   margin: 0 32px 16px 32px;
   border: none;
   border-top: 1px solid #787cff55;
 }
+
 .sidebar-links {
   display: flex;
   flex-direction: column;
@@ -101,6 +124,7 @@
   flex-grow: 1;
   overflow-y: auto;
 }
+
 .sidebar-links a {
   display: flex;
   align-items: center;
@@ -117,12 +141,14 @@
   border: 2px solid transparent;
   box-sizing: border-box;
 }
+
 .sidebar-links a span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 20px;
 }
+
 .sidebar-links a.active,
 .sidebar-links a:focus {
   background: #4f46e5;
@@ -132,16 +158,19 @@
   box-shadow: 0 4px 12px rgba(79,70,229,0.3);
   outline: none;
 }
+
 .sidebar-links a:hover:not(.active) {
   background: #f0f1ff;
   color: #3b2fd6;
   border-color: #d1d5fa;
 }
+
 .sidebar-footer {
   margin-top: auto;
   padding: 32px;
   flex-shrink: 0;
 }
+
 .btn-logout {
   background: #fff;
   color: #4f46e5;
@@ -157,20 +186,24 @@
   border: 2px solid transparent;
   outline: none;
 }
+
 .btn-logout:hover,
 .btn-logout:focus {
   background: #4f46e5;
   color: #fff;
   border: 2px solid #fff;
 }
+
 @media (max-width: 900px) {
   .sidebar {
     transform: translateX(-100%);
     z-index: 2000;
   }
+
   .sidebar.open {
     transform: translateX(0);
   }
+
   body.sidebar-open {
     overflow: hidden;
   }
