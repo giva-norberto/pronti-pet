@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="google-site-verification" content="ufJvm5YVeJTdH-mwyQGxvPpZekd7WojsxYTHCfWE7b0" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pronti Pet - Painel do Proprietário</title>
+    <title>Pronti - Início</title>
 
     <link rel="manifest" href="manifest.json">
 
-    <meta property="og:title" content="Pronti Pet - Painel do Proprietário" />
-    <meta property="og:description" content="Gerencie a agenda, os clientes, os serviços e a operação do seu pet shop no Pronti Pet." />
-    <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" />
+    <meta property="og:title" content="Pronti - Painel de Gestão" />
+    <meta property="og:description" content="Acesse seu painel Pronti para gerenciar sua agenda, clientes e serviços." />
+    <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/logos%2FBX6Q7HrVMrcCBqe72r7K76EBPkX2%2F1758126224738-LOGO%20PRONTI%20FUNDO%20AZUL.png?alt=media&token=e01a4e43-a304-4550-8573-c1c15059d164" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://pronti-pet.web.app" />
+    <meta property="og:url" content="https://prontiapp.com.br" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
     <link href="style.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -20,21 +20,22 @@
     <style>
         :root {
             --sidebar-width: 250px;
-            --pronti-purple: #5424b8;
-            --pronti-purple-dark: #35106f;
-            --pronti-purple-soft: #f2edff;
-            --pronti-yellow: #ffc928;
-            --pronti-ink: #17123c;
-            --pronti-muted: #6f6b86;
-            --pronti-border: #e8e4f2;
-            --pronti-surface: #ffffff;
-            --pronti-bg: #f7f7fb;
-            --success: #16a34a;
+            --pet-roxo: #5522b6;
+            --pet-roxo-2: #6f35d8;
+            --pet-roxo-escuro: #211047;
+            --pet-amarelo: #ffc928;
+            --pet-branco: #ffffff;
+            --pet-fundo: #f7f5fc;
+            --pet-card: #ffffff;
+            --pet-borda: #e7e0f4;
+            --pet-texto: #17113d;
+            --pet-muted: #6d6684;
+            --pet-verde: #16a34a;
+            --pet-azul: #2563eb;
+            --pet-laranja: #ea7b12;
         }
 
         * { box-sizing: border-box; }
-
-        html { scroll-behavior: smooth; }
 
         body {
             margin: 0;
@@ -45,357 +46,544 @@
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
             background:
-                radial-gradient(circle at 88% 5%, rgba(84,36,184,.09), transparent 24rem),
-                linear-gradient(180deg, #fbfaff 0%, var(--pronti-bg) 100%);
-            color: var(--pronti-ink);
+                radial-gradient(circle at 82% 8%, rgba(111, 53, 216, .10), transparent 22rem),
+                radial-gradient(circle at 58% 4%, rgba(255, 201, 40, .08), transparent 18rem),
+                linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
+            color: var(--pet-texto);
         }
 
-        body.loaded { visibility: visible; opacity: 1; }
+        body.loaded {
+            visibility: visible;
+            opacity: 1;
+        }
 
         #menu-container {
-            width: var(--sidebar-width);
             flex: 0 0 var(--sidebar-width);
+            width: var(--sidebar-width);
             min-height: 100vh;
         }
 
         main.main-content {
+            flex: 1 1 auto;
             width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
-            padding: 30px 34px 110px;
+            padding: 24px 28px 118px;
             overflow-y: auto;
+            display: block !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
         }
 
-        .dashboard-shell {
-            width: min(1320px, 100%);
+        .index-shell {
+            width: 100%;
+            max-width: 1280px;
             margin: 0 auto;
         }
 
-        .mobile-brand {
+        .mobile-index-logo {
             display: none;
-            align-items: center;
             justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .mobile-index-logo img {
+            width: 72px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 22px;
+            box-shadow: 0 10px 30px rgba(33, 16, 71, .18);
+        }
+
+        .index-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 20px;
+            align-items: start;
             margin-bottom: 18px;
         }
 
-        .mobile-brand img {
-            width: 74px;
-            height: 74px;
-            object-fit: contain;
-            border-radius: 22px;
-            box-shadow: 0 12px 32px rgba(54,16,111,.18);
-        }
-
-        .dashboard-topbar {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 24px;
-            align-items: start;
-            margin-bottom: 22px;
-        }
-
-        .welcome-block h1 {
-            margin: 0 0 6px;
-            font-size: clamp(1.9rem, 3.2vw, 2.75rem);
-            line-height: 1.15;
-            color: var(--pronti-ink);
-            letter-spacing: -.04em;
-        }
-
-        .welcome-block > p {
+        .dashboard-welcome-center {
+            text-align: left;
             margin: 0;
-            color: var(--pronti-muted);
-            font-size: .98rem;
+            width: 100%;
         }
 
-        .owner-context {
-            margin-top: 15px;
+        .dashboard-welcome-center h1 {
+            margin: 0 0 6px;
+            font-size: clamp(1.75rem, 3vw, 2.55rem);
+            line-height: 1.08;
+            color: var(--pet-texto);
+            letter-spacing: -0.04em;
+        }
+
+        .dashboard-welcome-center p {
+            margin: 0;
+            max-width: 680px;
+            color: var(--pet-muted);
+            font-size: .95rem;
+            line-height: 1.55;
+        }
+
+        .owner-chip {
+            margin-top: 12px;
             display: inline-flex;
             align-items: center;
-            gap: 9px;
-            padding: 9px 13px;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
             background: #fff;
-            border: 1px solid var(--pronti-border);
-            border-radius: 12px;
-            color: var(--pronti-purple-dark);
-            font-size: .82rem;
-            font-weight: 600;
-            box-shadow: 0 6px 20px rgba(35,20,75,.05);
+            border: 1px solid var(--pet-borda);
+            color: var(--pet-roxo-escuro);
+            font-size: .78rem;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(33, 16, 71, .05);
         }
 
-        .owner-context i { color: var(--pronti-yellow); }
+        .owner-chip i {
+            color: var(--pet-amarelo);
+        }
 
-        .top-actions {
-            min-width: 185px;
+        .index-actions {
             display: flex;
             justify-content: flex-end;
             align-items: flex-start;
         }
 
         .notification-button {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid #ddd4ff;
+            background: #ffffff;
+            color: var(--pet-roxo);
+            border: 1px solid #ddd2fb;
             border-radius: 12px;
             padding: 10px 14px;
-            background: #fff;
-            color: var(--pronti-purple);
             font-family: 'Poppins', sans-serif;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 6px 18px rgba(53,16,111,.06);
+            transition: all .2s ease;
+            display: none;
+            box-shadow: 0 8px 22px rgba(33, 16, 71, .06);
         }
 
-        .notification-button:hover { background: var(--pronti-purple-soft); }
+        .notification-button:hover {
+            background: #f5f0ff;
+        }
+
+        .notification-button i {
+            margin-right: 8px;
+        }
 
         .notification-message {
             margin: 12px 0 0;
             padding: 11px 14px;
-            border-radius: 11px;
-            font-weight: 600;
-            font-size: .85rem;
-            max-width: 420px;
+            background: #f5f0ff;
+            border-radius: 10px;
+            color: var(--pet-roxo);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: .86rem;
+            max-width: 460px;
             text-align: left;
             display: none;
         }
 
         .notification-message.success { color: #15803d; background: #f0fdf4; }
         .notification-message.error { color: #b91c1c; background: #fef2f2; }
-        .notification-message.info { color: #5b21b6; background: #f5f3ff; }
+        .notification-message.info { color: var(--pet-roxo); background: #f5f0ff; }
 
-        .daily-overview {
+        .index-main-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
-            gap: 22px;
-            margin-bottom: 22px;
-        }
-
-        .summary-panel,
-        .agenda-feature {
-            border-radius: 24px;
-            overflow: hidden;
-        }
-
-        .summary-panel {
-            background: var(--pronti-surface);
-            border: 1px solid var(--pronti-border);
-            box-shadow: 0 14px 35px rgba(35,20,75,.07);
-            padding: 22px;
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
+            grid-template-columns: minmax(520px, 1.05fr) minmax(380px, .95fr);
+            gap: 18px;
+            align-items: stretch;
             margin-bottom: 18px;
         }
 
-        .section-title h2 {
-            margin: 0;
-            font-size: 1.08rem;
-            color: var(--pronti-purple-dark);
+        .today-panel,
+        .agenda-hero,
+        .next-panel {
+            background: var(--pet-card);
+            border: 1px solid var(--pet-borda);
+            border-radius: 22px;
+            box-shadow: 0 16px 38px rgba(33, 16, 71, .07);
         }
 
-        .section-title h2 i {
-            color: var(--pronti-purple);
+        .today-panel {
+            padding: 20px;
+        }
+
+        .panel-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .panel-title-row h2 {
+            margin: 0;
+            color: var(--pet-roxo-escuro);
+            font-size: 1.06rem;
+            line-height: 1.25;
+        }
+
+        .panel-title-row h2 i {
+            color: var(--pet-roxo);
             margin-right: 8px;
         }
 
-        .summary-note {
-            font-size: .73rem;
-            color: var(--pronti-muted);
+        .panel-title-row a {
+            color: var(--pet-roxo);
+            font-size: .76rem;
+            font-weight: 800;
+            text-decoration: none;
+            white-space: nowrap;
         }
 
-        .summary-grid {
+        .today-summary-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
+            gap: 10px;
         }
 
-        .summary-item {
-            min-height: 132px;
-            padding: 16px 12px;
-            border: 1px solid var(--pronti-border);
-            border-radius: 17px;
+        .today-metric {
+            min-height: 126px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            background: linear-gradient(180deg, #fff, #fcfbff);
+            gap: 7px;
+            padding: 14px 10px;
+            border-radius: 17px;
+            border: 1px solid var(--pet-borda);
+            background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+            color: var(--pet-texto);
+            text-decoration: none;
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .summary-item .summary-icon {
+        .today-metric:hover,
+        .today-metric:active {
+            transform: translateY(-2px);
+            border-color: #d2c2ff;
+            box-shadow: 0 12px 24px rgba(33, 16, 71, .08);
+        }
+
+        .today-metric-icon {
             width: 42px;
             height: 42px;
-            border-radius: 13px;
+            border-radius: 14px;
             display: grid;
             place-items: center;
-            margin-bottom: 9px;
-            font-size: 1.15rem;
-            background: var(--pronti-purple-soft);
-            color: var(--pronti-purple);
+            background: #f1eaff;
+            color: var(--pet-roxo);
+            font-size: 1.05rem;
         }
 
-        .summary-item:nth-child(2) .summary-icon {
-            background: #fff8dc;
-            color: #d89d00;
+        .today-metric:nth-child(2) .today-metric-icon {
+            background: #fff6d9;
+            color: #d39800;
         }
 
-        .summary-item:nth-child(3) .summary-icon {
+        .today-metric:nth-child(3) .today-metric-icon {
             background: #eaf2ff;
-            color: #2563eb;
+            color: var(--pet-azul);
         }
 
-        .summary-item:nth-child(4) .summary-icon {
-            background: #ecfdf3;
-            color: var(--success);
+        .today-metric:nth-child(4) .today-metric-icon {
+            background: #e9fbea;
+            color: var(--pet-verde);
         }
 
-        .summary-value {
-            font-size: 1.55rem;
-            font-weight: 700;
+        .today-metric-value {
+            font-size: 1.65rem;
             line-height: 1;
-            margin-bottom: 7px;
+            font-weight: 800;
+            min-height: 1em;
         }
 
-        .summary-label {
-            font-size: .75rem;
-            color: var(--pronti-muted);
-            line-height: 1.35;
+        .today-metric-label {
+            font-size: .72rem;
+            line-height: 1.32;
+            color: var(--pet-muted);
+            font-weight: 600;
         }
 
-        .summary-footer {
-            margin-top: 16px;
-            padding: 13px 14px;
-            border-radius: 14px;
-            background: #f8f6ff;
-            color: var(--pronti-muted);
-            font-size: .78rem;
+        .next-panel {
+            margin-top: 14px;
+            padding: 18px 20px;
+        }
+
+        .next-list {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 9px;
         }
 
-        .summary-footer i { color: var(--pronti-purple); }
+        .next-item {
+            display: grid;
+            grid-template-columns: 58px minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 11px 12px;
+            border: 1px solid #eee8f8;
+            border-radius: 15px;
+            color: var(--pet-texto);
+            text-decoration: none;
+            background: #fff;
+            transition: all .2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        .agenda-feature {
+        .next-item:hover,
+        .next-item:active {
+            background: #fbf8ff;
+            border-color: #d9ccff;
+            transform: translateY(-1px);
+        }
+
+        .next-hour {
+            color: var(--pet-roxo);
+            font-weight: 800;
+            font-size: .88rem;
+        }
+
+        .next-main {
+            min-width: 0;
+        }
+
+        .next-main strong {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: .9rem;
+        }
+
+        .next-main span {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--pet-muted);
+            font-size: .72rem;
+            margin-top: 2px;
+        }
+
+        .next-status {
+            padding: 6px 9px;
+            border-radius: 999px;
+            background: #f5f0ff;
+            color: var(--pet-roxo);
+            font-size: .68rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .next-empty {
+            padding: 18px;
+            border: 1px dashed #ddd2fb;
+            border-radius: 15px;
+            color: var(--pet-muted);
+            font-size: .84rem;
+            text-align: center;
+            background: #fbf8ff;
+        }
+
+        .agenda-hero {
             position: relative;
-            min-height: 292px;
-            padding: 30px;
-            background:
-                radial-gradient(circle at 92% 12%, rgba(255,201,40,.28), transparent 13rem),
-                linear-gradient(135deg, #381078 0%, #6128c5 60%, #7d44e2 100%);
+            display: flex;
+            min-height: 278px;
+            padding: 28px;
+            overflow: hidden;
             color: #fff;
-            box-shadow: 0 18px 40px rgba(84,36,184,.22);
+            text-decoration: none;
+            border: none;
+            background:
+                radial-gradient(circle at 90% 18%, rgba(255, 201, 40, .28), transparent 11rem),
+                linear-gradient(135deg, #35106f 0%, #5522b6 55%, #793ae5 100%);
+            box-shadow: 0 20px 46px rgba(85, 34, 182, .24);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .agenda-hero:hover,
+        .agenda-hero:active {
+            transform: translateY(-2px);
+        }
+
+        .agenda-hero::before,
+        .agenda-hero::after {
+            content: "🐾";
+            position: absolute;
+            opacity: .10;
+            font-size: 5.2rem;
+            pointer-events: none;
+        }
+
+        .agenda-hero::before {
+            right: 36px;
+            top: 22px;
+            transform: rotate(18deg);
+        }
+
+        .agenda-hero::after {
+            right: 145px;
+            bottom: -24px;
+            transform: rotate(-18deg);
+        }
+
+        .agenda-hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 430px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            isolation: isolate;
         }
 
-        .agenda-feature::before,
-        .agenda-feature::after {
-            content: "🐾";
-            position: absolute;
-            opacity: .08;
-            font-size: 5rem;
-            z-index: -1;
-        }
-
-        .agenda-feature::before { right: 28px; top: 12px; transform: rotate(15deg); }
-        .agenda-feature::after { right: 180px; bottom: -18px; transform: rotate(-18deg); }
-
-        .agenda-feature .eyebrow {
+        .agenda-kicker {
             width: fit-content;
             padding: 6px 10px;
             border-radius: 999px;
-            background: rgba(255,255,255,.13);
-            border: 1px solid rgba(255,255,255,.16);
+            background: rgba(255, 255, 255, .14);
+            border: 1px solid rgba(255, 255, 255, .18);
             font-size: .72rem;
-            font-weight: 600;
+            font-weight: 800;
             margin-bottom: 14px;
         }
 
-        .agenda-feature h2 {
-            margin: 0 0 10px;
-            font-size: 2rem;
-            line-height: 1.1;
+        .agenda-hero h2 {
+            margin: 0 0 9px;
+            font-size: clamp(2rem, 3vw, 2.55rem);
+            line-height: 1;
+            color: #fff;
         }
 
-        .agenda-feature p {
-            max-width: 420px;
-            margin: 0 0 23px;
-            color: rgba(255,255,255,.84);
-            font-size: .9rem;
-            line-height: 1.55;
+        .agenda-hero p {
+            margin: 0 0 22px;
+            color: rgba(255, 255, 255, .86);
+            font-size: .93rem;
+            line-height: 1.52;
         }
 
-        .agenda-feature .agenda-cta {
+        .agenda-hero-button {
             width: fit-content;
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 17px;
-            border-radius: 12px;
-            background: var(--pronti-yellow);
+            padding: 12px 18px;
+            border-radius: 13px;
+            background: var(--pet-amarelo);
             color: #2b1558;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: .85rem;
-            box-shadow: 0 10px 22px rgba(0,0,0,.16);
-            transition: transform .2s ease, box-shadow .2s ease;
+            font-weight: 800;
+            font-size: .86rem;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, .20);
         }
 
-        .agenda-feature .agenda-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 26px rgba(0,0,0,.2);
+        .agenda-hero-visual {
+            position: absolute;
+            right: 24px;
+            bottom: 20px;
+            width: 210px;
+            height: 180px;
+            border-radius: 32px;
+            background:
+                radial-gradient(circle at 72% 25%, rgba(255,255,255,.7), transparent 16px),
+                linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.04));
+            border: 1px solid rgba(255,255,255,.16);
+            opacity: .95;
         }
 
-        .quick-access-heading {
-            margin: 6px 0 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: end;
-            gap: 16px;
+        .agenda-hero-visual::before {
+            content: "🐶";
+            position: absolute;
+            left: 24px;
+            bottom: 18px;
+            font-size: 4.4rem;
+            filter: drop-shadow(0 10px 14px rgba(0,0,0,.18));
         }
 
-        .quick-access-heading h2 {
+        .agenda-hero-visual::after {
+            content: "🐱";
+            position: absolute;
+            right: 28px;
+            bottom: 20px;
+            font-size: 3.4rem;
+            filter: drop-shadow(0 10px 14px rgba(0,0,0,.18));
+        }
+
+        .calendar-mini {
+            position: absolute;
+            right: 26px;
+            top: 22px;
+            width: 82px;
+            height: 68px;
+            border-radius: 15px;
+            background: rgba(255,255,255,.92);
+            color: var(--pet-roxo);
+            display: grid;
+            place-items: center;
+            font-size: 2rem;
+            box-shadow: 0 14px 26px rgba(0,0,0,.16);
+        }
+
+        .quick-section {
+            margin-top: 4px;
+        }
+
+        .quick-section-header {
+            margin: 0 0 13px;
+        }
+
+        .quick-section-header h2 {
             margin: 0;
-            font-size: 1.1rem;
+            font-size: 1.02rem;
+            color: var(--pet-roxo-escuro);
         }
 
-        .quick-access-heading p {
+        .quick-section-header p {
             margin: 3px 0 0;
-            color: var(--pronti-muted);
             font-size: .78rem;
+            color: var(--pet-muted);
         }
 
         .dashboard-grid-cards {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 15px;
+            gap: 13px;
             width: 100%;
+            max-width: none;
         }
 
         .menu-card {
+            min-height: 128px;
             position: relative;
-            min-height: 148px;
-            padding: 19px;
+            color: var(--pet-texto);
+            border-radius: 18px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             justify-content: flex-start;
+            text-align: left;
             gap: 8px;
-            color: var(--pronti-ink);
-            background: #fff;
-            border: 1px solid var(--pronti-border);
-            border-radius: 18px;
+            font-weight: 700;
+            font-size: .92rem;
             text-decoration: none;
-            box-shadow: 0 10px 28px rgba(35,20,75,.055);
-            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+            box-shadow: 0 10px 25px rgba(33, 16, 71, .055);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+            border: 1px solid var(--pet-borda);
+            background: #fff;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .menu-card:hover,
+        .menu-card:active {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px rgba(33, 16, 71, .10);
+            border-color: #d4c5ff;
+            cursor: pointer;
         }
 
         .menu-card::after {
@@ -403,153 +591,234 @@
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
-            right: 17px;
-            bottom: 15px;
-            font-size: .76rem;
-            color: var(--pronti-purple);
-        }
-
-        .menu-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 34px rgba(53,16,111,.11);
-            border-color: #d8ccff;
+            right: 16px;
+            bottom: 14px;
+            color: var(--pet-roxo);
+            font-size: .78rem;
         }
 
         .menu-card i {
-            width: 43px;
-            height: 43px;
+            width: 42px;
+            height: 42px;
             display: grid;
             place-items: center;
             border-radius: 13px;
-            font-size: 1.12rem;
-            background: var(--pronti-purple-soft);
-            color: var(--pronti-purple);
+            font-size: 1.1rem;
+            background: #f1eaff;
+            color: var(--pet-roxo);
+            flex-shrink: 0;
         }
 
         .menu-card span {
-            font-size: .98rem;
-            font-weight: 700;
-            margin-top: 2px;
+            display: block;
+            font-weight: 800;
+            color: var(--pet-texto);
         }
 
         .menu-card small {
-            max-width: 90%;
-            color: var(--pronti-muted);
-            font-size: .73rem;
-            font-weight: 400;
-            line-height: 1.45;
+            display: block;
+            max-width: 92%;
+            color: var(--pet-muted);
+            font-size: .71rem;
+            line-height: 1.42;
+            font-weight: 500;
         }
 
-        [data-card-id="dashboard"] i { background:#efeaff; color:#5b21b6; }
-        [data-card-id="servicos"] i { background:#fff0df; color:#ea7b12; }
-        [data-card-id="planos"] i { background:#fff8dc; color:#c89200; }
-        [data-card-id="clientes"] i { background:#eaf2ff; color:#2563eb; }
-        [data-card-id="equipe"] i { background:#ecfdf3; color:#16a34a; }
-        [data-card-id="perfil"] i { background:#edfafa; color:#0f9f9a; }
-        [data-card-id="relatorios"] i { background:#f8eaf3; color:#c43c78; }
+        [data-card-id="dashboard"] i { background: #f1eaff; color: var(--pet-roxo); }
+        [data-card-id="servicos"] i { background: #fff0df; color: var(--pet-laranja); }
+        [data-card-id="planos"] i { background: #fff8dc; color: #c89200; }
+        [data-card-id="clientes"] i { background: #eaf2ff; color: var(--pet-azul); }
+        [data-card-id="equipe"] i { background: #ecfdf3; color: var(--pet-verde); }
+        [data-card-id="perfil"] i { background: #edfafa; color: #0f9f9a; }
+        [data-card-id="relatorios"] i { background: #f8eaf3; color: #c43c78; }
         [data-card-id="administracao"] i,
-        [data-card-id="permissoes"] i { background:#f1edff; color:#5b21b6; }
+        [data-card-id="permissoes"] i { background: #f1eaff; color: var(--pet-roxo); }
 
-        .management-title {
-            margin: 24px 0 13px;
-            padding-top: 4px;
-            border-top: 1px solid var(--pronti-border);
+        .management-divider {
+            margin: 21px 0 13px;
+            padding-top: 14px;
+            border-top: 1px solid var(--pet-borda);
         }
 
-        .management-title h2 {
-            margin: 17px 0 0;
+        .management-divider h2 {
+            margin: 0;
+            color: var(--pet-roxo-escuro);
             font-size: 1rem;
-            color: var(--pronti-purple-dark);
         }
 
         #statusAssinatura {
             --badge-scale: 1;
             position: fixed;
-            top: 14px;
-            right: 14px;
-            padding: 7px 11px;
+            top: 10px;
+            right: 12px;
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            color: white;
+            padding: 5px 9px;
             border-radius: 999px;
-            color: #fff;
-            font-size: .68rem;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0,0,0,.1);
+            font-size: 0.66rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, .20);
             display: none;
             z-index: 9999;
             opacity: 0;
             transform: translateY(-6px) scale(var(--badge-scale));
-            transition: opacity .28s ease, transform .28s ease;
+            transition: opacity 0.28s ease, transform 0.28s ease;
         }
 
         #btn-logout {
             display: none;
+            background: #374151;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             position: fixed;
             right: 16px;
             bottom: 16px;
             z-index: 1002;
-            border: none;
-            border-radius: 12px;
-            padding: 11px 16px;
-            background: var(--pronti-purple-dark);
-            color: #fff;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            box-shadow: 0 8px 22px rgba(0,0,0,.18);
             cursor: pointer;
+            transition: background 0.2s;
         }
 
-        #btn-logout i { margin-right: 7px; }
+        #btn-logout i { margin-right: 8px; }
+        #btn-logout:hover { background: #111827; }
 
-        @media (max-width: 1120px) {
-            .daily-overview { grid-template-columns: 1fr; }
-            .agenda-feature { min-height: 250px; }
-            .dashboard-grid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (max-width: 1180px) {
+            .index-main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .agenda-hero {
+                min-height: 250px;
+            }
+
+            .agenda-hero-visual {
+                width: 190px;
+            }
         }
 
         @media (max-width: 900px) {
-            body { display: block; }
+            body {
+                display: block;
+            }
+
             #menu-container {
                 width: 0;
                 min-height: 0;
                 flex: none;
             }
+
             main.main-content {
                 width: 100%;
                 min-height: 100vh;
-                padding: 18px 16px 105px;
+                padding: 16px 14px 112px;
             }
-            .mobile-brand { display: flex; }
-            .dashboard-topbar {
+
+            .mobile-index-logo {
+                display: flex;
+            }
+
+            .index-header {
                 grid-template-columns: 1fr;
                 gap: 12px;
             }
-            .top-actions { justify-content: flex-start; min-width: 0; }
-            #btn-logout { display: block; }
-        }
 
-        @media (max-width: 620px) {
-            .mobile-brand img {
-                width: 66px;
-                height: 66px;
-                border-radius: 19px;
+            .index-actions {
+                justify-content: flex-start;
             }
 
-            .welcome-block h1 { font-size: 1.72rem; }
-            .welcome-block > p { font-size: .86rem; line-height: 1.5; }
-            .owner-context { font-size: .72rem; }
+            .dashboard-welcome-center h1 {
+                font-size: 1.7rem;
+            }
 
-            .summary-panel { padding: 17px; border-radius: 20px; }
-            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .summary-item { min-height: 116px; }
-            .summary-note { display: none; }
+            .dashboard-welcome-center p {
+                font-size: .86rem;
+            }
 
-            .agenda-feature {
-                min-height: 255px;
-                padding: 23px;
+            #btn-logout {
+                display: block;
+            }
+
+            #statusAssinatura {
+                --badge-scale: .88;
+                top: 8px;
+                right: 8px;
+                font-size: .60rem;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .today-panel,
+            .next-panel {
+                border-radius: 19px;
+                padding: 16px;
+            }
+
+            .today-summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .today-metric {
+                min-height: 116px;
+                padding: 12px 8px;
+            }
+
+            .today-metric-label {
+                font-size: .68rem;
+            }
+
+            .next-item {
+                grid-template-columns: 48px minmax(0, 1fr);
+            }
+
+            .next-status {
+                grid-column: 1 / -1;
+                width: fit-content;
+                justify-self: start;
+            }
+
+            .agenda-hero {
+                min-height: 260px;
+                padding: 22px;
                 border-radius: 20px;
             }
 
-            .agenda-feature h2 { font-size: 1.7rem; }
-            .agenda-feature p { max-width: 92%; }
+            .agenda-hero p {
+                max-width: 96%;
+            }
+
+            .agenda-hero-visual {
+                width: 150px;
+                height: 118px;
+                right: 12px;
+                bottom: 10px;
+                opacity: .45;
+            }
+
+            .agenda-hero-visual::before {
+                font-size: 3.2rem;
+                left: 16px;
+                bottom: 12px;
+            }
+
+            .agenda-hero-visual::after {
+                font-size: 2.6rem;
+                right: 18px;
+                bottom: 13px;
+            }
+
+            .calendar-mini {
+                width: 58px;
+                height: 48px;
+                right: 14px;
+                top: 14px;
+                font-size: 1.35rem;
+            }
 
             .dashboard-grid-cards {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -557,46 +826,42 @@
             }
 
             .menu-card {
-                min-height: 145px;
+                min-height: 135px;
                 padding: 15px;
                 border-radius: 16px;
             }
 
             .menu-card small {
                 max-width: 100%;
-                font-size: .67rem;
-            }
-
-            #statusAssinatura {
-                --badge-scale: .88;
-                top: 10px;
-                right: 10px;
-                font-size: .62rem;
+                font-size: .66rem;
             }
         }
 
-        @media (max-width: 390px) {
-            .dashboard-grid-cards { grid-template-columns: 1fr; }
+        @media (max-width: 400px) {
+            .dashboard-grid-cards {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
-
 <body>
     <div id="menu-container"></div>
 
     <main class="main-content">
-        <div class="dashboard-shell">
-
-            <a class="mobile-brand" href="index.html" aria-label="Pronti Pet">
-                <img src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" alt="Logo Pronti Pet">
+        <div class="index-shell">
+            <a class="mobile-index-logo" href="index.html" aria-label="Pronti Pet">
+                <img 
+                    src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" 
+                    alt="Logo Pronti Pet"
+                >
             </a>
 
-            <header class="dashboard-topbar">
-                <div class="welcome-block">
+            <header class="index-header">
+                <div class="dashboard-welcome-center">
                     <h1><span id="saudacao"></span>, <span id="nome-usuario">Usuário</span>!</h1>
                     <p>Acompanhe a operação do seu pet shop e acesse rapidamente as principais áreas.</p>
 
-                    <div class="owner-context">
+                    <div class="owner-chip">
                         <i class="fa-solid fa-crown"></i>
                         Painel do proprietário
                     </div>
@@ -604,132 +869,148 @@
                     <div id="notification-message" class="notification-message info"></div>
                 </div>
 
-                <div class="top-actions">
+                <div class="index-actions">
                     <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
-                        <i class="fa-solid fa-bell"></i>
-                        Ativar notificações
+                        <i class="fa-solid fa-bell"></i> Ativar Notificações
                     </button>
                 </div>
             </header>
 
-            <section class="daily-overview">
-                <article class="summary-panel">
-                    <div class="section-title">
-                        <h2><i class="fa-regular fa-calendar-check"></i>Resumo de hoje</h2>
-                        <span class="summary-note">Estrutura preparada para dados da Agenda</span>
+            <section class="index-main-grid">
+                <div>
+                    <article class="today-panel">
+                        <div class="panel-title-row">
+                            <h2><i class="fa-regular fa-calendar-check"></i>Resumo de hoje</h2>
+                            <a href="agenda.html">Ver agenda completa <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="today-summary-grid">
+                            <a href="agenda.html" class="today-metric" aria-label="Abrir agendamentos de hoje">
+                                <div class="today-metric-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                                <strong class="today-metric-value" id="resumo-agendamentos-hoje">...</strong>
+                                <span class="today-metric-label">Agendamentos<br>de hoje</span>
+                            </a>
+
+                            <a href="agenda.html" class="today-metric" aria-label="Abrir agendamentos aguardando">
+                                <div class="today-metric-icon"><i class="fa-regular fa-clock"></i></div>
+                                <strong class="today-metric-value" id="resumo-aguardando">...</strong>
+                                <span class="today-metric-label">Aguardando<br>atendimento</span>
+                            </a>
+
+                            <a href="agenda.html" class="today-metric" aria-label="Abrir atendimentos em andamento">
+                                <div class="today-metric-icon"><i class="fa-solid fa-scissors"></i></div>
+                                <strong class="today-metric-value" id="resumo-em-atendimento">...</strong>
+                                <span class="today-metric-label">Em<br>atendimento</span>
+                            </a>
+
+                            <a href="agenda.html" class="today-metric" aria-label="Abrir atendimentos finalizados">
+                                <div class="today-metric-icon"><i class="fa-solid fa-check"></i></div>
+                                <strong class="today-metric-value" id="resumo-finalizados">...</strong>
+                                <span class="today-metric-label">Finalizados<br>hoje</span>
+                            </a>
+                        </div>
+                    </article>
+
+                    <article class="next-panel">
+                        <div class="panel-title-row">
+                            <h2><i class="fa-solid fa-paw"></i>Próximos atendimentos</h2>
+                            <a href="agenda.html">Abrir agenda <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="next-list" id="proximos-atendimentos-lista">
+                            <div class="next-empty">Carregando atendimentos de hoje...</div>
+                        </div>
+                    </article>
+                </div>
+
+                <a href="agenda.html" class="agenda-hero" data-card-id="agenda">
+                    <div class="agenda-hero-content">
+                        <span class="agenda-kicker">Rotina operacional</span>
+                        <h2>Agenda</h2>
+                        <p>Acompanhe os atendimentos, os horários e a rotina da sua equipe durante o dia.</p>
+
+                        <span class="agenda-hero-button">
+                            Acessar agenda
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </span>
                     </div>
 
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-icon"><i class="fa-solid fa-calendar-days"></i></div>
-                            <strong class="summary-value">—</strong>
-                            <span class="summary-label">Agendamentos<br>de hoje</span>
-                        </div>
-
-                        <div class="summary-item">
-                            <div class="summary-icon"><i class="fa-regular fa-clock"></i></div>
-                            <strong class="summary-value">—</strong>
-                            <span class="summary-label">Aguardando<br>atendimento</span>
-                        </div>
-
-                        <div class="summary-item">
-                            <div class="summary-icon"><i class="fa-solid fa-scissors"></i></div>
-                            <strong class="summary-value">—</strong>
-                            <span class="summary-label">Em<br>atendimento</span>
-                        </div>
-
-                        <div class="summary-item">
-                            <div class="summary-icon"><i class="fa-solid fa-check"></i></div>
-                            <strong class="summary-value">—</strong>
-                            <span class="summary-label">Finalizados<br>hoje</span>
-                        </div>
+                    <div class="calendar-mini">
+                        <i class="fa-regular fa-calendar-check"></i>
                     </div>
 
-                    <div class="summary-footer">
-                        <i class="fa-solid fa-circle-info"></i>
-                        Os números serão conectados à consulta real da Agenda sem alterar o fluxo atual dos atendimentos.
-                    </div>
-                </article>
-
-                <article class="agenda-feature">
-                    <span class="eyebrow">Rotina operacional</span>
-                    <h2>Agenda</h2>
-                    <p>Acompanhe os atendimentos, os horários e a rotina da sua equipe durante o dia.</p>
-
-                    <a href="agenda.html" class="agenda-cta" data-card-id="agenda">
-                        Acessar agenda
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </article>
+                    <div class="agenda-hero-visual" aria-hidden="true"></div>
+                </a>
             </section>
 
-            <div class="quick-access-heading">
-                <div>
+            <section class="quick-section">
+                <div class="quick-section-header">
                     <h2>Acessos do pet shop</h2>
-                    <p>Os módulos continuam aparecendo conforme as permissões atuais.</p>
+                    <p>Todos os cards abaixo são clicáveis e continuam respeitando as permissões atuais.</p>
                 </div>
-            </div>
 
-            <div class="dashboard-grid-cards" id="dashboard-grid-cards">
-                <a href="dashboard.html" class="menu-card" data-card-id="dashboard">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Dashboard</span>
-                    <small>Visualize os principais indicadores e resultados do negócio.</small>
-                </a>
+                <div class="dashboard-grid-cards" id="dashboard-grid-cards">
+                    <a href="dashboard.html" class="menu-card" data-card-id="dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                        <small>Visão geral do negócio e indicadores principais.</small>
+                    </a>
 
-                <a href="servicos.html" class="menu-card" data-card-id="servicos">
-                    <i class="fa-solid fa-scissors"></i>
-                    <span>Serviços</span>
-                    <small>Gerencie serviços, preços e opções oferecidas aos clientes.</small>
-                </a>
+                    <a href="servicos.html" class="menu-card" data-card-id="servicos">
+                        <i class="fa-solid fa-scissors"></i>
+                        <span>Serviços</span>
+                        <small>Gerencie serviços, preços e categorias.</small>
+                    </a>
 
-                <a href="planos.html" class="menu-card" data-card-id="planos">
-                    <i class="fa-solid fa-file-invoice-dollar"></i>
-                    <span>Planos</span>
-                    <small>Consulte o plano atual, recursos e condições disponíveis.</small>
-                </a>
+                    <a href="planos.html" class="menu-card" data-card-id="planos">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Planos</span>
+                        <small>Consulte plano atual, recursos e limites.</small>
+                    </a>
 
-                <a href="clientes.html" class="menu-card" data-card-id="clientes">
-                    <i class="fa-solid fa-user-group"></i>
-                    <span>Clientes</span>
-                    <small>Acesse tutores, pets e históricos de atendimento.</small>
-                </a>
+                    <a href="clientes.html" class="menu-card" data-card-id="clientes">
+                        <i class="fa-solid fa-user-group"></i>
+                        <span>Clientes</span>
+                        <small>Acesse tutores, pets e históricos de atendimento.</small>
+                    </a>
 
-                <a href="equipe.html" class="menu-card" data-card-id="equipe">
-                    <i class="fa-solid fa-users"></i>
-                    <span>Equipe</span>
-                    <small>Gerencie profissionais, funções e acessos da operação.</small>
-                </a>
+                    <a href="equipe.html" class="menu-card" data-card-id="equipe">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Equipe</span>
+                        <small>Controle profissionais, funções e acessos.</small>
+                    </a>
 
-                <a href="perfil.html" class="menu-card" data-card-id="perfil">
-                    <i class="fa-solid fa-store"></i>
-                    <span>Empresa</span>
-                    <small>Atualize os dados e as configurações do seu pet shop.</small>
-                </a>
+                    <a href="perfil.html" class="menu-card" data-card-id="perfil">
+                        <i class="fa-solid fa-store"></i>
+                        <span>Empresa</span>
+                        <small>Atualize os dados e configurações da empresa.</small>
+                    </a>
 
-                <a href="relatorios.html" class="menu-card" data-card-id="relatorios">
-                    <i class="fa-solid fa-file-lines"></i>
-                    <span>Relatórios</span>
-                    <small>Acompanhe informações e o desempenho da empresa.</small>
-                </a>
+                    <a href="relatorios.html" class="menu-card" data-card-id="relatorios">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Relatórios</span>
+                        <small>Acompanhe informações e desempenho da operação.</small>
+                    </a>
 
-                <a href="admin-clientes.html" class="menu-card" data-card-id="administracao">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Administração</span>
-                    <small>Acesse as configurações administrativas disponíveis.</small>
-                </a>
+                    <a href="admin-clientes.html" class="menu-card" data-card-id="administracao">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Administração</span>
+                        <small>Configurações administrativas disponíveis.</small>
+                    </a>
 
-                <a href="permissoes.html" class="menu-card" data-card-id="permissoes">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Permissões</span>
-                    <small>Defina quais módulos cada perfil poderá visualizar.</small>
-                </a>
-            </div>
+                    <a href="permissoes.html" class="menu-card" data-card-id="permissoes">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Permissões</span>
+                        <small>Defina os acessos de cada perfil.</small>
+                    </a>
+                </div>
+            </section>
         </div>
     </main>
 
-    <button id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Sair</button>
+    <button id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
 
+    <!-- Badge de status da assinatura (inserido sem alterar validação) -->
     <div id="statusAssinatura" aria-hidden="true"></div>
 
 
@@ -738,7 +1019,7 @@
         import { unlockAudio, iniciarOuvinteDeNotificacoes } from './messaging.js';
         import { verificarAcesso } from './userService.js'; 
         import { db } from './firebase-config.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+        import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
         // Guard simples para evitar redirect-loop rápido
         const REDIRECT_GUARD_KEY = 'ultimaRedirectIndex';
@@ -901,6 +1182,208 @@
                 (hora >= 12 && hora < 18) ? "Boa tarde" : "Boa noite";
             document.getElementById('nome-usuario').textContent = nomeUsuario;
         }
+
+        // =========================================================
+        // RESUMO REAL DO DIA NO INDEX
+        // Apenas leitura dos agendamentos da empresa ativa.
+        // Não altera agenda, status, atendimento, dashboard ou permissões.
+        // =========================================================
+
+        const STATUS_DASHBOARD_INDEX = ["ativo", "realizado"];
+
+        function formatarDataISOIndex(data) {
+            const off = data.getTimezoneOffset();
+            const dataLocal = new Date(data.getTime() - off * 60 * 1000);
+            return dataLocal.toISOString().split("T")[0];
+        }
+
+        function timeStringToMinutesIndex(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = String(timeStr).split(":").map(Number);
+            return (Number(h) || 0) * 60 + (Number(m) || 0);
+        }
+
+        function normalizarStatusAtendimentoIndex(status) {
+            if (!status) return "aguardando";
+            return String(status)
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, "_")
+                .replace(/-/g, "_");
+        }
+
+        function textoStatusAtendimentoIndex(ag) {
+            const statusAtendimento = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
+
+            if (ag.status === "realizado") return "Realizado";
+            if (statusAtendimento === "em_atendimento") return "Em atendimento";
+
+            if (
+                statusAtendimento === "finalizado" ||
+                statusAtendimento === "liberado" ||
+                statusAtendimento === "liberado_para_retirada"
+            ) {
+                return "Atendido";
+            }
+
+            if (
+                statusAtendimento === "retirado" ||
+                statusAtendimento === "pet_retirado"
+            ) {
+                return "Retirado";
+            }
+
+            return "Aguardando";
+        }
+
+        function preencherValorResumoIndex(id, valor) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(valor);
+        }
+
+        function exibirListaProximosAtendimentosIndex(agendamentos) {
+            const lista = document.getElementById("proximos-atendimentos-lista");
+            if (!lista) return;
+
+            const agora = new Date();
+            const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+            const proximos = agendamentos
+                .filter(ag => ag.status === "ativo")
+                .filter(ag => {
+                    const st = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
+                    return ![
+                        "finalizado",
+                        "liberado",
+                        "liberado_para_retirada",
+                        "retirado",
+                        "pet_retirado"
+                    ].includes(st);
+                })
+                .sort((a, b) => timeStringToMinutesIndex(a.horario) - timeStringToMinutesIndex(b.horario))
+                .sort((a, b) => {
+                    const aFuturo = timeStringToMinutesIndex(a.horario) >= minutosAgora ? 0 : 1;
+                    const bFuturo = timeStringToMinutesIndex(b.horario) >= minutosAgora ? 0 : 1;
+                    return aFuturo - bFuturo;
+                })
+                .slice(0, 5);
+
+            if (proximos.length === 0) {
+                lista.innerHTML = `
+                    <a href="agenda.html" class="next-empty" style="display:block;text-decoration:none;">
+                        Nenhum atendimento pendente para hoje. Abrir agenda.
+                    </a>
+                `;
+                return;
+            }
+
+            lista.innerHTML = proximos.map(ag => {
+                const horario = ag.horario || "--:--";
+                const pet = ag.petNome || "Pet não informado";
+                const servico = ag.servicoNome || "Serviço não informado";
+                const profissional = ag.profissionalNome || "Profissional não informado";
+                const statusTexto = textoStatusAtendimentoIndex(ag);
+
+                return `
+                    <a href="agenda.html" class="next-item">
+                        <div class="next-hour">${horario}</div>
+
+                        <div class="next-main">
+                            <strong>${pet}</strong>
+                            <span>${servico} • ${profissional}</span>
+                        </div>
+
+                        <div class="next-status">${statusTexto}</div>
+                    </a>
+                `;
+            }).join("");
+        }
+
+        async function carregarResumoHojeIndex(sessao) {
+            try {
+                const empresaId =
+                    localStorage.getItem("empresaAtivaId") ||
+                    sessao?.empresaAtivaId ||
+                    sessao?.empresaId;
+
+                if (!empresaId) return;
+
+                const hojeISO = formatarDataISOIndex(new Date());
+                const agRef = collection(db, "empresarios", empresaId, "agendamentos");
+
+                const q = query(
+                    agRef,
+                    where("data", "==", hojeISO),
+                    where("status", "in", STATUS_DASHBOARD_INDEX)
+                );
+
+                const snapshot = await getDocs(q);
+
+                let totalAgendamentosDia = 0;
+                let aguardando = 0;
+                let emAtendimento = 0;
+                let finalizados = 0;
+                const agendamentos = [];
+
+                snapshot.forEach(docSnap => {
+                    const ag = { id: docSnap.id, ...docSnap.data() };
+                    const statusAtendimento = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
+
+                    totalAgendamentosDia++;
+                    agendamentos.push(ag);
+
+                    if (ag.status === "realizado") {
+                        finalizados++;
+                        return;
+                    }
+
+                    if (statusAtendimento === "em_atendimento") {
+                        emAtendimento++;
+                        return;
+                    }
+
+                    if (
+                        statusAtendimento === "finalizado" ||
+                        statusAtendimento === "liberado" ||
+                        statusAtendimento === "liberado_para_retirada" ||
+                        statusAtendimento === "retirado" ||
+                        statusAtendimento === "pet_retirado"
+                    ) {
+                        finalizados++;
+                        return;
+                    }
+
+                    aguardando++;
+                });
+
+                preencherValorResumoIndex("resumo-agendamentos-hoje", totalAgendamentosDia);
+                preencherValorResumoIndex("resumo-aguardando", aguardando);
+                preencherValorResumoIndex("resumo-em-atendimento", emAtendimento);
+                preencherValorResumoIndex("resumo-finalizados", finalizados);
+
+                exibirListaProximosAtendimentosIndex(agendamentos);
+
+            } catch (error) {
+                console.error("Erro ao carregar resumo de hoje no index:", error);
+
+                preencherValorResumoIndex("resumo-agendamentos-hoje", "0");
+                preencherValorResumoIndex("resumo-aguardando", "0");
+                preencherValorResumoIndex("resumo-em-atendimento", "0");
+                preencherValorResumoIndex("resumo-finalizados", "0");
+
+                const lista = document.getElementById("proximos-atendimentos-lista");
+                if (lista) {
+                    lista.innerHTML = `
+                        <a href="agenda.html" class="next-empty" style="display:block;text-decoration:none;">
+                            Não foi possível carregar o resumo. Abrir agenda.
+                        </a>
+                    `;
+                }
+            }
+        }
+
         async function inicializarPagina() {
             try {
                 const sessao = await verificarAcesso();
@@ -924,6 +1407,7 @@
                 popularCabecalho(sessao);
                 await loadAndSetupMenu(papelUsuario);
                 await aplicarPermissoes(papelUsuario);
+                carregarResumoHojeIndex(sessao);
 
                 const notificationButton = document.querySelector('.notification-button');
                 if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
