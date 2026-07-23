@@ -16,40 +16,41 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
     <link href="style.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
     <style>
         :root {
-            --sidebar-width: 250px;
+            --sidebar-width: 240px;
             --pet-roxo: #5522b6;
-            --pet-roxo-2: #6f35d8;
-            --pet-roxo-escuro: #211047;
+            --pet-roxo-2: #7140dc;
+            --pet-roxo-escuro: #201042;
             --pet-amarelo: #ffc928;
-            --pet-branco: #ffffff;
-            --pet-fundo: #f7f5fc;
+            --pet-fundo: #f8f5ff;
             --pet-card: #ffffff;
-            --pet-borda: #e7e0f4;
+            --pet-borda: #e7def8;
             --pet-texto: #17113d;
-            --pet-muted: #6d6684;
+            --pet-muted: #726b86;
             --pet-verde: #16a34a;
             --pet-azul: #2563eb;
             --pet-laranja: #ea7b12;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
+            display: flex;
             margin: 0;
             min-height: 100vh;
-            display: flex;
             font-family: 'Poppins', sans-serif;
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
             background:
-                radial-gradient(circle at 82% 8%, rgba(111, 53, 216, .10), transparent 22rem),
-                radial-gradient(circle at 58% 4%, rgba(255, 201, 40, .08), transparent 18rem),
+                radial-gradient(circle at 84% 4%, rgba(255, 201, 40, .14), transparent 22rem),
+                radial-gradient(circle at 54% 8%, rgba(113, 64, 220, .12), transparent 24rem),
                 linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
             color: var(--pet-texto);
+            overflow-x: hidden;
         }
 
         body.loaded {
@@ -58,32 +59,29 @@
         }
 
         #menu-container {
-            flex: 0 0 var(--sidebar-width);
-            width: var(--sidebar-width);
-            min-height: 100vh;
+            flex-shrink: 0;
         }
 
         main.main-content {
-            flex: 1 1 auto;
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
+            flex-grow: 1;
             padding: 24px 28px 118px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            height: 100vh;
             overflow-y: auto;
-            display: block !important;
-            align-items: stretch !important;
-            justify-content: flex-start !important;
+            display: block;
         }
 
         .index-shell {
             width: 100%;
-            max-width: 1280px;
+            max-width: 1240px;
             margin: 0 auto;
         }
 
         .mobile-index-logo {
             display: none;
             justify-content: center;
-            margin-bottom: 14px;
+            margin: 0 0 14px;
         }
 
         .mobile-index-logo img {
@@ -91,37 +89,36 @@
             height: 72px;
             object-fit: cover;
             border-radius: 22px;
-            box-shadow: 0 10px 30px rgba(33, 16, 71, .18);
-        }
-
-        .index-header {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 20px;
-            align-items: start;
-            margin-bottom: 18px;
+            box-shadow: 0 12px 28px rgba(32, 16, 66, .18);
+            background: #fff;
         }
 
         .dashboard-welcome-center {
             text-align: left;
-            margin: 0;
+            margin: 0 0 18px;
             width: 100%;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
+            align-items: start;
         }
 
-        .dashboard-welcome-center h1 {
+        .welcome-copy h1 {
             margin: 0 0 6px;
-            font-size: clamp(1.75rem, 3vw, 2.55rem);
+            font-size: clamp(1.75rem, 3vw, 2.6rem);
             line-height: 1.08;
             color: var(--pet-texto);
             letter-spacing: -0.04em;
+            text-shadow: none;
         }
 
-        .dashboard-welcome-center p {
+        .welcome-copy p {
             margin: 0;
             max-width: 680px;
-            color: var(--pet-muted);
             font-size: .95rem;
             line-height: 1.55;
+            font-weight: 500;
+            color: var(--pet-muted);
         }
 
         .owner-chip {
@@ -135,36 +132,39 @@
             border: 1px solid var(--pet-borda);
             color: var(--pet-roxo-escuro);
             font-size: .78rem;
-            font-weight: 700;
-            box-shadow: 0 8px 20px rgba(33, 16, 71, .05);
+            font-weight: 800;
+            box-shadow: 0 8px 20px rgba(32, 16, 66, .05);
         }
 
         .owner-chip i {
             color: var(--pet-amarelo);
         }
 
-        .index-actions {
+        .header-actions {
             display: flex;
-            justify-content: flex-end;
             align-items: flex-start;
+            justify-content: flex-end;
         }
 
         .notification-button {
             background: #ffffff;
             color: var(--pet-roxo);
-            border: 1px solid #ddd2fb;
+            border: 1px solid #ddd1fb;
             border-radius: 12px;
             padding: 10px 14px;
             font-family: 'Poppins', sans-serif;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
             transition: all .2s ease;
             display: none;
-            box-shadow: 0 8px 22px rgba(33, 16, 71, .06);
+            margin-top: 0;
+            box-shadow: 0 8px 22px rgba(32, 16, 66, .06);
+            white-space: nowrap;
         }
 
         .notification-button:hover {
             background: #f5f0ff;
+            transform: translateY(-1px);
         }
 
         .notification-button i {
@@ -185,32 +185,43 @@
             display: none;
         }
 
-        .notification-message.success { color: #15803d; background: #f0fdf4; }
-        .notification-message.error { color: #b91c1c; background: #fef2f2; }
-        .notification-message.info { color: var(--pet-roxo); background: #f5f0ff; }
+        .notification-message.success {
+            color: #15803d;
+            background: #f0fdf4;
+        }
 
-        .index-main-grid {
+        .notification-message.error {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+
+        .notification-message.info {
+            color: var(--pet-roxo);
+            background: #f5f0ff;
+        }
+
+        .professional-grid {
             display: grid;
-            grid-template-columns: minmax(520px, 1.05fr) minmax(380px, .95fr);
+            grid-template-columns: minmax(520px, 1.06fr) minmax(380px, .94fr);
             gap: 18px;
             align-items: stretch;
             margin-bottom: 18px;
         }
 
-        .today-panel,
-        .agenda-hero,
-        .next-panel {
+        .today-card,
+        .next-card,
+        .agenda-feature-card {
             background: var(--pet-card);
             border: 1px solid var(--pet-borda);
             border-radius: 22px;
-            box-shadow: 0 16px 38px rgba(33, 16, 71, .07);
+            box-shadow: 0 16px 38px rgba(32, 16, 66, .07);
         }
 
-        .today-panel {
+        .today-card {
             padding: 20px;
         }
 
-        .panel-title-row {
+        .section-title-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -218,22 +229,22 @@
             margin-bottom: 16px;
         }
 
-        .panel-title-row h2 {
+        .section-title-row h2 {
             margin: 0;
             color: var(--pet-roxo-escuro);
             font-size: 1.06rem;
             line-height: 1.25;
         }
 
-        .panel-title-row h2 i {
+        .section-title-row h2 i {
             color: var(--pet-roxo);
             margin-right: 8px;
         }
 
-        .panel-title-row a {
+        .section-title-row a {
             color: var(--pet-roxo);
             font-size: .76rem;
-            font-weight: 800;
+            font-weight: 900;
             text-decoration: none;
             white-space: nowrap;
         }
@@ -265,8 +276,8 @@
         .today-metric:hover,
         .today-metric:active {
             transform: translateY(-2px);
-            border-color: #d2c2ff;
-            box-shadow: 0 12px 24px rgba(33, 16, 71, .08);
+            border-color: #d3c3ff;
+            box-shadow: 0 12px 24px rgba(32, 16, 66, .08);
         }
 
         .today-metric-icon {
@@ -282,7 +293,7 @@
 
         .today-metric:nth-child(2) .today-metric-icon {
             background: #fff6d9;
-            color: #d39800;
+            color: #c89200;
         }
 
         .today-metric:nth-child(3) .today-metric-icon {
@@ -298,7 +309,7 @@
         .today-metric-value {
             font-size: 1.65rem;
             line-height: 1;
-            font-weight: 800;
+            font-weight: 900;
             min-height: 1em;
         }
 
@@ -306,10 +317,10 @@
             font-size: .72rem;
             line-height: 1.32;
             color: var(--pet-muted);
-            font-weight: 600;
+            font-weight: 700;
         }
 
-        .next-panel {
+        .next-card {
             margin-top: 14px;
             padding: 18px 20px;
         }
@@ -344,7 +355,7 @@
 
         .next-hour {
             color: var(--pet-roxo);
-            font-weight: 800;
+            font-weight: 900;
             font-size: .88rem;
         }
 
@@ -376,7 +387,7 @@
             background: #f5f0ff;
             color: var(--pet-roxo);
             font-size: .68rem;
-            font-weight: 800;
+            font-weight: 900;
             white-space: nowrap;
         }
 
@@ -388,31 +399,32 @@
             font-size: .84rem;
             text-align: center;
             background: #fbf8ff;
+            text-decoration: none;
+            display: block;
         }
 
-        .agenda-hero {
+        .agenda-feature-card {
             position: relative;
-            display: flex;
-            min-height: 278px;
+            min-height: 288px;
             padding: 28px;
             overflow: hidden;
             color: #fff;
             text-decoration: none;
             border: none;
             background:
-                radial-gradient(circle at 90% 18%, rgba(255, 201, 40, .28), transparent 11rem),
+                radial-gradient(circle at 88% 20%, rgba(255, 201, 40, .28), transparent 12rem),
                 linear-gradient(135deg, #35106f 0%, #5522b6 55%, #793ae5 100%);
             box-shadow: 0 20px 46px rgba(85, 34, 182, .24);
             -webkit-tap-highlight-color: transparent;
         }
 
-        .agenda-hero:hover,
-        .agenda-hero:active {
+        .agenda-feature-card:hover,
+        .agenda-feature-card:active {
             transform: translateY(-2px);
         }
 
-        .agenda-hero::before,
-        .agenda-hero::after {
+        .agenda-feature-card::before,
+        .agenda-feature-card::after {
             content: "🐾";
             position: absolute;
             opacity: .10;
@@ -420,22 +432,23 @@
             pointer-events: none;
         }
 
-        .agenda-hero::before {
+        .agenda-feature-card::before {
             right: 36px;
             top: 22px;
             transform: rotate(18deg);
         }
 
-        .agenda-hero::after {
+        .agenda-feature-card::after {
             right: 145px;
             bottom: -24px;
             transform: rotate(-18deg);
         }
 
-        .agenda-hero-content {
+        .agenda-feature-content {
             position: relative;
             z-index: 2;
             max-width: 430px;
+            min-height: 232px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -448,25 +461,25 @@
             background: rgba(255, 255, 255, .14);
             border: 1px solid rgba(255, 255, 255, .18);
             font-size: .72rem;
-            font-weight: 800;
+            font-weight: 900;
             margin-bottom: 14px;
         }
 
-        .agenda-hero h2 {
+        .agenda-feature-card h2 {
             margin: 0 0 9px;
             font-size: clamp(2rem, 3vw, 2.55rem);
             line-height: 1;
             color: #fff;
         }
 
-        .agenda-hero p {
+        .agenda-feature-card p {
             margin: 0 0 22px;
             color: rgba(255, 255, 255, .86);
             font-size: .93rem;
             line-height: 1.52;
         }
 
-        .agenda-hero-button {
+        .agenda-feature-button {
             width: fit-content;
             display: inline-flex;
             align-items: center;
@@ -475,12 +488,12 @@
             border-radius: 13px;
             background: var(--pet-amarelo);
             color: #2b1558;
-            font-weight: 800;
+            font-weight: 900;
             font-size: .86rem;
             box-shadow: 0 12px 25px rgba(0, 0, 0, .20);
         }
 
-        .agenda-hero-visual {
+        .agenda-feature-visual {
             position: absolute;
             right: 24px;
             bottom: 20px;
@@ -492,9 +505,10 @@
                 linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.04));
             border: 1px solid rgba(255,255,255,.16);
             opacity: .95;
+            z-index: 1;
         }
 
-        .agenda-hero-visual::before {
+        .agenda-feature-visual::before {
             content: "🐶";
             position: absolute;
             left: 24px;
@@ -503,7 +517,7 @@
             filter: drop-shadow(0 10px 14px rgba(0,0,0,.18));
         }
 
-        .agenda-hero-visual::after {
+        .agenda-feature-visual::after {
             content: "🐱";
             position: absolute;
             right: 28px;
@@ -525,6 +539,7 @@
             place-items: center;
             font-size: 2rem;
             box-shadow: 0 14px 26px rgba(0,0,0,.16);
+            z-index: 2;
         }
 
         .quick-section {
@@ -549,14 +564,14 @@
 
         .dashboard-grid-cards {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 13px;
             width: 100%;
             max-width: none;
         }
 
         .menu-card {
-            min-height: 128px;
+            min-height: 132px;
             position: relative;
             color: var(--pet-texto);
             border-radius: 18px;
@@ -567,27 +582,29 @@
             justify-content: flex-start;
             text-align: left;
             gap: 8px;
-            font-weight: 700;
-            font-size: .92rem;
+            font-weight: 800;
+            font-size: .9rem;
             text-decoration: none;
-            box-shadow: 0 10px 25px rgba(33, 16, 71, .055);
+            box-shadow: 0 10px 25px rgba(32, 16, 66, .055);
             transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
             border: 1px solid var(--pet-borda);
             background: #fff;
             overflow: hidden;
+            aspect-ratio: auto;
             -webkit-tap-highlight-color: transparent;
         }
 
         .menu-card:hover,
         .menu-card:active {
             transform: translateY(-3px);
-            box-shadow: 0 16px 32px rgba(33, 16, 71, .10);
+            box-shadow: 0 16px 32px rgba(32, 16, 66, .10);
             border-color: #d4c5ff;
             cursor: pointer;
+            filter: none;
         }
 
         .menu-card::after {
-            content: "061";
+            content: "\f061";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
@@ -603,7 +620,7 @@
             display: grid;
             place-items: center;
             border-radius: 13px;
-            font-size: 1.1rem;
+            font-size: 1.08rem;
             background: #f1eaff;
             color: var(--pet-roxo);
             flex-shrink: 0;
@@ -611,7 +628,7 @@
 
         .menu-card span {
             display: block;
-            font-weight: 800;
+            font-weight: 900;
             color: var(--pet-texto);
         }
 
@@ -619,12 +636,13 @@
             display: block;
             max-width: 92%;
             color: var(--pet-muted);
-            font-size: .71rem;
-            line-height: 1.42;
-            font-weight: 500;
+            font-size: .68rem;
+            line-height: 1.38;
+            font-weight: 600;
         }
 
         [data-card-id="dashboard"] i { background: #f1eaff; color: var(--pet-roxo); }
+        [data-card-id="agenda"] i { background: #fff6d9; color: #c89200; }
         [data-card-id="servicos"] i { background: #fff0df; color: var(--pet-laranja); }
         [data-card-id="planos"] i { background: #fff8dc; color: #c89200; }
         [data-card-id="clientes"] i { background: #eaf2ff; color: var(--pet-azul); }
@@ -633,37 +651,6 @@
         [data-card-id="relatorios"] i { background: #f8eaf3; color: #c43c78; }
         [data-card-id="administracao"] i,
         [data-card-id="permissoes"] i { background: #f1eaff; color: var(--pet-roxo); }
-
-        .management-divider {
-            margin: 21px 0 13px;
-            padding-top: 14px;
-            border-top: 1px solid var(--pet-borda);
-        }
-
-        .management-divider h2 {
-            margin: 0;
-            color: var(--pet-roxo-escuro);
-            font-size: 1rem;
-        }
-
-        #statusAssinatura {
-            --badge-scale: 1;
-            position: fixed;
-            top: 10px;
-            right: 12px;
-            background: linear-gradient(90deg, #16a34a, #22c55e);
-            color: white;
-            padding: 5px 9px;
-            border-radius: 999px;
-            font-size: 0.66rem;
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(22, 163, 74, .20);
-            display: none;
-            z-index: 9999;
-            opacity: 0;
-            transform: translateY(-6px) scale(var(--badge-scale));
-            transition: opacity 0.28s ease, transform 0.28s ease;
-        }
 
         #btn-logout {
             display: none;
@@ -684,36 +671,53 @@
             transition: background 0.2s;
         }
 
-        #btn-logout i { margin-right: 8px; }
-        #btn-logout:hover { background: #111827; }
+        #btn-logout i {
+            margin-right: 8px;
+        }
+
+        #btn-logout:hover {
+            background: #111827;
+        }
+
+        /* Badge de status da assinatura discreto no canto superior direito */
+        #statusAssinatura {
+            --badge-scale: 1;
+            position: fixed;
+            top: 10px;
+            right: 12px;
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            color: white;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.66rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, .20);
+            display: none;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-6px) scale(var(--badge-scale));
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
 
         @media (max-width: 1180px) {
-            .index-main-grid {
+            .professional-grid {
                 grid-template-columns: 1fr;
             }
 
-            .agenda-hero {
-                min-height: 250px;
-            }
-
-            .agenda-hero-visual {
-                width: 190px;
+            .dashboard-grid-cards {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
         }
 
         @media (max-width: 900px) {
             body {
+                flex-direction: column;
                 display: block;
-            }
-
-            #menu-container {
-                width: 0;
-                min-height: 0;
-                flex: none;
             }
 
             main.main-content {
                 width: 100%;
+                height: auto;
                 min-height: 100vh;
                 padding: 16px 14px 112px;
             }
@@ -722,21 +726,21 @@
                 display: flex;
             }
 
-            .index-header {
+            .dashboard-welcome-center {
                 grid-template-columns: 1fr;
                 gap: 12px;
             }
 
-            .index-actions {
-                justify-content: flex-start;
-            }
-
-            .dashboard-welcome-center h1 {
+            .welcome-copy h1 {
                 font-size: 1.7rem;
             }
 
-            .dashboard-welcome-center p {
+            .welcome-copy p {
                 font-size: .86rem;
+            }
+
+            .header-actions {
+                justify-content: flex-start;
             }
 
             #btn-logout {
@@ -744,16 +748,17 @@
             }
 
             #statusAssinatura {
-                --badge-scale: .88;
+                --badge-scale: .82;
                 top: 8px;
                 right: 8px;
-                font-size: .60rem;
+                font-size: .58rem;
+                padding: 4px 7px;
             }
         }
 
         @media (max-width: 680px) {
-            .today-panel,
-            .next-panel {
+            .today-card,
+            .next-card {
                 border-radius: 19px;
                 padding: 16px;
             }
@@ -782,17 +787,17 @@
                 justify-self: start;
             }
 
-            .agenda-hero {
+            .agenda-feature-card {
                 min-height: 260px;
                 padding: 22px;
                 border-radius: 20px;
             }
 
-            .agenda-hero p {
+            .agenda-feature-card p {
                 max-width: 96%;
             }
 
-            .agenda-hero-visual {
+            .agenda-feature-visual {
                 width: 150px;
                 height: 118px;
                 right: 12px;
@@ -800,13 +805,13 @@
                 opacity: .45;
             }
 
-            .agenda-hero-visual::before {
+            .agenda-feature-visual::before {
                 font-size: 3.2rem;
                 left: 16px;
                 bottom: 12px;
             }
 
-            .agenda-hero-visual::after {
+            .agenda-feature-visual::after {
                 font-size: 2.6rem;
                 right: 18px;
                 bottom: 13px;
@@ -826,7 +831,7 @@
             }
 
             .menu-card {
-                min-height: 135px;
+                min-height: 136px;
                 padding: 15px;
                 border-radius: 16px;
             }
@@ -856,10 +861,10 @@
                 >
             </a>
 
-            <header class="index-header">
-                <div class="dashboard-welcome-center">
+            <div class="dashboard-welcome-center">
+                <div class="welcome-copy">
                     <h1><span id="saudacao"></span>, <span id="nome-usuario">Usuário</span>!</h1>
-                    <p>Acompanhe a operação do seu pet shop e acesse rapidamente as principais áreas.</p>
+                    <p>Controle a rotina do pet shop, acompanhe os atendimentos do dia e acesse rapidamente as áreas principais.</p>
 
                     <div class="owner-chip">
                         <i class="fa-solid fa-crown"></i>
@@ -869,17 +874,17 @@
                     <div id="notification-message" class="notification-message info"></div>
                 </div>
 
-                <div class="index-actions">
+                <div class="header-actions">
                     <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
                         <i class="fa-solid fa-bell"></i> Ativar Notificações
                     </button>
                 </div>
-            </header>
+            </div>
 
-            <section class="index-main-grid">
+            <section class="professional-grid">
                 <div>
-                    <article class="today-panel">
-                        <div class="panel-title-row">
+                    <article class="today-card">
+                        <div class="section-title-row">
                             <h2><i class="fa-regular fa-calendar-check"></i>Resumo de hoje</h2>
                             <a href="agenda.html">Ver agenda completa <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
@@ -911,25 +916,27 @@
                         </div>
                     </article>
 
-                    <article class="next-panel">
-                        <div class="panel-title-row">
+                    <article class="next-card">
+                        <div class="section-title-row">
                             <h2><i class="fa-solid fa-paw"></i>Próximos atendimentos</h2>
                             <a href="agenda.html">Abrir agenda <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
 
                         <div class="next-list" id="proximos-atendimentos-lista">
-                            <div class="next-empty">Carregando atendimentos de hoje...</div>
+                            <a href="agenda.html" class="next-empty">
+                                Carregando atendimentos de hoje...
+                            </a>
                         </div>
                     </article>
                 </div>
 
-                <a href="agenda.html" class="agenda-hero" data-card-id="agenda">
-                    <div class="agenda-hero-content">
+                <a href="agenda.html" class="agenda-feature-card">
+                    <div class="agenda-feature-content">
                         <span class="agenda-kicker">Rotina operacional</span>
                         <h2>Agenda</h2>
-                        <p>Acompanhe os atendimentos, os horários e a rotina da sua equipe durante o dia.</p>
+                        <p>Veja os horários do dia, os pets em atendimento e a movimentação da equipe.</p>
 
-                        <span class="agenda-hero-button">
+                        <span class="agenda-feature-button">
                             Acessar agenda
                             <i class="fa-solid fa-arrow-right"></i>
                         </span>
@@ -939,69 +946,75 @@
                         <i class="fa-regular fa-calendar-check"></i>
                     </div>
 
-                    <div class="agenda-hero-visual" aria-hidden="true"></div>
+                    <div class="agenda-feature-visual" aria-hidden="true"></div>
                 </a>
             </section>
 
             <section class="quick-section">
                 <div class="quick-section-header">
                     <h2>Acessos do pet shop</h2>
-                    <p>Todos os cards abaixo são clicáveis e continuam respeitando as permissões atuais.</p>
+                    <p>Os mesmos módulos do painel original, com área de toque maior para celular.</p>
                 </div>
 
                 <div class="dashboard-grid-cards" id="dashboard-grid-cards">
                     <a href="dashboard.html" class="menu-card" data-card-id="dashboard">
                         <i class="fa-solid fa-chart-line"></i>
                         <span>Dashboard</span>
-                        <small>Visão geral do negócio e indicadores principais.</small>
+                        <small>Indicadores e visão geral do negócio.</small>
+                    </a>
+
+                    <a href="agenda.html" class="menu-card" data-card-id="agenda">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Agenda</span>
+                        <small>Horários, atendimentos e rotina do dia.</small>
                     </a>
 
                     <a href="servicos.html" class="menu-card" data-card-id="servicos">
-                        <i class="fa-solid fa-scissors"></i>
+                        <i class="fa-solid fa-concierge-bell"></i>
                         <span>Serviços</span>
-                        <small>Gerencie serviços, preços e categorias.</small>
+                        <small>Serviços, preços e configurações.</small>
                     </a>
 
                     <a href="planos.html" class="menu-card" data-card-id="planos">
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                         <span>Planos</span>
-                        <small>Consulte plano atual, recursos e limites.</small>
+                        <small>Plano atual e recursos disponíveis.</small>
                     </a>
 
                     <a href="clientes.html" class="menu-card" data-card-id="clientes">
                         <i class="fa-solid fa-user-group"></i>
                         <span>Clientes</span>
-                        <small>Acesse tutores, pets e históricos de atendimento.</small>
+                        <small>Tutores, pets e histórico de atendimento.</small>
                     </a>
 
                     <a href="equipe.html" class="menu-card" data-card-id="equipe">
                         <i class="fa-solid fa-users"></i>
                         <span>Equipe</span>
-                        <small>Controle profissionais, funções e acessos.</small>
+                        <small>Profissionais, funções e acessos.</small>
                     </a>
 
                     <a href="perfil.html" class="menu-card" data-card-id="perfil">
-                        <i class="fa-solid fa-store"></i>
+                        <i class="fa-solid fa-user-gear"></i>
                         <span>Empresa</span>
-                        <small>Atualize os dados e configurações da empresa.</small>
+                        <small>Dados e configurações da empresa.</small>
                     </a>
 
                     <a href="relatorios.html" class="menu-card" data-card-id="relatorios">
                         <i class="fa-solid fa-file-lines"></i>
                         <span>Relatórios</span>
-                        <small>Acompanhe informações e desempenho da operação.</small>
+                        <small>Informações e desempenho operacional.</small>
                     </a>
 
                     <a href="admin-clientes.html" class="menu-card" data-card-id="administracao">
                         <i class="fa-solid fa-shield-halved"></i>
                         <span>Administração</span>
-                        <small>Configurações administrativas disponíveis.</small>
+                        <small>Área administrativa do sistema.</small>
                     </a>
 
                     <a href="permissoes.html" class="menu-card" data-card-id="permissoes">
                         <i class="fa-solid fa-sliders"></i>
                         <span>Permissões</span>
-                        <small>Defina os acessos de cada perfil.</small>
+                        <small>Controle de acesso por perfil.</small>
                     </a>
                 </div>
             </section>
@@ -1013,13 +1026,12 @@
     <!-- Badge de status da assinatura (inserido sem alterar validação) -->
     <div id="statusAssinatura" aria-hidden="true"></div>
 
-
     <script type="module" src="messaging.js"></script>
     <script type="module">
         import { unlockAudio, iniciarOuvinteDeNotificacoes } from './messaging.js';
         import { verificarAcesso } from './userService.js'; 
         import { db } from './firebase-config.js';
-        import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
         // Guard simples para evitar redirect-loop rápido
         const REDIRECT_GUARD_KEY = 'ultimaRedirectIndex';
@@ -1182,208 +1194,6 @@
                 (hora >= 12 && hora < 18) ? "Boa tarde" : "Boa noite";
             document.getElementById('nome-usuario').textContent = nomeUsuario;
         }
-
-        // =========================================================
-        // RESUMO REAL DO DIA NO INDEX
-        // Apenas leitura dos agendamentos da empresa ativa.
-        // Não altera agenda, status, atendimento, dashboard ou permissões.
-        // =========================================================
-
-        const STATUS_DASHBOARD_INDEX = ["ativo", "realizado"];
-
-        function formatarDataISOIndex(data) {
-            const off = data.getTimezoneOffset();
-            const dataLocal = new Date(data.getTime() - off * 60 * 1000);
-            return dataLocal.toISOString().split("T")[0];
-        }
-
-        function timeStringToMinutesIndex(timeStr) {
-            if (!timeStr) return 0;
-            const [h, m] = String(timeStr).split(":").map(Number);
-            return (Number(h) || 0) * 60 + (Number(m) || 0);
-        }
-
-        function normalizarStatusAtendimentoIndex(status) {
-            if (!status) return "aguardando";
-            return String(status)
-                .trim()
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .replace(/\s+/g, "_")
-                .replace(/-/g, "_");
-        }
-
-        function textoStatusAtendimentoIndex(ag) {
-            const statusAtendimento = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
-
-            if (ag.status === "realizado") return "Realizado";
-            if (statusAtendimento === "em_atendimento") return "Em atendimento";
-
-            if (
-                statusAtendimento === "finalizado" ||
-                statusAtendimento === "liberado" ||
-                statusAtendimento === "liberado_para_retirada"
-            ) {
-                return "Atendido";
-            }
-
-            if (
-                statusAtendimento === "retirado" ||
-                statusAtendimento === "pet_retirado"
-            ) {
-                return "Retirado";
-            }
-
-            return "Aguardando";
-        }
-
-        function preencherValorResumoIndex(id, valor) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = String(valor);
-        }
-
-        function exibirListaProximosAtendimentosIndex(agendamentos) {
-            const lista = document.getElementById("proximos-atendimentos-lista");
-            if (!lista) return;
-
-            const agora = new Date();
-            const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
-
-            const proximos = agendamentos
-                .filter(ag => ag.status === "ativo")
-                .filter(ag => {
-                    const st = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
-                    return ![
-                        "finalizado",
-                        "liberado",
-                        "liberado_para_retirada",
-                        "retirado",
-                        "pet_retirado"
-                    ].includes(st);
-                })
-                .sort((a, b) => timeStringToMinutesIndex(a.horario) - timeStringToMinutesIndex(b.horario))
-                .sort((a, b) => {
-                    const aFuturo = timeStringToMinutesIndex(a.horario) >= minutosAgora ? 0 : 1;
-                    const bFuturo = timeStringToMinutesIndex(b.horario) >= minutosAgora ? 0 : 1;
-                    return aFuturo - bFuturo;
-                })
-                .slice(0, 5);
-
-            if (proximos.length === 0) {
-                lista.innerHTML = `
-                    <a href="agenda.html" class="next-empty" style="display:block;text-decoration:none;">
-                        Nenhum atendimento pendente para hoje. Abrir agenda.
-                    </a>
-                `;
-                return;
-            }
-
-            lista.innerHTML = proximos.map(ag => {
-                const horario = ag.horario || "--:--";
-                const pet = ag.petNome || "Pet não informado";
-                const servico = ag.servicoNome || "Serviço não informado";
-                const profissional = ag.profissionalNome || "Profissional não informado";
-                const statusTexto = textoStatusAtendimentoIndex(ag);
-
-                return `
-                    <a href="agenda.html" class="next-item">
-                        <div class="next-hour">${horario}</div>
-
-                        <div class="next-main">
-                            <strong>${pet}</strong>
-                            <span>${servico} • ${profissional}</span>
-                        </div>
-
-                        <div class="next-status">${statusTexto}</div>
-                    </a>
-                `;
-            }).join("");
-        }
-
-        async function carregarResumoHojeIndex(sessao) {
-            try {
-                const empresaId =
-                    localStorage.getItem("empresaAtivaId") ||
-                    sessao?.empresaAtivaId ||
-                    sessao?.empresaId;
-
-                if (!empresaId) return;
-
-                const hojeISO = formatarDataISOIndex(new Date());
-                const agRef = collection(db, "empresarios", empresaId, "agendamentos");
-
-                const q = query(
-                    agRef,
-                    where("data", "==", hojeISO),
-                    where("status", "in", STATUS_DASHBOARD_INDEX)
-                );
-
-                const snapshot = await getDocs(q);
-
-                let totalAgendamentosDia = 0;
-                let aguardando = 0;
-                let emAtendimento = 0;
-                let finalizados = 0;
-                const agendamentos = [];
-
-                snapshot.forEach(docSnap => {
-                    const ag = { id: docSnap.id, ...docSnap.data() };
-                    const statusAtendimento = normalizarStatusAtendimentoIndex(ag.statusAtendimento || "");
-
-                    totalAgendamentosDia++;
-                    agendamentos.push(ag);
-
-                    if (ag.status === "realizado") {
-                        finalizados++;
-                        return;
-                    }
-
-                    if (statusAtendimento === "em_atendimento") {
-                        emAtendimento++;
-                        return;
-                    }
-
-                    if (
-                        statusAtendimento === "finalizado" ||
-                        statusAtendimento === "liberado" ||
-                        statusAtendimento === "liberado_para_retirada" ||
-                        statusAtendimento === "retirado" ||
-                        statusAtendimento === "pet_retirado"
-                    ) {
-                        finalizados++;
-                        return;
-                    }
-
-                    aguardando++;
-                });
-
-                preencherValorResumoIndex("resumo-agendamentos-hoje", totalAgendamentosDia);
-                preencherValorResumoIndex("resumo-aguardando", aguardando);
-                preencherValorResumoIndex("resumo-em-atendimento", emAtendimento);
-                preencherValorResumoIndex("resumo-finalizados", finalizados);
-
-                exibirListaProximosAtendimentosIndex(agendamentos);
-
-            } catch (error) {
-                console.error("Erro ao carregar resumo de hoje no index:", error);
-
-                preencherValorResumoIndex("resumo-agendamentos-hoje", "0");
-                preencherValorResumoIndex("resumo-aguardando", "0");
-                preencherValorResumoIndex("resumo-em-atendimento", "0");
-                preencherValorResumoIndex("resumo-finalizados", "0");
-
-                const lista = document.getElementById("proximos-atendimentos-lista");
-                if (lista) {
-                    lista.innerHTML = `
-                        <a href="agenda.html" class="next-empty" style="display:block;text-decoration:none;">
-                            Não foi possível carregar o resumo. Abrir agenda.
-                        </a>
-                    `;
-                }
-            }
-        }
-
         async function inicializarPagina() {
             try {
                 const sessao = await verificarAcesso();
@@ -1407,7 +1217,6 @@
                 popularCabecalho(sessao);
                 await loadAndSetupMenu(papelUsuario);
                 await aplicarPermissoes(papelUsuario);
-                carregarResumoHojeIndex(sessao);
 
                 const notificationButton = document.querySelector('.notification-button');
                 if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
@@ -1575,6 +1384,257 @@
             } catch (e) {
                 console.error("Erro aviso vencimento:", e);
             }
+        });
+    </script>
+
+    <script type="module">
+        /*
+         * RESUMO DO DIA - INDEX PRONTI PET
+         * Camada nova e independente.
+         * Não altera funções originais do index, agenda, dashboard, menu, assinatura ou permissões.
+         * Faz somente leitura em empresarios/{empresaId}/agendamentos.
+         */
+        import { db } from './firebase-config.js';
+        import {
+            collection,
+            query,
+            where,
+            getDocs
+        } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        const STATUS_INDEX_RESUMO = ["ativo", "realizado"];
+        let resumoIndexCarregado = false;
+
+        function dataHojeISOIndex() {
+            const data = new Date();
+            const off = data.getTimezoneOffset();
+            const dataLocal = new Date(data.getTime() - off * 60 * 1000);
+            return dataLocal.toISOString().split("T")[0];
+        }
+
+        function horarioParaMinutosIndex(horario) {
+            if (!horario) return 0;
+            const [h, m] = String(horario).split(":").map(Number);
+            return (Number(h) || 0) * 60 + (Number(m) || 0);
+        }
+
+        function normalizarStatusAtendimentoIndex(status) {
+            if (!status) return "aguardando";
+
+            return String(status)
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, "_")
+                .replace(/-/g, "_");
+        }
+
+        function escaparHTMLIndex(valor) {
+            return String(valor || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function atualizarNumeroIndex(id, valor) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(valor);
+        }
+
+        function textoStatusAtendimentoIndex(agendamento) {
+            if (agendamento.status === "realizado") return "Realizado";
+
+            const statusAtendimento = normalizarStatusAtendimentoIndex(
+                agendamento.statusAtendimento || ""
+            );
+
+            if (statusAtendimento === "em_atendimento") {
+                return "Em atendimento";
+            }
+
+            if (
+                statusAtendimento === "finalizado" ||
+                statusAtendimento === "liberado" ||
+                statusAtendimento === "liberado_para_retirada"
+            ) {
+                return "Atendido";
+            }
+
+            if (
+                statusAtendimento === "retirado" ||
+                statusAtendimento === "pet_retirado"
+            ) {
+                return "Retirado";
+            }
+
+            return "Aguardando";
+        }
+
+        function renderizarProximosAtendimentosIndex(agendamentos) {
+            const lista = document.getElementById("proximos-atendimentos-lista");
+            if (!lista) return;
+
+            const agora = new Date();
+            const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+            const proximos = agendamentos
+                .filter(ag => ag.status === "ativo")
+                .filter(ag => {
+                    const statusAtendimento = normalizarStatusAtendimentoIndex(
+                        ag.statusAtendimento || ""
+                    );
+
+                    return ![
+                        "finalizado",
+                        "liberado",
+                        "liberado_para_retirada",
+                        "retirado",
+                        "pet_retirado"
+                    ].includes(statusAtendimento);
+                })
+                .sort((a, b) => {
+                    const aMin = horarioParaMinutosIndex(a.horario);
+                    const bMin = horarioParaMinutosIndex(b.horario);
+
+                    const aPassado = aMin >= minutosAgora ? 0 : 1;
+                    const bPassado = bMin >= minutosAgora ? 0 : 1;
+
+                    if (aPassado !== bPassado) return aPassado - bPassado;
+                    return aMin - bMin;
+                })
+                .slice(0, 5);
+
+            if (proximos.length === 0) {
+                lista.innerHTML = `
+                    <a href="agenda.html" class="next-empty">
+                        Nenhum atendimento pendente para hoje. Abrir agenda.
+                    </a>
+                `;
+                return;
+            }
+
+            lista.innerHTML = proximos.map(ag => {
+                const horario = escaparHTMLIndex(ag.horario || "--:--");
+                const pet = escaparHTMLIndex(ag.petNome || "Pet não informado");
+                const servico = escaparHTMLIndex(ag.servicoNome || "Serviço não informado");
+                const profissional = escaparHTMLIndex(ag.profissionalNome || "Profissional não informado");
+                const statusTexto = escaparHTMLIndex(textoStatusAtendimentoIndex(ag));
+
+                return `
+                    <a href="agenda.html" class="next-item">
+                        <div class="next-hour">${horario}</div>
+
+                        <div class="next-main">
+                            <strong>${pet}</strong>
+                            <span>${servico} • ${profissional}</span>
+                        </div>
+
+                        <div class="next-status">${statusTexto}</div>
+                    </a>
+                `;
+            }).join("");
+        }
+
+        async function carregarResumoHojeIndex(sessao) {
+            if (resumoIndexCarregado) return;
+            resumoIndexCarregado = true;
+
+            try {
+                const empresaId =
+                    localStorage.getItem("empresaAtivaId") ||
+                    sessao?.empresaAtivaId ||
+                    sessao?.empresaId;
+
+                if (!empresaId) {
+                    resumoIndexCarregado = false;
+                    return;
+                }
+
+                const hojeISO = dataHojeISOIndex();
+                const agRef = collection(db, "empresarios", empresaId, "agendamentos");
+
+                const q = query(
+                    agRef,
+                    where("data", "==", hojeISO),
+                    where("status", "in", STATUS_INDEX_RESUMO)
+                );
+
+                const snapshot = await getDocs(q);
+
+                let total = 0;
+                let aguardando = 0;
+                let emAtendimento = 0;
+                let finalizados = 0;
+                const agendamentos = [];
+
+                snapshot.forEach(docSnap => {
+                    const ag = {
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    };
+
+                    const statusAtendimento = normalizarStatusAtendimentoIndex(
+                        ag.statusAtendimento || ""
+                    );
+
+                    total++;
+                    agendamentos.push(ag);
+
+                    if (ag.status === "realizado") {
+                        finalizados++;
+                        return;
+                    }
+
+                    if (statusAtendimento === "em_atendimento") {
+                        emAtendimento++;
+                        return;
+                    }
+
+                    if (
+                        statusAtendimento === "finalizado" ||
+                        statusAtendimento === "liberado" ||
+                        statusAtendimento === "liberado_para_retirada" ||
+                        statusAtendimento === "retirado" ||
+                        statusAtendimento === "pet_retirado"
+                    ) {
+                        finalizados++;
+                        return;
+                    }
+
+                    aguardando++;
+                });
+
+                atualizarNumeroIndex("resumo-agendamentos-hoje", total);
+                atualizarNumeroIndex("resumo-aguardando", aguardando);
+                atualizarNumeroIndex("resumo-em-atendimento", emAtendimento);
+                atualizarNumeroIndex("resumo-finalizados", finalizados);
+
+                renderizarProximosAtendimentosIndex(agendamentos);
+
+            } catch (error) {
+                console.error("Erro ao carregar resumo de hoje no index:", error);
+
+                atualizarNumeroIndex("resumo-agendamentos-hoje", "0");
+                atualizarNumeroIndex("resumo-aguardando", "0");
+                atualizarNumeroIndex("resumo-em-atendimento", "0");
+                atualizarNumeroIndex("resumo-finalizados", "0");
+
+                const lista = document.getElementById("proximos-atendimentos-lista");
+                if (lista) {
+                    lista.innerHTML = `
+                        <a href="agenda.html" class="next-empty">
+                            Não foi possível carregar o resumo. Abrir agenda.
+                        </a>
+                    `;
+                }
+            }
+        }
+
+        window.addEventListener("sessionProfileReady", (event) => {
+            carregarResumoHojeIndex(event?.detail || {});
         });
     </script>
 
