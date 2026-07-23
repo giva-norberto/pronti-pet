@@ -4,174 +4,734 @@
     <meta charset="UTF-8">
     <meta name="google-site-verification" content="ufJvm5YVeJTdH-mwyQGxvPpZekd7WojsxYTHCfWE7b0" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pronti - Início</title>
+    <title>Pronti Pet - Painel do Proprietário</title>
 
     <link rel="manifest" href="manifest.json">
 
-    <meta property="og:title" content="Pronti - Painel de Gestão" />
-    <meta property="og:description" content="Acesse seu painel Pronti para gerenciar sua agenda, clientes e serviços." />
-    <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/logos%2FBX6Q7HrVMrcCBqe72r7K76EBPkX2%2F1758126224738-LOGO%20PRONTI%20FUNDO%20AZUL.png?alt=media&token=e01a4e43-a304-4550-8573-c1c15059d164" />
+    <meta property="og:title" content="Pronti Pet - Painel do Proprietário" />
+    <meta property="og:description" content="Gerencie a agenda, os clientes, os serviços e a operação do seu pet shop no Pronti Pet." />
+    <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://prontiapp.com.br" />
+    <meta property="og:url" content="https://pronti-pet.web.app" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
     <link href="style.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
     <style>
-        :root { --sidebar-width: 240px; }
+        :root {
+            --sidebar-width: 250px;
+            --pronti-purple: #5424b8;
+            --pronti-purple-dark: #35106f;
+            --pronti-purple-soft: #f2edff;
+            --pronti-yellow: #ffc928;
+            --pronti-ink: #17123c;
+            --pronti-muted: #6f6b86;
+            --pronti-border: #e8e4f2;
+            --pronti-surface: #ffffff;
+            --pronti-bg: #f7f7fb;
+            --success: #16a34a;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
         body {
-            display: flex; margin: 0; font-family: 'Poppins', sans-serif;
-            visibility: hidden; 
-            opacity: 0; 
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            font-family: 'Poppins', sans-serif;
+            visibility: hidden;
+            opacity: 0;
             transition: opacity 0.3s ease-in-out;
-            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+            background:
+                radial-gradient(circle at 88% 5%, rgba(84,36,184,.09), transparent 24rem),
+                linear-gradient(180deg, #fbfaff 0%, var(--pronti-bg) 100%);
+            color: var(--pronti-ink);
         }
+
         body.loaded { visibility: visible; opacity: 1; }
-        #menu-container { flex-shrink: 0; }
+
+        #menu-container {
+            width: var(--sidebar-width);
+            flex: 0 0 var(--sidebar-width);
+            min-height: 100vh;
+        }
+
         main.main-content {
-            flex-grow: 1; padding: 40px; box-sizing: border-box;
-            height: 100vh; overflow-y: auto; display: flex; flex-direction: column;
-            justify-content: flex-start; align-items: center;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            padding: 30px 34px 110px;
+            overflow-y: auto;
         }
-        .dashboard-welcome-center { text-align: center; margin-bottom: 5vh; width: 100%; }
-        .dashboard-welcome-center h1 { font-size: clamp(2rem, 5vw, 3.2rem); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .dashboard-welcome-center p { font-size: clamp(1rem, 2.5vw, 1.25rem); font-weight: 400; color: #e0e7ff; }
-        .dashboard-grid-cards {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 20px; width: 100%; max-width: 900px;
+
+        .dashboard-shell {
+            width: min(1320px, 100%);
+            margin: 0 auto;
         }
-        .menu-card {
-            color: #fff; border-radius: 16px; padding: 20px 10px;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; text-align: center; gap: 12px;
-            font-weight: 600; font-size: 0.9rem; text-decoration: none;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-            transition: transform 0.25s, box-shadow 0.25s, filter 0.25s;
-            border: none; aspect-ratio: 1 / 1;
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
         }
-        .menu-card:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 10px 25px rgba(0,0,0,0.2); filter: brightness(1.1); cursor: pointer; }
-        .menu-card i { font-size: 2rem; }
-        [data-card-id="dashboard"] { background: linear-gradient(135deg, #43e97b, #38f9d7); }
-        [data-card-id="agenda"] { background: linear-gradient(135deg, #6366f1, #4facfe); }
-        [data-card-id="servicos"] { background: linear-gradient(135deg, #f59e42, #ff5858); }
-        [data-card-id="planos"] { background: linear-gradient(135deg, #a855f7, #d946ef); }
-        [data-card-id="clientes"] { background: linear-gradient(135deg, #4facfe, #6366f1); }
-        [data-card-id="equipe"] { background: linear-gradient(135deg, #00f2fe, #6366f1); }
-        [data-card-id="perfil"] { background: linear-gradient(135deg, #ff5858, #a18cd1); }
-        [data-card-id="relatorios"] { background: linear-gradient(135deg, #374151, #111827); }
-        [data-card-id="administracao"], [data-card-id="permissoes"] { background: linear-gradient(135deg, #111827, #374151); }
+
+        .mobile-brand img {
+            width: 74px;
+            height: 74px;
+            object-fit: contain;
+            border-radius: 22px;
+            box-shadow: 0 12px 32px rgba(54,16,111,.18);
+        }
+
+        .dashboard-topbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 22px;
+        }
+
+        .welcome-block h1 {
+            margin: 0 0 6px;
+            font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+            line-height: 1.15;
+            color: var(--pronti-ink);
+            letter-spacing: -.04em;
+        }
+
+        .welcome-block > p {
+            margin: 0;
+            color: var(--pronti-muted);
+            font-size: .98rem;
+        }
+
+        .owner-context {
+            margin-top: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 13px;
+            background: #fff;
+            border: 1px solid var(--pronti-border);
+            border-radius: 12px;
+            color: var(--pronti-purple-dark);
+            font-size: .82rem;
+            font-weight: 600;
+            box-shadow: 0 6px 20px rgba(35,20,75,.05);
+        }
+
+        .owner-context i { color: var(--pronti-yellow); }
+
+        .top-actions {
+            min-width: 185px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+        }
+
         .notification-button {
-            background-color: #ff5858;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #ddd4ff;
+            border-radius: 12px;
+            padding: 10px 14px;
+            background: #fff;
+            color: var(--pronti-purple);
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 20px;
-            display: none;
+            box-shadow: 0 6px 18px rgba(53,16,111,.06);
         }
-        .notification-button:hover { background-color: #f59e42; }
+
+        .notification-button:hover { background: var(--pronti-purple-soft); }
+
         .notification-message {
-            margin: 18px auto 0 auto;
-            padding: 12px 24px;
-            background: #eef2ff;
-            border-radius: 8px;
-            color: #4f46e5;
-            font-family: 'Poppins', sans-serif;
+            margin: 12px 0 0;
+            padding: 11px 14px;
+            border-radius: 11px;
             font-weight: 600;
-            font-size: 1rem;
-            max-width: 400px;
-            text-align: center;
+            font-size: .85rem;
+            max-width: 420px;
+            text-align: left;
             display: none;
         }
-        .notification-message.success { color: #10b981; background: #f0fdf4; }
-        .notification-message.error { color: #dc2626; background: #fef2f2; }
-        .notification-message.info { color: #6366f1; background: #eef2ff; }
+
+        .notification-message.success { color: #15803d; background: #f0fdf4; }
+        .notification-message.error { color: #b91c1c; background: #fef2f2; }
+        .notification-message.info { color: #5b21b6; background: #f5f3ff; }
+
+        .daily-overview {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .summary-panel,
+        .agenda-feature {
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .summary-panel {
+            background: var(--pronti-surface);
+            border: 1px solid var(--pronti-border);
+            box-shadow: 0 14px 35px rgba(35,20,75,.07);
+            padding: 22px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-size: 1.08rem;
+            color: var(--pronti-purple-dark);
+        }
+
+        .section-title h2 i {
+            color: var(--pronti-purple);
+            margin-right: 8px;
+        }
+
+        .summary-note {
+            font-size: .73rem;
+            color: var(--pronti-muted);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .summary-item {
+            min-height: 132px;
+            padding: 16px 12px;
+            border: 1px solid var(--pronti-border);
+            border-radius: 17px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(180deg, #fff, #fcfbff);
+        }
+
+        .summary-item .summary-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 9px;
+            font-size: 1.15rem;
+            background: var(--pronti-purple-soft);
+            color: var(--pronti-purple);
+        }
+
+        .summary-item:nth-child(2) .summary-icon {
+            background: #fff8dc;
+            color: #d89d00;
+        }
+
+        .summary-item:nth-child(3) .summary-icon {
+            background: #eaf2ff;
+            color: #2563eb;
+        }
+
+        .summary-item:nth-child(4) .summary-icon {
+            background: #ecfdf3;
+            color: var(--success);
+        }
+
+        .summary-value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 7px;
+        }
+
+        .summary-label {
+            font-size: .75rem;
+            color: var(--pronti-muted);
+            line-height: 1.35;
+        }
+
+        .summary-footer {
+            margin-top: 16px;
+            padding: 13px 14px;
+            border-radius: 14px;
+            background: #f8f6ff;
+            color: var(--pronti-muted);
+            font-size: .78rem;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .summary-footer i { color: var(--pronti-purple); }
+
+        .agenda-feature {
+            position: relative;
+            min-height: 292px;
+            padding: 30px;
+            background:
+                radial-gradient(circle at 92% 12%, rgba(255,201,40,.28), transparent 13rem),
+                linear-gradient(135deg, #381078 0%, #6128c5 60%, #7d44e2 100%);
+            color: #fff;
+            box-shadow: 0 18px 40px rgba(84,36,184,.22);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            isolation: isolate;
+        }
+
+        .agenda-feature::before,
+        .agenda-feature::after {
+            content: "🐾";
+            position: absolute;
+            opacity: .08;
+            font-size: 5rem;
+            z-index: -1;
+        }
+
+        .agenda-feature::before { right: 28px; top: 12px; transform: rotate(15deg); }
+        .agenda-feature::after { right: 180px; bottom: -18px; transform: rotate(-18deg); }
+
+        .agenda-feature .eyebrow {
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.13);
+            border: 1px solid rgba(255,255,255,.16);
+            font-size: .72rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .agenda-feature h2 {
+            margin: 0 0 10px;
+            font-size: 2rem;
+            line-height: 1.1;
+        }
+
+        .agenda-feature p {
+            max-width: 420px;
+            margin: 0 0 23px;
+            color: rgba(255,255,255,.84);
+            font-size: .9rem;
+            line-height: 1.55;
+        }
+
+        .agenda-feature .agenda-cta {
+            width: fit-content;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 17px;
+            border-radius: 12px;
+            background: var(--pronti-yellow);
+            color: #2b1558;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: .85rem;
+            box-shadow: 0 10px 22px rgba(0,0,0,.16);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .agenda-feature .agenda-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px rgba(0,0,0,.2);
+        }
+
+        .quick-access-heading {
+            margin: 6px 0 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+        }
+
+        .quick-access-heading h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .quick-access-heading p {
+            margin: 3px 0 0;
+            color: var(--pronti-muted);
+            font-size: .78rem;
+        }
+
+        .dashboard-grid-cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        .menu-card {
+            position: relative;
+            min-height: 148px;
+            padding: 19px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 8px;
+            color: var(--pronti-ink);
+            background: #fff;
+            border: 1px solid var(--pronti-border);
+            border-radius: 18px;
+            text-decoration: none;
+            box-shadow: 0 10px 28px rgba(35,20,75,.055);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+            overflow: hidden;
+        }
+
+        .menu-card::after {
+            content: "061";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 17px;
+            bottom: 15px;
+            font-size: .76rem;
+            color: var(--pronti-purple);
+        }
+
+        .menu-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 34px rgba(53,16,111,.11);
+            border-color: #d8ccff;
+        }
+
+        .menu-card i {
+            width: 43px;
+            height: 43px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            font-size: 1.12rem;
+            background: var(--pronti-purple-soft);
+            color: var(--pronti-purple);
+        }
+
+        .menu-card span {
+            font-size: .98rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .menu-card small {
+            max-width: 90%;
+            color: var(--pronti-muted);
+            font-size: .73rem;
+            font-weight: 400;
+            line-height: 1.45;
+        }
+
+        [data-card-id="dashboard"] i { background:#efeaff; color:#5b21b6; }
+        [data-card-id="servicos"] i { background:#fff0df; color:#ea7b12; }
+        [data-card-id="planos"] i { background:#fff8dc; color:#c89200; }
+        [data-card-id="clientes"] i { background:#eaf2ff; color:#2563eb; }
+        [data-card-id="equipe"] i { background:#ecfdf3; color:#16a34a; }
+        [data-card-id="perfil"] i { background:#edfafa; color:#0f9f9a; }
+        [data-card-id="relatorios"] i { background:#f8eaf3; color:#c43c78; }
+        [data-card-id="administracao"] i,
+        [data-card-id="permissoes"] i { background:#f1edff; color:#5b21b6; }
+
+        .management-title {
+            margin: 24px 0 13px;
+            padding-top: 4px;
+            border-top: 1px solid var(--pronti-border);
+        }
+
+        .management-title h2 {
+            margin: 17px 0 0;
+            font-size: 1rem;
+            color: var(--pronti-purple-dark);
+        }
+
+        #statusAssinatura {
+            --badge-scale: 1;
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: .68rem;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,.1);
+            display: none;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-6px) scale(var(--badge-scale));
+            transition: opacity .28s ease, transform .28s ease;
+        }
+
         #btn-logout {
             display: none;
-            background: #374151;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             position: fixed;
             right: 16px;
             bottom: 16px;
             z-index: 1002;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        #btn-logout i { margin-right: 8px; }
-        #btn-logout:hover { background: #111827; }
-        @media (max-width: 600px) { #btn-logout { display: block; } }
-        @media (max-width: 900px) { body { flex-direction: column; } main.main-content { height: auto; } }
-
-        /* Badge de status da assinatura (menor visual no canto superior direito) */
-        #statusAssinatura {
-          --badge-scale: 1;
-          position: fixed;
-          top: 12px;
-          right: 12px;
-          background: linear-gradient(90deg, #4f8cff, #7b5cff);
-          color: white;
-          padding: 6px 10px;
-          border-radius: 14px;
-          font-size: 0.78rem;
-          font-weight: 600;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-          display: none;
-          z-index: 9999;
-          opacity: 0;
-          transform: translateY(-6px) scale(var(--badge-scale));
-          transition: opacity 0.28s ease, transform 0.28s ease;
-        }
-        @media (max-width: 600px) {
-          #statusAssinatura {
-            --badge-scale: 0.6;
-            top: 10px;
-            right: 10px;
-            padding: 4px 8px;
-            font-size: 0.65rem;
+            border: none;
             border-radius: 12px;
-          }
+            padding: 11px 16px;
+            background: var(--pronti-purple-dark);
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            box-shadow: 0 8px 22px rgba(0,0,0,.18);
+            cursor: pointer;
+        }
+
+        #btn-logout i { margin-right: 7px; }
+
+        @media (max-width: 1120px) {
+            .daily-overview { grid-template-columns: 1fr; }
+            .agenda-feature { min-height: 250px; }
+            .dashboard-grid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 900px) {
+            body { display: block; }
+            #menu-container {
+                width: 0;
+                min-height: 0;
+                flex: none;
+            }
+            main.main-content {
+                width: 100%;
+                min-height: 100vh;
+                padding: 18px 16px 105px;
+            }
+            .mobile-brand { display: flex; }
+            .dashboard-topbar {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .top-actions { justify-content: flex-start; min-width: 0; }
+            #btn-logout { display: block; }
+        }
+
+        @media (max-width: 620px) {
+            .mobile-brand img {
+                width: 66px;
+                height: 66px;
+                border-radius: 19px;
+            }
+
+            .welcome-block h1 { font-size: 1.72rem; }
+            .welcome-block > p { font-size: .86rem; line-height: 1.5; }
+            .owner-context { font-size: .72rem; }
+
+            .summary-panel { padding: 17px; border-radius: 20px; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .summary-item { min-height: 116px; }
+            .summary-note { display: none; }
+
+            .agenda-feature {
+                min-height: 255px;
+                padding: 23px;
+                border-radius: 20px;
+            }
+
+            .agenda-feature h2 { font-size: 1.7rem; }
+            .agenda-feature p { max-width: 92%; }
+
+            .dashboard-grid-cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 11px;
+            }
+
+            .menu-card {
+                min-height: 145px;
+                padding: 15px;
+                border-radius: 16px;
+            }
+
+            .menu-card small {
+                max-width: 100%;
+                font-size: .67rem;
+            }
+
+            #statusAssinatura {
+                --badge-scale: .88;
+                top: 10px;
+                right: 10px;
+                font-size: .62rem;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .dashboard-grid-cards { grid-template-columns: 1fr; }
         }
     </style>
 </head>
+
 <body>
     <div id="menu-container"></div>
+
     <main class="main-content">
-        <div class="dashboard-welcome-center">
-            <h1><span id="saudacao"></span>, <span id="nome-usuario">Usuário</span>!</h1>
-            <p>Pronto para gerenciar seu dia?</p>
-            <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
-                <i class="fa-solid fa-bell"></i> Ativar Notificações
-            </button>
-            <div id="notification-message" class="notification-message info"></div>
-        </div>
-        <div class="dashboard-grid-cards" id="dashboard-grid-cards">
-            <a href="dashboard.html" class="menu-card" data-card-id="dashboard"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></a>
-            <a href="agenda.html" class="menu-card" data-card-id="agenda"><i class="fa-solid fa-calendar-check"></i><span>Agenda</span></a>
-            <a href="servicos.html" class="menu-card" data-card-id="servicos"><i class="fa-solid fa-concierge-bell"></i><span>Serviços</span></a>
-            <a href="planos.html" class="menu-card" data-card-id="planos"><i class="fa-solid fa-file-invoice-dollar"></i><span>Planos</span></a>
-            <a href="clientes.html" class="menu-card" data-card-id="clientes"><i class="fa-solid fa-user-group"></i><span>Clientes</span></a>
-            <a href="equipe.html" class="menu-card" data-card-id="equipe"><i class="fa-solid fa-users"></i><span>Equipe</span></a>
-            <a href="perfil.html" class="menu-card" data-card-id="perfil"><i class="fa-solid fa-user-gear"></i><span>Empresa</span></a>
-            <a href="relatorios.html" class="menu-card" data-card-id="relatorios"><i class="fa-solid fa-file-lines"></i><span>Relatórios</span></a>
-            <a href="admin-clientes.html" class="menu-card" data-card-id="administracao"><i class="fa-solid fa-shield-halved"></i><span>Administração</span></a>
-            <a href="permissoes.html" class="menu-card" data-card-id="permissoes"><i class="fa-solid fa-sliders"></i><span>Permissões</span></a>
+        <div class="dashboard-shell">
+
+            <a class="mobile-brand" href="index.html" aria-label="Pronti Pet">
+                <img src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" alt="Logo Pronti Pet">
+            </a>
+
+            <header class="dashboard-topbar">
+                <div class="welcome-block">
+                    <h1><span id="saudacao"></span>, <span id="nome-usuario">Usuário</span>!</h1>
+                    <p>Acompanhe a operação do seu pet shop e acesse rapidamente as principais áreas.</p>
+
+                    <div class="owner-context">
+                        <i class="fa-solid fa-crown"></i>
+                        Painel do proprietário
+                    </div>
+
+                    <div id="notification-message" class="notification-message info"></div>
+                </div>
+
+                <div class="top-actions">
+                    <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
+                        <i class="fa-solid fa-bell"></i>
+                        Ativar notificações
+                    </button>
+                </div>
+            </header>
+
+            <section class="daily-overview">
+                <article class="summary-panel">
+                    <div class="section-title">
+                        <h2><i class="fa-regular fa-calendar-check"></i>Resumo de hoje</h2>
+                        <span class="summary-note">Estrutura preparada para dados da Agenda</span>
+                    </div>
+
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                            <strong class="summary-value">—</strong>
+                            <span class="summary-label">Agendamentos<br>de hoje</span>
+                        </div>
+
+                        <div class="summary-item">
+                            <div class="summary-icon"><i class="fa-regular fa-clock"></i></div>
+                            <strong class="summary-value">—</strong>
+                            <span class="summary-label">Aguardando<br>atendimento</span>
+                        </div>
+
+                        <div class="summary-item">
+                            <div class="summary-icon"><i class="fa-solid fa-scissors"></i></div>
+                            <strong class="summary-value">—</strong>
+                            <span class="summary-label">Em<br>atendimento</span>
+                        </div>
+
+                        <div class="summary-item">
+                            <div class="summary-icon"><i class="fa-solid fa-check"></i></div>
+                            <strong class="summary-value">—</strong>
+                            <span class="summary-label">Finalizados<br>hoje</span>
+                        </div>
+                    </div>
+
+                    <div class="summary-footer">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Os números serão conectados à consulta real da Agenda sem alterar o fluxo atual dos atendimentos.
+                    </div>
+                </article>
+
+                <article class="agenda-feature">
+                    <span class="eyebrow">Rotina operacional</span>
+                    <h2>Agenda</h2>
+                    <p>Acompanhe os atendimentos, os horários e a rotina da sua equipe durante o dia.</p>
+
+                    <a href="agenda.html" class="agenda-cta" data-card-id="agenda">
+                        Acessar agenda
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </article>
+            </section>
+
+            <div class="quick-access-heading">
+                <div>
+                    <h2>Acessos do pet shop</h2>
+                    <p>Os módulos continuam aparecendo conforme as permissões atuais.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid-cards" id="dashboard-grid-cards">
+                <a href="dashboard.html" class="menu-card" data-card-id="dashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                    <small>Visualize os principais indicadores e resultados do negócio.</small>
+                </a>
+
+                <a href="servicos.html" class="menu-card" data-card-id="servicos">
+                    <i class="fa-solid fa-scissors"></i>
+                    <span>Serviços</span>
+                    <small>Gerencie serviços, preços e opções oferecidas aos clientes.</small>
+                </a>
+
+                <a href="planos.html" class="menu-card" data-card-id="planos">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Planos</span>
+                    <small>Consulte o plano atual, recursos e condições disponíveis.</small>
+                </a>
+
+                <a href="clientes.html" class="menu-card" data-card-id="clientes">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>Clientes</span>
+                    <small>Acesse tutores, pets e históricos de atendimento.</small>
+                </a>
+
+                <a href="equipe.html" class="menu-card" data-card-id="equipe">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Equipe</span>
+                    <small>Gerencie profissionais, funções e acessos da operação.</small>
+                </a>
+
+                <a href="perfil.html" class="menu-card" data-card-id="perfil">
+                    <i class="fa-solid fa-store"></i>
+                    <span>Empresa</span>
+                    <small>Atualize os dados e as configurações do seu pet shop.</small>
+                </a>
+
+                <a href="relatorios.html" class="menu-card" data-card-id="relatorios">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Relatórios</span>
+                    <small>Acompanhe informações e o desempenho da empresa.</small>
+                </a>
+
+                <a href="admin-clientes.html" class="menu-card" data-card-id="administracao">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Administração</span>
+                    <small>Acesse as configurações administrativas disponíveis.</small>
+                </a>
+
+                <a href="permissoes.html" class="menu-card" data-card-id="permissoes">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Permissões</span>
+                    <small>Defina quais módulos cada perfil poderá visualizar.</small>
+                </a>
+            </div>
         </div>
     </main>
 
-    <button id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    <button id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Sair</button>
 
-    <!-- Badge de status da assinatura (inserido sem alterar validação) -->
     <div id="statusAssinatura" aria-hidden="true"></div>
+
 
     <script type="module" src="messaging.js"></script>
     <script type="module">
