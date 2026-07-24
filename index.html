@@ -1155,6 +1155,95 @@
             }
         }
 
+
+        /* =========================================================
+           CABEÇALHO CENTRALIZADO
+           Somente layout. Nenhuma função original foi alterada.
+        ========================================================= */
+
+        .dashboard-welcome-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .welcome-copy {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .welcome-copy h1,
+        .welcome-copy p {
+            text-align: center;
+        }
+
+        .welcome-copy p {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .owner-chip {
+            align-self: center;
+        }
+
+        .header-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .notification-message {
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
+        .mobile-index-logo {
+            justify-content: center;
+        }
+
+        @media (min-width: 901px) {
+            .mobile-index-logo {
+                display: flex;
+                margin-bottom: 10px;
+            }
+
+            .mobile-index-logo img {
+                width: 64px;
+                height: 64px;
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .dashboard-welcome-center {
+                align-items: center;
+                text-align: center;
+            }
+
+            .welcome-copy {
+                align-items: center;
+                text-align: center;
+            }
+
+            .welcome-copy h1 {
+                text-align: center;
+            }
+
+            .welcome-copy p {
+                max-width: 330px;
+                text-align: center;
+            }
+
+            .header-actions {
+                justify-content: center;
+            }
+        }
+
     </style>
 </head>
 <body>
