@@ -1466,9 +1466,218 @@
             }
         }
 
+
+        /* =========================================================
+           FECHAMENTO DO INDEX
+           1. Tela de carregamento profissional
+           2. Sem sobreposição no celular
+           3. Funções originais preservadas
+        ========================================================= */
+
+        /* O body fica visível imediatamente para mostrar o carregamento. */
+        body {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Enquanto a sessão e as permissões carregam, esconde apenas o app. */
+        body:not(.loaded) #menu-container,
+        body:not(.loaded) main.main-content,
+        body:not(.loaded) #btn-logout,
+        body:not(.loaded) #statusAssinatura,
+        body:not(.loaded) #pronti-floating-back {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        #pronti-index-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at 82% 12%, rgba(255, 201, 40, .13), transparent 18rem),
+                radial-gradient(circle at 20% 80%, rgba(113, 64, 220, .12), transparent 20rem),
+                linear-gradient(180deg, #fbfaff 0%, #f6f2fd 100%);
+            transition: opacity .28s ease, visibility .28s ease;
+        }
+
+        body.loaded #pronti-index-loading {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .pronti-loading-card {
+            width: min(360px, calc(100vw - 36px));
+            padding: 28px 24px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, .96);
+            border: 1px solid rgba(85, 34, 182, .14);
+            box-shadow: 0 22px 55px rgba(32, 16, 66, .12);
+            text-align: center;
+        }
+
+        .pronti-loading-logo {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 16px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 21px;
+            background: #fff;
+            border: 1px solid rgba(85, 34, 182, .14);
+            box-shadow: 0 10px 26px rgba(32, 16, 66, .15);
+        }
+
+        .pronti-loading-logo img {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 16px;
+            background: #000;
+        }
+
+        .pronti-loading-title {
+            margin: 0;
+            color: var(--pet-roxo-escuro);
+            font-size: 1.05rem;
+            font-weight: 900;
+        }
+
+        .pronti-loading-text {
+            margin: 6px 0 16px;
+            color: var(--pet-muted);
+            font-size: .76rem;
+            line-height: 1.45;
+        }
+
+        .pronti-loading-bar {
+            width: 100%;
+            height: 7px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #eee8fa;
+        }
+
+        .pronti-loading-bar::after {
+            content: "";
+            display: block;
+            width: 42%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--pet-roxo), var(--pet-amarelo));
+            animation: prontiLoadingMove 1.1s ease-in-out infinite;
+        }
+
+        @keyframes prontiLoadingMove {
+            0% { transform: translateX(-110%); }
+            100% { transform: translateX(260%); }
+        }
+
+        /*
+         * No index, o botão voltar flutuante não é necessário.
+         * A lógica original continua intacta nas outras páginas.
+         */
+        #pronti-floating-back {
+            display: none !important;
+        }
+
+        @media (max-width: 900px) {
+            /*
+             * Botão sair menor e circular para não cobrir os cards.
+             * O clique e a função original permanecem os mesmos.
+             */
+            #btn-logout {
+                width: 42px !important;
+                height: 42px !important;
+                min-width: 42px !important;
+                padding: 0 !important;
+                right: 10px !important;
+                bottom: 10px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 14px !important;
+                font-size: 0 !important;
+            }
+
+            #btn-logout i {
+                margin: 0 !important;
+                font-size: .96rem !important;
+            }
+
+            /*
+             * O selo deixa de acompanhar a rolagem e fica apenas no topo,
+             * junto ao cabeçalho, sem cobrir os cards inferiores.
+             */
+            #statusAssinatura {
+                position: absolute !important;
+                top: 10px !important;
+                right: 10px !important;
+                padding: 4px 7px !important;
+                font-size: .56rem !important;
+                border-radius: 999px !important;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .pronti-loading-card {
+                padding: 24px 20px;
+                border-radius: 20px;
+            }
+
+            .pronti-loading-logo {
+                width: 66px;
+                height: 66px;
+                border-radius: 19px;
+            }
+
+            .pronti-loading-logo img {
+                width: 54px;
+                height: 54px;
+                border-radius: 14px;
+            }
+
+            .pronti-loading-title {
+                font-size: .96rem;
+            }
+
+            .pronti-loading-text {
+                font-size: .7rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .pronti-loading-bar::after {
+                animation-duration: 2.2s;
+            }
+        }
+
     </style>
 </head>
 <body>
+    <div id="pronti-index-loading" role="status" aria-live="polite">
+        <div class="pronti-loading-card">
+            <div class="pronti-loading-logo">
+                <img
+                    src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b"
+                    alt="Logo Pronti Pet"
+                >
+            </div>
+
+            <h2 class="pronti-loading-title">Preparando seu pet shop</h2>
+            <p class="pronti-loading-text">Carregando empresa, agenda e permissões...</p>
+            <div class="pronti-loading-bar" aria-hidden="true"></div>
+        </div>
+    </div>
+
     <div id="menu-container"></div>
 
     <main class="main-content">
