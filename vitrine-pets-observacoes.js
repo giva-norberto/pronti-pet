@@ -3,15 +3,51 @@
 // PRONTI PET - Observação do atendimento na vitrine
 // ======================================================================
 
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
 import { db } from "./vitrini-firebase.js";
 import { getPetSelecionado } from "./vitrine-pets.js";
 
 // ======================================================================
+// Resolver o ID verdadeiro do cliente
+//
+// Compatibilidade:
+// - Fluxo atual: recebe o objeto user do Firebase Auth
+// - Novo fluxo: poderá receber diretamente o clienteId do Firestore
+// ======================================================================
+function resolverClienteId(userOuClienteId) {
+    if (!userOuClienteId) return "";
+
+    if (typeof userOuClienteId === "string") {
+        return userOuClienteId.trim();
+    }
+
+    if (typeof userOuClienteId === "object") {
+        return String(
+            userOuClienteId.clienteId ||
+            userOuClienteId.id ||
+            userOuClienteId.uid ||
+            ""
+        ).trim();
+    }
+
+    return "";
+}
+
+// ======================================================================
 // Buscar pet atualizado no Firebase
 // ======================================================================
-export async function buscarPetAtualizado(empresaId, clienteId, petId) {
-    if (!empresaId || !clienteId || !petId) return null;
+export async function buscarPetAtualizado(
+    empresaId,
+    clienteId,
+    petId
+) {
+    if (!empresaId || !clienteId || !petId) {
+        return null;
+    }
 
     const petRef = doc(
         db,
@@ -25,7 +61,9 @@ export async function buscarPetAtualizado(empresaId, clienteId, petId) {
 
     const petSnap = await getDoc(petRef);
 
-    if (!petSnap.exists()) return null;
+    if (!petSnap.exists()) {
+        return null;
+    }
 
     return {
         id: petSnap.id,
@@ -35,17 +73,30 @@ export async function buscarPetAtualizado(empresaId, clienteId, petId) {
 
 // ======================================================================
 // Pegar observação permanente do pet
+//
+// Pode receber:
+// - objeto do Firebase Auth;
+// - clienteId verdadeiro como string.
 // ======================================================================
-export async function obterObservacaoPetSelecionado(empresaId, user) {
-    if (!empresaId || !user) return "";
+export async function obterObservacaoPetSelecionado(
+    empresaId,
+    userOuClienteId
+) {
+    const clienteId = resolverClienteId(userOuClienteId);
+
+    if (!empresaId || !clienteId) {
+        return "";
+    }
 
     const petSelecionado = getPetSelecionado();
 
-    if (!petSelecionado || !petSelecionado.id) return "";
+    if (!petSelecionado || !petSelecionado.id) {
+        return "";
+    }
 
     const petAtualizado = await buscarPetAtualizado(
         empresaId,
-        user.uid,
+        clienteId,
         petSelecionado.id
     );
 
@@ -60,18 +111,30 @@ export async function obterObservacaoPetSelecionado(empresaId, user) {
 // Modal: perguntar observação do atendimento
 // ======================================================================
 function garantirModalObservacaoAtendimento() {
-    if (document.getElementById("modal-observacao-pet-pronti")) return;
+    if (
+        document.getElementById(
+            "modal-observacao-pet-pronti"
+        )
+    ) {
+        return;
+    }
 
     const modal = document.createElement("div");
+
     modal.id = "modal-observacao-pet-pronti";
     modal.style.display = "none";
 
     modal.innerHTML = `
         <div class="modal-observacao-pet-overlay">
             <div class="modal-observacao-pet-card">
-                <div class="modal-observacao-pet-icon">🐾</div>
 
-                <h2>Algum detalhe importante?</h2>
+                <div class="modal-observacao-pet-icon">
+                    🐾
+                </div>
+
+                <h2>
+                    Algum detalhe importante?
+                </h2>
 
                 <p class="modal-observacao-pet-texto">
                     Deseja deixar alguma observação para este atendimento?
@@ -86,17 +149,26 @@ function garantirModalObservacaoAtendimento() {
                 ></textarea>
 
                 <div class="modal-observacao-pet-ajuda">
-                    Essa informação será enviada para o pet shop junto com o agendamento.
+                    Essa informação será enviada para o pet shop junto
+                    com o agendamento.
                 </div>
 
                 <div class="modal-observacao-pet-botoes">
-                    <button type="button" id="btn-continuar-sem-observacao-pet">
+
+                    <button
+                        type="button"
+                        id="btn-continuar-sem-observacao-pet"
+                    >
                         Continuar sem observação
                     </button>
 
-                    <button type="button" id="btn-confirmar-observacao-pet">
+                    <button
+                        type="button"
+                        id="btn-confirmar-observacao-pet"
+                    >
                         Salvar e continuar
                     </button>
+
                 </div>
             </div>
         </div>
@@ -104,8 +176,18 @@ function garantirModalObservacaoAtendimento() {
 
     document.body.appendChild(modal);
 
+    if (
+        document.getElementById(
+            "style-modal-observacao-pet-pronti"
+        )
+    ) {
+        return;
+    }
+
     const style = document.createElement("style");
+
     style.id = "style-modal-observacao-pet-pronti";
+
     style.textContent = `
         #modal-observacao-pet-pronti {
             position: fixed;
@@ -121,6 +203,7 @@ function garantirModalObservacaoAtendimento() {
             align-items: center;
             justify-content: center;
             padding: 18px;
+            box-sizing: border-box;
         }
 
         .modal-observacao-pet-card {
@@ -130,8 +213,10 @@ function garantirModalObservacaoAtendimento() {
             border-radius: 22px;
             padding: 24px;
             color: #1e293b;
-            box-shadow: 0 18px 48px rgba(15, 23, 42, 0.35);
+            box-shadow:
+                0 18px 48px rgba(15, 23, 42, 0.35);
             text-align: center;
+            box-sizing: border-box;
         }
 
         .modal-observacao-pet-icon {
@@ -179,8 +264,9 @@ function garantirModalObservacaoAtendimento() {
 
         .modal-observacao-pet-textarea:focus {
             border-color: #4f46e5;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            background: #ffffff;
+            box-shadow:
+                0 0 0 3px rgba(79, 70, 229, 0.12);
         }
 
         .modal-observacao-pet-ajuda {
@@ -211,11 +297,41 @@ function garantirModalObservacaoAtendimento() {
             border: none;
             border-radius: 13px;
             padding: 13px 16px;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: #fff;
+            background:
+                linear-gradient(
+                    135deg,
+                    #6366f1,
+                    #4f46e5
+                );
+            color: #ffffff;
             font-weight: 900;
             font-size: 1rem;
             cursor: pointer;
+        }
+
+        #btn-continuar-sem-observacao-pet:disabled,
+        #btn-confirmar-observacao-pet:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        @media (max-width: 520px) {
+            .modal-observacao-pet-overlay {
+                align-items: flex-end;
+                padding: 10px;
+            }
+
+            .modal-observacao-pet-card {
+                max-width: 100%;
+                max-height: calc(100vh - 20px);
+                overflow-y: auto;
+                border-radius: 22px 22px 16px 16px;
+                padding: 20px 18px;
+            }
+
+            .modal-observacao-pet-textarea {
+                font-size: 16px;
+            }
         }
     `;
 
@@ -229,12 +345,28 @@ export function perguntarObservacaoAtendimento() {
     return new Promise((resolve) => {
         garantirModalObservacaoAtendimento();
 
-        const modal = document.getElementById("modal-observacao-pet-pronti");
-        const input = document.getElementById("modal-observacao-atendimento-input");
-        const btnConfirmar = document.getElementById("btn-confirmar-observacao-pet");
-        const btnSemObservacao = document.getElementById("btn-continuar-sem-observacao-pet");
+        const modal = document.getElementById(
+            "modal-observacao-pet-pronti"
+        );
 
-        if (!modal || !input || !btnConfirmar || !btnSemObservacao) {
+        const input = document.getElementById(
+            "modal-observacao-atendimento-input"
+        );
+
+        const btnConfirmar = document.getElementById(
+            "btn-confirmar-observacao-pet"
+        );
+
+        const btnSemObservacao = document.getElementById(
+            "btn-continuar-sem-observacao-pet"
+        );
+
+        if (
+            !modal ||
+            !input ||
+            !btnConfirmar ||
+            !btnSemObservacao
+        ) {
             resolve("");
             return;
         }
@@ -242,48 +374,87 @@ export function perguntarObservacaoAtendimento() {
         input.value = "";
         modal.style.display = "block";
 
-        setTimeout(() => input.focus(), 100);
+        setTimeout(() => {
+            input.focus();
+        }, 100);
 
-        btnConfirmar.onclick = () => {
-            const observacaoAgendamento = String(input.value || "").trim();
+        let finalizado = false;
 
+        function fecharModal(valor) {
+            if (finalizado) return;
+
+            finalizado = true;
             modal.style.display = "none";
 
-            resolve(observacaoAgendamento);
+            btnConfirmar.onclick = null;
+            btnSemObservacao.onclick = null;
+
+            resolve(valor);
+        }
+
+        btnConfirmar.onclick = () => {
+            const observacaoAgendamento = String(
+                input.value || ""
+            ).trim();
+
+            fecharModal(observacaoAgendamento);
         };
 
         btnSemObservacao.onclick = () => {
             input.value = "";
-            modal.style.display = "none";
-
-            resolve("");
+            fecharModal("");
         };
     });
 }
 
 // ======================================================================
 // Função principal para usar antes de salvar agendamento
+//
+// Compatibilidade:
+// - Atualmente recebe o objeto currentUser;
+// - Futuramente poderá receber state.clienteId.
 // ======================================================================
-export async function validarObservacaoPetAntesDeAgendar(empresaId, user) {
+export async function validarObservacaoPetAntesDeAgendar(
+    empresaId,
+    userOuClienteId
+) {
     let observacaoPet = "";
     let observacaoAgendamento = "";
 
     try {
-        observacaoPet = await obterObservacaoPetSelecionado(empresaId, user);
+        observacaoPet =
+            await obterObservacaoPetSelecionado(
+                empresaId,
+                userOuClienteId
+            );
     } catch (error) {
-        console.warn("⚠️ Não foi possível buscar observação do pet:", error);
+        console.warn(
+            "⚠️ Não foi possível buscar observação do pet:",
+            error
+        );
+
         observacaoPet = "";
     }
 
     try {
-        observacaoAgendamento = await perguntarObservacaoAtendimento();
+        observacaoAgendamento =
+            await perguntarObservacaoAtendimento();
     } catch (error) {
-        console.warn("⚠️ Não foi possível perguntar observação do atendimento:", error);
+        console.warn(
+            "⚠️ Não foi possível perguntar observação do atendimento:",
+            error
+        );
+
         observacaoAgendamento = "";
     }
 
     return {
-        observacaoPet: String(observacaoPet || "").trim(),
-        observacaoAgendamento: String(observacaoAgendamento || "").trim()
+        observacaoPet: String(
+            observacaoPet || ""
+        ).trim(),
+
+        observacaoAgendamento: String(
+            observacaoAgendamento || ""
+        ).trim()
     };
 }
