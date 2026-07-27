@@ -1,210 +1,491 @@
 // vitrine-assinatura-integration.js
-// Integração mínima para detectar assinaturas do cliente e marcar serviços na vitrine.
-// Coloque este arquivo na mesma pasta do vitrine.html (ou ajuste o import no HTML).
+// Integração para detectar assinaturas do cliente
+// e marcar serviços incluídos na vitrine.
+//
+// Compatibilidade:
+// - Fluxo antigo: usa auth.currentUser.uid;
+// - Novo fluxo: aceita o clienteId real do Firestore.
+//
+// Mantenha este arquivo na mesma pasta do vitrine.html.
 
-import { db, auth } from './vitrini-firebase.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import {
+    db,
+    auth
+} from "./vitrini-firebase.js";
+
+import {
+    collection,
+    query,
+    where,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// ======================================================================
+// Resolver o ID real do cliente
+//
+// Aceita:
+// - clienteId como string;
+// - objeto contendo clienteId;
+// - objeto Firebase Auth contendo uid;
+// - fallback para auth.currentUser.uid.
+// ======================================================================
+
+function resolverClienteId(clienteIdOuUsuario = null) {
+    if (typeof clienteIdOuUsuario === "string") {
+        return clienteIdOuUsuario.trim();
+    }
+
+    if (
+        clienteIdOuUsuario &&
+        typeof clienteIdOuUsuario === "object"
+    ) {
+        return String(
+            clienteIdOuUsuario.clienteId ||
+            clienteIdOuUsuario.id ||
+            clienteIdOuUsuario.uid ||
+            ""
+        ).trim();
+    }
+
+    return String(
+        auth.currentUser?.uid || ""
+    ).trim();
+}
+
+// ======================================================================
+// Limpar marcações de assinatura dos serviços
+// ======================================================================
+
+function limparAssinaturasDaListaServicos(listaServicos = []) {
+    if (!Array.isArray(listaServicos)) {
+        return;
+    }
+
+    listaServicos.forEach((servico) => {
+        servico.fazParteDaAssinatura = false;
+        servico.inclusoAssinatura = false;
+
+        if (servico.precoOriginal != null) {
+            servico.precoCobrado =
+                Number(servico.precoOriginal);
+        } else if (servico.preco != null) {
+            servico.precoOriginal =
+                Number(servico.preco);
+
+            servico.precoCobrado =
+                Number(servico.preco);
+        } else if (servico.precoCobrado === 0) {
+            delete servico.precoCobrado;
+        }
+
+        delete servico.assinaturasCandidatas;
+    });
+}
 
 /**
- * construirMapaServicosPorAssinatura(clienteUid, empresaId)
+ * construirMapaServicosPorAssinatura(clienteId, empresaId)
  *
- * Retorna um mapa no formato:
+ * Retorna:
+ *
  * {
  *   [servicoId]: {
  *     totalDisponivel: Number | Infinity,
  *     assinaturas: [
- *       { assinaturaId, quantidadeRestante: Number, planoNome, dataFimTimestamp }
+ *       {
+ *         assinaturaId,
+ *         quantidadeRestante,
+ *         planoNome,
+ *         dataFim
+ *       }
  *     ]
- *   },
- *   ...
+ *   }
  * }
  *
- * Observações:
- * - Considera apenas assinaturas com status === 'ativo' e dataFim > agora (válidas).
- * - Interpreta quantidadeRestante === 0 como ilimitado (Infinity) para cálculo de totalDisponivel,
- *   mas mantém a quantidadeRaw em assinaturas (0 = ilimitado).
+ * Regras:
+ * - considera apenas assinaturas com status "ativo";
+ * - ignora assinaturas expiradas;
+ * - quantidadeRestante igual a zero representa uso ilimitado;
+ * - aceita o clienteId real do documento Firestore.
  */
-export async function construirMapaServicosPorAssinatura(clienteUid, empresaId) {
-  const mapa = {};
-  if (!clienteUid || !empresaId) {
-    console.debug('construirMapa: parâmetros ausentes');
-    return mapa;
-  }
-  try {
-    const assinCol = collection(db, `empresarios/${empresaId}/clientes/${clienteUid}/assinaturas`);
-    const q = query(assinCol, where('status', '==', 'ativo'));
-    const snap = await getDocs(q);
-    if (snap.empty) return mapa;
 
-    const agora = new Date();
+export async function construirMapaServicosPorAssinatura(
+    clienteIdOuUsuario,
+    empresaId
+) {
+    const mapa = {};
 
-    snap.docs.forEach(docSnap => {
-      const data = docSnap.data();
+    const clienteId =
+        resolverClienteId(clienteIdOuUsuario);
 
-      // filtra assinaturas expiradas (segurança adicional)
-      const dataFimRaw = data.dataFim;
-      let dataFim = null;
-      try {
-        dataFim = dataFimRaw && typeof dataFimRaw.toDate === 'function' ? dataFimRaw.toDate() : new Date(dataFimRaw);
-      } catch (err) {
-        dataFim = null;
-      }
-      if (dataFim && !(dataFim > agora)) {
-        // assinatura expirada — ignora
+    if (!clienteId || !empresaId) {
+        console.debug(
+            "construirMapaServicosPorAssinatura: parâmetros ausentes"
+        );
+
+        return mapa;
+    }
+
+    try {
+        const assinaturasRef = collection(
+            db,
+            "empresarios",
+            empresaId,
+            "clientes",
+            clienteId,
+            "assinaturas"
+        );
+
+        const consulta = query(
+            assinaturasRef,
+            where("status", "==", "ativo")
+        );
+
+        const snapshot = await getDocs(consulta);
+
+        if (snapshot.empty) {
+            return mapa;
+        }
+
+        const agora = new Date();
+
+        snapshot.docs.forEach((docSnap) => {
+            const dadosAssinatura = docSnap.data();
+
+            const dataFimRaw =
+                dadosAssinatura.dataFim;
+
+            let dataFim = null;
+
+            try {
+                if (
+                    dataFimRaw &&
+                    typeof dataFimRaw.toDate === "function"
+                ) {
+                    dataFim = dataFimRaw.toDate();
+                } else if (dataFimRaw) {
+                    const dataConvertida =
+                        new Date(dataFimRaw);
+
+                    if (
+                        !Number.isNaN(
+                            dataConvertida.getTime()
+                        )
+                    ) {
+                        dataFim = dataConvertida;
+                    }
+                }
+            } catch (erroData) {
+                console.warn(
+                    "Não foi possível interpretar a data final da assinatura:",
+                    erroData
+                );
+
+                dataFim = null;
+            }
+
+            /*
+             * Quando existe uma data final válida,
+             * a assinatura expirada é ignorada.
+             */
+            if (dataFim && dataFim <= agora) {
+                return;
+            }
+
+            const servicosInclusos =
+                Array.isArray(
+                    dadosAssinatura.servicosInclusos
+                )
+                    ? dadosAssinatura.servicosInclusos
+                    : [];
+
+            servicosInclusos.forEach((item) => {
+                const servicoId =
+                    String(item.servicoId || "").trim();
+
+                if (!servicoId) {
+                    return;
+                }
+
+                const quantidadeRaw =
+                    item.quantidadeRestante != null
+                        ? Number(
+                            item.quantidadeRestante
+                        )
+                        : item.quantidade != null
+                            ? Number(item.quantidade)
+                            : 0;
+
+                /*
+                 * Zero representa ilimitado,
+                 * conforme o modelo existente.
+                 */
+                const quantidadeCalculada =
+                    quantidadeRaw === 0
+                        ? Infinity
+                        : quantidadeRaw;
+
+                if (!mapa[servicoId]) {
+                    mapa[servicoId] = {
+                        totalDisponivel: 0,
+                        assinaturas: []
+                    };
+                }
+
+                mapa[servicoId].assinaturas.push({
+                    assinaturaId: docSnap.id,
+
+                    quantidadeRestante:
+                        quantidadeRaw,
+
+                    planoNome:
+                        dadosAssinatura.planoNome ||
+                        null,
+
+                    dataFim
+                });
+
+                const totalAtual =
+                    mapa[servicoId]
+                        .totalDisponivel;
+
+                mapa[servicoId]
+                    .totalDisponivel =
+                        totalAtual === Infinity ||
+                        quantidadeCalculada === Infinity
+                            ? Infinity
+                            : totalAtual +
+                              quantidadeCalculada;
+            });
+        });
+
+        console.debug(
+            "construirMapaServicosPorAssinatura: mapa construído",
+            {
+                clienteId,
+                mapa
+            }
+        );
+
+        return mapa;
+
+    } catch (error) {
+        console.error(
+            "Erro ao construir mapa de serviços por assinatura:",
+            error
+        );
+
+        return mapa;
+    }
+}
+
+/**
+ * aplicarAssinaturasNaListaServicos(
+ *     listaServicos,
+ *     mapaServicosInclusos
+ * )
+ *
+ * Marca cada serviço com:
+ * - fazParteDaAssinatura;
+ * - inclusoAssinatura;
+ * - precoOriginal;
+ * - precoCobrado;
+ * - assinaturasCandidatas.
+ */
+
+export function aplicarAssinaturasNaListaServicos(
+    listaServicos = [],
+    mapaServicosInclusos = {}
+) {
+    if (!Array.isArray(listaServicos)) {
         return;
-      }
-
-      const itens = Array.isArray(data.servicosInclusos) ? data.servicosInclusos : [];
-      itens.forEach(item => {
-        const sid = String(item.servicoId);
-        const qtdRaw = (item.quantidadeRestante != null) ? Number(item.quantidadeRestante) : (item.quantidade != null ? Number(item.quantidade) : 0);
-        const qtd = (qtdRaw === 0) ? Infinity : qtdRaw;
-
-        if (!mapa[sid]) mapa[sid] = { totalDisponivel: 0, assinaturas: [] };
-
-        mapa[sid].assinaturas.push({
-          assinaturaId: docSnap.id,
-          quantidadeRestante: qtdRaw, // 0 significa ilimitado conforme seu modelo
-          planoNome: data.planoNome || null,
-          dataFim: dataFim // pode ser null se não houver timestamp legível
-        });
-
-        mapa[sid].totalDisponivel = (mapa[sid].totalDisponivel === Infinity || qtd === Infinity)
-          ? Infinity
-          : (mapa[sid].totalDisponivel + qtd);
-      });
-    });
-
-    console.debug('construirMapaServicosPorAssinatura: mapa construído', mapa);
-    return mapa;
-  } catch (err) {
-    console.error('Erro construirMapaServicosPorAssinatura:', err);
-    return mapa;
-  }
-}
-
-/**
- * aplicarAssinaturasNaListaServicos(listaServicos, mapaServicosInclusos)
- *
- * Marca cada objeto de serviço com:
- * - fazParteDaAssinatura: boolean (flag principal usada pelo agendamento)
- * - inclusoAssinatura: boolean (compatibilidade visual)
- * - precoOriginal: preserva preço original se não existir
- * - precoCobrado: 0 quando incluso (para UI); atenção: servidor deve validar também
- * - assinaturasCandidatas: lista de assinaturas candidatas para consumo (opcional)
- */
-export function aplicarAssinaturasNaListaServicos(listaServicos = [], mapaServicosInclusos = {}) {
-  if (!Array.isArray(listaServicos)) return;
-  listaServicos.forEach(servico => {
-    const sid = servico.id || servico.servicoId || servico.dataId;
-    if (!sid) return;
-
-    const info = mapaServicosInclusos[String(sid)];
-    const temCredito = info && (info.totalDisponivel === Infinity || info.totalDisponivel > 0);
-
-    if (temCredito) {
-      // marca explicitamente que o serviço faz parte do plano para este usuário
-      servico.fazParteDaAssinatura = true;
-      servico.inclusoAssinatura = true;
-
-      // preserva precoOriginal se não estiver preenchido
-      servico.precoOriginal = (servico.precoOriginal != null)
-        ? servico.precoOriginal
-        : (servico.preco != null ? Number(servico.preco) : null);
-
-      // marca preço exibido como 0 (UI). A decisão definitiva deve ser validada no servidor.
-      servico.precoCobrado = 0;
-
-      // informação útil para escolher qual assinatura consumir (no servidor a escolha deve ser confirmada)
-      servico.assinaturasCandidatas = info.assinaturas.map(a => ({
-        assinaturaId: a.assinaturaId,
-        quantidadeRestante: a.quantidadeRestante,
-        planoNome: a.planoNome,
-        dataFim: a.dataFim
-      }));
-    } else {
-      // garante flags claras quando NÃO incluso
-      servico.fazParteDaAssinatura = false;
-      servico.inclusoAssinatura = false;
-
-      // não sobrescreve precoOriginal; remove precoCobrado 0 caso exista para evitar UI enganosa
-      if (servico.precoOriginal != null) {
-        // restaurar precoCobrado ao preço normal se disponível
-        servico.precoCobrado = servico.precoOriginal;
-      } else if (servico.preco != null) {
-        servico.precoOriginal = Number(servico.preco);
-        servico.precoCobrado = Number(servico.preco);
-      } else {
-        // não há preço conhecido; remove precoCobrado se for 0
-        if (servico.precoCobrado === 0) delete servico.precoCobrado;
-      }
-
-      // limpa candidatas caso existam
-      delete servico.assinaturasCandidatas;
-    }
-  });
-}
-
-/**
- * marcarServicosInclusosParaUsuario(listaServicos, empresaId)
- *
- * - Se usuário não autenticado: garante que todos os serviços sejam marcados como não inclusos.
- * - Se autenticado: constrói mapa de assinaturas válidas e aplica nas listas.
- *
- * Retorna o mapa construído (ou objeto vazio).
- */
-export async function marcarServicosInclusosParaUsuario(listaServicos = [], empresaId) {
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      console.debug('marcarServicosInclusosParaUsuario: usuário não autenticado - ajustando flags para false');
-      // assegura que os serviços não apareçam como inclusos para visitantes
-      if (Array.isArray(listaServicos)) {
-        listaServicos.forEach(servico => {
-          servico.fazParteDaAssinatura = false;
-          servico.inclusoAssinatura = false;
-          // restaura precoCobrado para precoOriginal se houver
-          if (servico.precoOriginal != null) {
-            servico.precoCobrado = servico.precoOriginal;
-          } else if (servico.preco != null) {
-            servico.precoOriginal = Number(servico.preco);
-            servico.precoCobrado = Number(servico.preco);
-          } else {
-            if (servico.precoCobrado === 0) delete servico.precoCobrado;
-          }
-          delete servico.assinaturasCandidatas;
-        });
-      }
-      return {};
     }
 
-    const mapa = await construirMapaServicosPorAssinatura(user.uid, empresaId);
-    aplicarAssinaturasNaListaServicos(listaServicos, mapa);
-    return mapa;
-  } catch (err) {
-    console.error('Erro marcarServicosInclusosParaUsuario:', err);
-    // em caso de erro, tenta garantir flags seguras (não inclusos)
-    if (Array.isArray(listaServicos)) {
-      listaServicos.forEach(servico => {
+    listaServicos.forEach((servico) => {
+        const servicoId =
+            servico.id ||
+            servico.servicoId ||
+            servico.dataId;
+
+        if (!servicoId) {
+            return;
+        }
+
+        const informacaoAssinatura =
+            mapaServicosInclusos[
+                String(servicoId)
+            ];
+
+        const possuiCredito =
+            informacaoAssinatura &&
+            (
+                informacaoAssinatura
+                    .totalDisponivel === Infinity ||
+
+                informacaoAssinatura
+                    .totalDisponivel > 0
+            );
+
+        if (possuiCredito) {
+            servico.fazParteDaAssinatura = true;
+            servico.inclusoAssinatura = true;
+
+            servico.precoOriginal =
+                servico.precoOriginal != null
+                    ? Number(
+                        servico.precoOriginal
+                    )
+                    : servico.preco != null
+                        ? Number(servico.preco)
+                        : null;
+
+            /*
+             * A vitrine exibe preço zero.
+             * A validação definitiva do consumo
+             * deve continuar sendo realizada no servidor.
+             */
+            servico.precoCobrado = 0;
+
+            servico.assinaturasCandidatas =
+                informacaoAssinatura
+                    .assinaturas
+                    .map((assinatura) => ({
+                        assinaturaId:
+                            assinatura.assinaturaId,
+
+                        quantidadeRestante:
+                            assinatura
+                                .quantidadeRestante,
+
+                        planoNome:
+                            assinatura.planoNome,
+
+                        dataFim:
+                            assinatura.dataFim
+                    }));
+
+            return;
+        }
+
         servico.fazParteDaAssinatura = false;
         servico.inclusoAssinatura = false;
+
         if (servico.precoOriginal != null) {
-          servico.precoCobrado = servico.precoOriginal;
+            servico.precoCobrado =
+                Number(servico.precoOriginal);
         } else if (servico.preco != null) {
-          servico.precoOriginal = Number(servico.preco);
-          servico.precoCobrado = Number(servico.preco);
-        } else {
-          if (servico.precoCobrado === 0) delete servico.precoCobrado;
+            servico.precoOriginal =
+                Number(servico.preco);
+
+            servico.precoCobrado =
+                Number(servico.preco);
+        } else if (servico.precoCobrado === 0) {
+            delete servico.precoCobrado;
         }
+
         delete servico.assinaturasCandidatas;
-      });
+    });
+}
+
+/**
+ * marcarServicosInclusosParaUsuario(
+ *     listaServicos,
+ *     empresaId,
+ *     clienteIdOuUsuario
+ * )
+ *
+ * O terceiro parâmetro é opcional.
+ *
+ * Fluxo atual:
+ *
+ * marcarServicosInclusosParaUsuario(
+ *     listaServicos,
+ *     empresaId
+ * );
+ *
+ * Novo fluxo:
+ *
+ * marcarServicosInclusosParaUsuario(
+ *     listaServicos,
+ *     empresaId,
+ *     state.clienteId
+ * );
+ */
+
+export async function marcarServicosInclusosParaUsuario(
+    listaServicos = [],
+    empresaId,
+    clienteIdOuUsuario = null
+) {
+    try {
+        const usuarioAutenticado =
+            auth.currentUser;
+
+        /*
+         * Sem login, nenhum serviço pode aparecer
+         * como incluso em uma assinatura.
+         */
+        if (!usuarioAutenticado) {
+            console.debug(
+                "marcarServicosInclusosParaUsuario: usuário não autenticado"
+            );
+
+            limparAssinaturasDaListaServicos(
+                listaServicos
+            );
+
+            return {};
+        }
+
+        const clienteId =
+            resolverClienteId(
+                clienteIdOuUsuario
+            ) || usuarioAutenticado.uid;
+
+        if (!clienteId || !empresaId) {
+            console.debug(
+                "marcarServicosInclusosParaUsuario: cliente ou empresa não identificado"
+            );
+
+            limparAssinaturasDaListaServicos(
+                listaServicos
+            );
+
+            return {};
+        }
+
+        const mapa =
+            await construirMapaServicosPorAssinatura(
+                clienteId,
+                empresaId
+            );
+
+        aplicarAssinaturasNaListaServicos(
+            listaServicos,
+            mapa
+        );
+
+        return mapa;
+
+    } catch (error) {
+        console.error(
+            "Erro ao marcar serviços incluídos para o usuário:",
+            error
+        );
+
+        /*
+         * Em caso de erro, mantém comportamento seguro:
+         * nenhum serviço aparece gratuitamente.
+         */
+        limparAssinaturasDaListaServicos(
+            listaServicos
+        );
+
+        return {};
     }
-    return {};
-  }
 }
 
 export default {
-  construirMapaServicosPorAssinatura,
-  aplicarAssinaturasNaListaServicos,
-  marcarServicosInclusosParaUsuario
+    construirMapaServicosPorAssinatura,
+    aplicarAssinaturasNaListaServicos,
+    marcarServicosInclusosParaUsuario
 };
