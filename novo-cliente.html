@@ -40,9 +40,21 @@
             font-family: "Poppins", sans-serif;
             color: var(--pet-texto);
             background:
-                radial-gradient(circle at 86% 2%, rgba(255, 201, 40, .14), transparent 24rem),
-                radial-gradient(circle at 48% 3%, rgba(113, 64, 220, .11), transparent 25rem),
-                linear-gradient(180deg, #fcfbff 0%, var(--pet-fundo) 100%);
+                radial-gradient(
+                    circle at 86% 2%,
+                    rgba(255, 201, 40, .14),
+                    transparent 24rem
+                ),
+                radial-gradient(
+                    circle at 48% 3%,
+                    rgba(113, 64, 220, .11),
+                    transparent 25rem
+                ),
+                linear-gradient(
+                    180deg,
+                    #fcfbff 0%,
+                    var(--pet-fundo) 100%
+                );
         }
 
         body {
@@ -146,7 +158,9 @@
             font-size: 14px;
             font-weight: 800;
             text-decoration: none;
-            transition: transform .18s ease, background .18s ease;
+            transition:
+                transform .18s ease,
+                background .18s ease;
         }
 
         .btn-back:hover {
@@ -162,7 +176,12 @@
             padding: 15px 17px;
             border: 1px solid #d9ccfb;
             border-radius: 16px;
-            background: linear-gradient(135deg, #f4efff 0%, #fff 100%);
+            background:
+                linear-gradient(
+                    135deg,
+                    #f4efff 0%,
+                    #fff 100%
+                );
             color: #47346c;
             font-size: 14px;
             line-height: 1.55;
@@ -176,7 +195,9 @@
 
         .content-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(340px, .82fr);
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(340px, .82fr);
             gap: 18px;
             align-items: start;
         }
@@ -192,7 +213,12 @@
         .card-header {
             padding: 18px 20px;
             border-bottom: 1px solid #eee8f8;
-            background: linear-gradient(135deg, #fbf9ff 0%, #fff 100%);
+            background:
+                linear-gradient(
+                    135deg,
+                    #fbf9ff 0%,
+                    #fff 100%
+                );
         }
 
         .card-header h2 {
@@ -222,7 +248,8 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
             gap: 15px;
         }
 
@@ -257,12 +284,15 @@
             color: var(--pet-texto);
             background: #fff;
             font: 600 15px "Poppins", sans-serif;
-            transition: border-color .18s ease, box-shadow .18s ease;
+            transition:
+                border-color .18s ease,
+                box-shadow .18s ease;
         }
 
         .form-group input:focus {
             border-color: var(--pet-roxo-claro);
-            box-shadow: 0 0 0 3px rgba(113, 64, 220, .11);
+            box-shadow:
+                0 0 0 3px rgba(113, 64, 220, .11);
         }
 
         .form-helper {
@@ -321,7 +351,10 @@
             cursor: pointer;
             font: 800 14px "Poppins", sans-serif;
             text-decoration: none;
-            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                background .18s ease;
         }
 
         .btn:hover {
@@ -333,7 +366,8 @@
             border: 1px solid #efc02f;
             color: #2b1558;
             background: var(--pet-amarelo);
-            box-shadow: 0 8px 18px rgba(255, 201, 40, .20);
+            box-shadow:
+                0 8px 18px rgba(255, 201, 40, .20);
         }
 
         .btn-submit:hover {
@@ -402,8 +436,14 @@
             margin-bottom: 14px;
             border: 1px solid #d9ccfb;
             color: #fff;
-            background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-claro));
-            box-shadow: 0 8px 20px rgba(85, 34, 182, .18);
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--pet-roxo),
+                    var(--pet-roxo-claro)
+                );
+            box-shadow:
+                0 8px 20px rgba(85, 34, 182, .18);
         }
 
         #lista-pets-cliente {
@@ -415,6 +455,59 @@
             text-align: center;
             color: var(--pet-muted);
             font-size: 13px;
+        }
+
+        /*
+         * CORREÇÃO DA FOTO DO PET
+         * Aplicada somente dentro da tela Novo Cliente.
+         */
+
+        #lista-pets-cliente .pet-card-corpo {
+            display: flex !important;
+            align-items: center !important;
+            gap: 14px !important;
+            padding: 14px !important;
+        }
+
+        #lista-pets-cliente .pet-foto-box {
+            width: 86px !important;
+            height: 86px !important;
+            min-width: 86px !important;
+            min-height: 86px !important;
+            max-width: 86px !important;
+            max-height: 86px !important;
+            flex: 0 0 86px !important;
+            overflow: hidden !important;
+            border-radius: 18px !important;
+            background: #eef2ff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        #lista-pets-cliente .pet-foto-img {
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        #lista-pets-cliente .pet-card-info {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+
+        #lista-pets-cliente .pet-card-info h3 {
+            margin: 0 !important;
         }
 
         @media (max-width: 980px) {
@@ -507,29 +600,75 @@
                 min-height: 46px;
                 font-size: 14px;
             }
+
+            #lista-pets-cliente .pet-card-corpo {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 12px !important;
+                padding: 12px !important;
+            }
+
+            #lista-pets-cliente .pet-foto-box {
+                width: 76px !important;
+                height: 76px !important;
+                min-width: 76px !important;
+                min-height: 76px !important;
+                max-width: 76px !important;
+                max-height: 76px !important;
+                flex: 0 0 76px !important;
+                border-radius: 16px !important;
+            }
+
+            #lista-pets-cliente .pet-foto-img {
+                width: 100% !important;
+                height: 100% !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: cover !important;
+                object-position: center !important;
+            }
+
+            #lista-pets-cliente .pet-card-info {
+                width: calc(100% - 88px) !important;
+                min-width: 0 !important;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="sidebar-placeholder"></div>
 
     <main class="main-content">
         <div class="page-shell">
+
             <header class="page-header">
                 <div class="page-title-wrap">
+
                     <div class="page-icon">
                         <i class="fa-solid fa-user-plus"></i>
                     </div>
 
                     <div>
-                        <h1 id="form-titulo">Cadastro Manual de Cliente</h1>
+                        <h1 id="form-titulo">
+                            Cadastro Manual de Cliente
+                        </h1>
+
                         <p id="form-subtitulo">
                             Cadastre o tutor e depois vincule um ou mais pets.
                         </p>
                     </div>
+
                 </div>
 
-                <a href="clientes.html" class="btn-back" aria-label="Voltar para Clientes">
+                <a
+                    href="clientes.html"
+                    class="btn-back"
+                    aria-label="Voltar para Clientes"
+                >
                     <i class="fa-solid fa-arrow-left"></i>
                     Voltar para Clientes
                 </a>
@@ -537,30 +676,45 @@
 
             <div class="workflow-note">
                 <i class="fa-solid fa-circle-info"></i>
+
                 <div>
-                    O cadastro manual ficará preparado para futura vinculação com a conta do cliente.
-                    Quando ele entrar pela vitrine, o sistema poderá completar os dados que estiverem faltando,
-                    sem perder os pets cadastrados pelo estabelecimento.
+                    O cadastro manual ficará preparado para futura
+                    vinculação com a conta do cliente. Quando ele entrar
+                    pela vitrine, o sistema poderá completar os dados
+                    que estiverem faltando, sem perder os pets
+                    cadastrados pelo estabelecimento.
                 </div>
             </div>
 
             <div class="content-grid">
+
                 <section class="card">
                     <div class="card-header">
                         <h2>
                             <i class="fa-solid fa-address-card"></i>
                             Dados do tutor
                         </h2>
-                        <p>Nome obrigatório e pelo menos um contato: telefone ou e-mail.</p>
+
+                        <p>
+                            Nome obrigatório e pelo menos um contato:
+                            telefone ou e-mail.
+                        </p>
                     </div>
 
-                    <form id="form-cliente" autocomplete="off">
+                    <form
+                        id="form-cliente"
+                        autocomplete="off"
+                    >
                         <div class="card-body">
+
                             <div class="form-grid">
+
                                 <div class="form-group full">
                                     <label for="nome-cliente">
-                                        Nome completo <span class="obrigatorio">*</span>
+                                        Nome completo
+                                        <span class="obrigatorio">*</span>
                                     </label>
+
                                     <input
                                         type="text"
                                         id="nome-cliente"
@@ -573,7 +727,10 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="telefone-cliente">Telefone</label>
+                                    <label for="telefone-cliente">
+                                        Telefone
+                                    </label>
+
                                     <input
                                         type="tel"
                                         id="telefone-cliente"
@@ -586,7 +743,10 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="email-cliente">E-mail</label>
+                                    <label for="email-cliente">
+                                        E-mail
+                                    </label>
+
                                     <input
                                         type="email"
                                         id="email-cliente"
@@ -599,30 +759,46 @@
 
                                 <div class="contact-rule">
                                     <i class="fa-solid fa-shield-halved"></i>
+
                                     <span>
-                                        Informe pelo menos telefone ou e-mail. Esses dados serão usados
-                                        para evitar duplicidade e vincular a conta futuramente.
+                                        Informe pelo menos telefone ou
+                                        e-mail. Esses dados serão usados
+                                        para evitar duplicidade e vincular
+                                        a conta futuramente.
                                     </span>
                                 </div>
 
                                 <div class="status-box">
                                     <i class="fa-solid fa-link"></i>
+
                                     <span id="status-vinculo-cliente">
-                                        Cadastro manual ainda sem conta online vinculada.
+                                        Cadastro manual ainda sem conta
+                                        online vinculada.
                                     </span>
                                 </div>
+
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" id="btn-salvar" class="btn btn-submit">
+
+                                <button
+                                    type="submit"
+                                    id="btn-salvar"
+                                    class="btn btn-submit"
+                                >
                                     <i class="fa-solid fa-floppy-disk"></i>
                                     Salvar cliente e continuar
                                 </button>
 
-                                <a href="clientes.html" id="btn-concluir" class="btn btn-secondary">
+                                <a
+                                    href="clientes.html"
+                                    id="btn-concluir"
+                                    class="btn btn-secondary"
+                                >
                                     <i class="fa-solid fa-check"></i>
                                     Concluir
                                 </a>
+
                             </div>
 
                             <button
@@ -634,6 +810,7 @@
                                 <i class="fa-solid fa-trash"></i>
                                 Excluir cliente
                             </button>
+
                         </div>
                     </form>
                 </section>
@@ -644,63 +821,116 @@
                             <i class="fa-solid fa-paw"></i>
                             Pets do cliente
                         </h2>
-                        <p>Mesmo cadastro e mesmo caminho utilizado pela vitrine.</p>
+
+                        <p>
+                            Mesmo cadastro e mesmo caminho utilizado
+                            pela vitrine.
+                        </p>
                     </div>
 
                     <div class="card-body">
-                        <div id="pet-section-blocked" class="pet-section-blocked">
+
+                        <div
+                            id="pet-section-blocked"
+                            class="pet-section-blocked"
+                        >
                             <i class="fa-solid fa-lock"></i>
-                            <strong>Primeiro salve o tutor</strong>
-                            O cadastro dos pets será liberado após a criação do cliente.
+
+                            <strong>
+                                Primeiro salve o tutor
+                            </strong>
+
+                            O cadastro dos pets será liberado após
+                            a criação do cliente.
                         </div>
 
-                        <div id="pet-tools" class="pet-tools">
-                            <button type="button" id="btn-adicionar-pet" class="btn">
+                        <div
+                            id="pet-tools"
+                            class="pet-tools"
+                        >
+                            <button
+                                type="button"
+                                id="btn-adicionar-pet"
+                                class="btn"
+                            >
                                 <i class="fa-solid fa-plus"></i>
                                 Adicionar pet
                             </button>
 
                             <div id="lista-pets-cliente">
-                                <div class="loading-pets">Carregando pets...</div>
+                                <div class="loading-pets">
+                                    Carregando pets...
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </section>
+
             </div>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script type="module" src="novo-cliente.js"></script>
+
+    <script
+        type="module"
+        src="novo-cliente.js"
+    ></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch("menu-lateral.html")
-                .then(res => {
-                    if (!res.ok) throw new Error("Erro ao carregar menu.");
-                    return res.text();
-                })
-                .then(html => {
-                    const sidebar = document.getElementById("sidebar-placeholder");
-                    if (!sidebar) return;
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                fetch("menu-lateral.html")
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(
+                                "Erro ao carregar menu."
+                            );
+                        }
 
-                    sidebar.innerHTML = html;
+                        return res.text();
+                    })
+                    .then(html => {
+                        const sidebar =
+                            document.getElementById(
+                                "sidebar-placeholder"
+                            );
 
-                    document
-                        .querySelectorAll(".sidebar-links a")
-                        .forEach(link => link.classList.remove("active"));
+                        if (!sidebar) return;
 
-                    const clientesLink = document.querySelector(
-                        '.sidebar-links a[href="clientes.html"]'
-                    );
+                        sidebar.innerHTML = html;
 
-                    if (clientesLink) clientesLink.classList.add("active");
-                    if (window.ativarLogout) window.ativarLogout();
-                })
-                .catch(error => {
-                    console.error("Erro ao carregar menu lateral:", error);
-                });
-        });
+                        document
+                            .querySelectorAll(
+                                ".sidebar-links a"
+                            )
+                            .forEach(link => {
+                                link.classList.remove("active");
+                            });
+
+                        const clientesLink =
+                            document.querySelector(
+                                '.sidebar-links a[href="clientes.html"]'
+                            );
+
+                        if (clientesLink) {
+                            clientesLink.classList.add("active");
+                        }
+
+                        if (window.ativarLogout) {
+                            window.ativarLogout();
+                        }
+                    })
+                    .catch(error => {
+                        console.error(
+                            "Erro ao carregar menu lateral:",
+                            error
+                        );
+                    });
+            }
+        );
     </script>
 </body>
 </html>
