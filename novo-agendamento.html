@@ -3,45 +3,481 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pronti - Novo Agendamento</title>
+    <title>Pronti Pet - Novo Agendamento</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <link href="style.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        :root {
+            --pet-roxo: #5522b6;
+            --pet-roxo-2: #7140dc;
+            --pet-roxo-escuro: #201042;
+            --pet-amarelo: #ffc928;
+            --pet-fundo: #f8f5ff;
+            --pet-card: #ffffff;
+            --pet-borda: #e7def8;
+            --pet-texto: #17113d;
+            --pet-muted: #726b86;
+            --pet-verde: #16a34a;
+            --pet-azul: #2563eb;
+            --shadow: 0 14px 34px rgba(32, 16, 66, .08);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--pet-texto);
+            background:
+                radial-gradient(circle at 84% 4%, rgba(255, 201, 40, .13), transparent 22rem),
+                radial-gradient(circle at 50% 7%, rgba(113, 64, 220, .11), transparent 24rem),
+                linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
+        }
+
+        #sidebar-placeholder {
+            width: 270px;
+            min-width: 270px;
+            min-height: 100vh;
+            flex-shrink: 0;
+            background: transparent;
+        }
+
+        .main-content {
+            flex: 1;
+            width: calc(100% - 270px);
+            max-width: 1180px;
+            min-width: 0;
+            margin: 0 auto;
+            padding: 24px 28px 70px;
+            background: transparent !important;
+        }
+
+        .page-header {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 16px;
+            padding: 18px 20px;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(248,244,255,.98));
+            border: 1px solid var(--pet-borda);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .page-header::after {
+            content: "🐾";
+            position: absolute;
+            right: 126px;
+            bottom: -22px;
+            font-size: 4.2rem;
+            opacity: .05;
+            transform: rotate(-18deg);
+            pointer-events: none;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            color: var(--pet-roxo-escuro);
+            font-size: clamp(1.45rem, 2.4vw, 2rem);
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -.035em;
+        }
+
+        .page-header h1::before {
+            content: "\f271";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            display: inline-grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin-right: 12px;
+            border-radius: 14px;
+            vertical-align: middle;
+            color: var(--pet-roxo);
+            background: #f1eaff;
+            box-shadow: inset 0 0 0 1px #dfd2fb;
+        }
+
+        .btn {
+            min-height: 40px;
+            padding: 9px 14px;
+            border: 1px solid var(--pet-borda);
+            border-radius: 12px;
+            cursor: pointer;
+            font: 800 .72rem 'Poppins', sans-serif;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .page-header .btn {
+            position: relative;
+            z-index: 2;
+            color: var(--pet-roxo);
+            background: #fff;
+            box-shadow: 0 7px 18px rgba(32, 16, 66, .05);
+        }
+
+        .page-header .btn:hover,
+        .page-header .btn:active {
+            transform: translateY(-1px);
+            background: #f7f2ff;
+        }
+
+        #form-agendamento {
+            overflow: hidden;
+            border: 1px solid var(--pet-borda);
+            border-radius: 20px;
+            background: rgba(255,255,255,.97);
+            box-shadow: 0 12px 30px rgba(32, 16, 66, .07);
+        }
+
+        #form-agendamento .card-info {
+            padding: 18px !important;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .form-group {
+            min-width: 0;
+            margin: 0;
+            padding: 14px;
+            border: 1px solid #eee8f8;
+            border-radius: 15px;
+            background: linear-gradient(180deg, #fbf9ff 0%, #ffffff 100%);
+        }
+
+        .form-group:first-child,
+        .form-group:last-child {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--pet-roxo-escuro);
+            font-size: .69rem;
+            line-height: 1.35;
+            font-weight: 900;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            min-height: 43px;
+            padding: 10px 12px;
+            outline: none;
+            color: var(--pet-texto);
+            background: #fff;
+            border: 1px solid #ddd1fb;
+            border-radius: 11px;
+            font: 600 .76rem 'Poppins', sans-serif;
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--pet-roxo-2);
+            box-shadow: 0 0 0 3px rgba(113, 64, 220, .11);
+        }
+
+        .form-input:disabled,
+        .form-select:disabled {
+            cursor: not-allowed;
+            color: #918aa0;
+            background: #f5f3f8;
+        }
+
+        .aviso-multiplo {
+            margin: 0 0 7px !important;
+            padding: 8px 10px;
+            color: var(--pet-azul) !important;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            font-size: .66rem;
+            font-weight: 800 !important;
+        }
+
+        #grade-horarios {
+            min-height: 78px;
+            padding: 11px;
+            border: 1px dashed #d8cdf2;
+            border-radius: 12px;
+            background: #fbf9ff;
+        }
+
+        .aviso-horarios {
+            margin: 0;
+            padding: 16px 8px;
+            text-align: center;
+            color: var(--pet-muted);
+            font-size: .68rem;
+            font-weight: 700;
+        }
+
+        #grade-horarios button,
+        #grade-horarios .horario-btn {
+            min-height: 36px;
+            margin: 4px;
+            padding: 7px 11px;
+            color: var(--pet-roxo);
+            background: #f3edff;
+            border: 1px solid #d9ccfb;
+            border-radius: 10px;
+            font: 800 .65rem 'Poppins', sans-serif;
+            cursor: pointer;
+        }
+
+        #grade-horarios button.selecionado,
+        #grade-horarios button.active,
+        #grade-horarios .horario-btn.selecionado {
+            color: #fff;
+            background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
+            border-color: transparent;
+        }
+
+        .resumo-agendamento {
+            grid-column: 1 / -1;
+            padding: 14px;
+            border: 1px solid #eadcf7;
+            border-left: 4px solid var(--pet-amarelo);
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+        }
+
+        .resumo-linha {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 7px;
+            color: var(--pet-muted);
+            font-size: .71rem;
+            font-weight: 700;
+        }
+
+        .resumo-linha.total {
+            margin: 0;
+            color: var(--pet-roxo-escuro);
+            font-size: .84rem;
+            font-weight: 900;
+        }
+
+        .desconto-aplicado {
+            color: var(--pet-verde);
+        }
+
+        .resumo-agendamento hr {
+            margin: 10px 0;
+            border: 0;
+            border-top: 1px solid #eee4d2;
+        }
+
+        .card-actions {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #eee8f8;
+            background: #fbf9ff;
+        }
+
+        .btn-primary {
+            min-width: 190px;
+            color: #2b1558;
+            background: var(--pet-amarelo);
+            border-color: #efc02f;
+            box-shadow: 0 8px 18px rgba(255, 201, 40, .20);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:active {
+            transform: translateY(-1px);
+            background: #ffd650;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                display: block;
+            }
+
+            #sidebar-placeholder {
+                width: 100%;
+                min-width: 0;
+                min-height: 0;
+            }
+
+            .main-content {
+                width: 100%;
+                max-width: 900px;
+                padding: 76px 12px 55px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .page-header {
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 8px;
+                margin-bottom: 10px;
+                padding: 12px;
+                border-radius: 16px;
+            }
+
+            .page-header h1 {
+                font-size: 1rem;
+                white-space: nowrap;
+            }
+
+            .page-header h1::before {
+                width: 36px;
+                height: 36px;
+                margin-right: 8px;
+                border-radius: 11px;
+                font-size: .8rem;
+            }
+
+            .page-header .btn {
+                width: 38px;
+                min-height: 36px;
+                padding: 0;
+                font-size: 0;
+            }
+
+            .page-header .btn i {
+                font-size: .72rem;
+            }
+
+            #form-agendamento {
+                border-radius: 16px;
+            }
+
+            #form-agendamento .card-info {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                padding: 10px !important;
+            }
+
+            .form-group,
+            .form-group:first-child,
+            .form-group:last-child,
+            .resumo-agendamento {
+                grid-column: 1;
+            }
+
+            .form-group {
+                padding: 10px;
+                border-radius: 12px;
+            }
+
+            .form-group label {
+                margin-bottom: 5px;
+                font-size: .59rem;
+            }
+
+            .form-input,
+            .form-select {
+                min-height: 39px;
+                padding: 8px 10px;
+                border-radius: 10px;
+                font-size: .65rem;
+            }
+
+            #grade-horarios {
+                min-height: 68px;
+                padding: 7px;
+            }
+
+            .aviso-horarios {
+                font-size: .58rem;
+            }
+
+            .resumo-agendamento {
+                padding: 10px;
+                border-radius: 12px;
+            }
+
+            .resumo-linha {
+                font-size: .61rem;
+            }
+
+            .resumo-linha.total {
+                font-size: .72rem;
+            }
+
+            .card-actions {
+                padding: 10px;
+            }
+
+            .btn-primary {
+                width: 100%;
+                min-width: 0;
+                min-height: 40px;
+                font-size: .66rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="sidebar-placeholder"></div>
 
     <main class="main-content">
-        
         <div class="page-header">
             <h1>Novo Agendamento</h1>
-            <a href="agenda.html" class="btn">
+
+            <a href="agenda.html" class="btn" aria-label="Voltar para Agenda">
                 <i class="fa-solid fa-arrow-left"></i>
                 Voltar para Agenda
             </a>
         </div>
-        
+
         <form id="form-agendamento" class="card" autocomplete="off">
             <div class="card-info" style="padding: 24px;">
                 <div class="form-group">
                     <label for="cliente">Nome do Cliente:</label>
                     <input type="text" id="cliente" name="cliente" required class="form-input">
                 </div>
+
                 <div class="form-group">
                     <label for="dia">1. Escolha o Dia:</label>
                     <input type="date" id="dia" name="dia" required class="form-input">
                 </div>
+
                 <div class="form-group">
                     <label for="servico">2. Escolha o Serviço:</label>
+
                     <div id="aviso-multiplo" class="aviso-multiplo" style="display:none; color: #0ea5e9; font-weight: 600; margin-bottom: 6px;">
-                      <i class="fa fa-layer-group"></i>
-                      Modo múltiplos serviços ativado!
+                        <i class="fa fa-layer-group"></i>
+                        Modo múltiplos serviços ativado!
                     </div>
+
                     <select id="servico" name="servico" required class="form-select" disabled>
                         <option value="">Primeiro, selecione um dia</option>
                     </select>
@@ -52,59 +488,81 @@
                         <span>Preço Original:</span>
                         <span id="preco-original"></span>
                     </div>
+
                     <div id="linha-desconto" class="resumo-linha desconto-aplicado" style="display: none;">
                         <span id="desconto-nome"></span>
                         <span id="desconto-valor"></span>
                     </div>
+
                     <hr>
+
                     <div class="resumo-linha total">
                         <span>Preço Final:</span>
                         <strong id="preco-final"></strong>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label for="profissional">3. Escolha o Profissional:</label>
+
                     <select id="profissional" name="profissional" required class="form-select" disabled>
                         <option value="">Primeiro, selecione um serviço</option>
                     </select>
                 </div>
+
                 <div class="form-group">
                     <label>4. Escolha o Horário Disponível:</label>
+
                     <div id="grade-horarios">
                         <p class="aviso-horarios">Preencha os campos acima para ver os horários.</p>
                     </div>
+
                     <input type="hidden" id="horario-final" name="horario-final">
                 </div>
             </div>
+
             <div class="card-actions">
-                 <button type="submit" class="btn btn-primary">Salvar Agendamento</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Salvar Agendamento
+                </button>
             </div>
         </form>
     </main>
 
     <script>
-    // Carrega o menu lateral e destaca o link da agenda
-    document.addEventListener("DOMContentLoaded", function() {
-      const sidebarPlaceholder = document.getElementById('sidebar-placeholder');
-      if (sidebarPlaceholder) {
-        fetch('menu-lateral.html')
-          .then(res => res.ok ? res.text() : Promise.reject('Erro ao carregar menu.'))
-          .then(html => {
-            sidebarPlaceholder.innerHTML = html;
-            const activeLink = document.querySelector('.sidebar-links a[href="agenda.html"]');
-            if (activeLink) {
-              document.querySelectorAll('.sidebar-links a.active').forEach(link => link.classList.remove('active'));
-              activeLink.classList.add('active');
+        // Carrega o menu lateral e destaca o link da agenda.
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebarPlaceholder = document.getElementById("sidebar-placeholder");
+
+            if (sidebarPlaceholder) {
+                fetch("menu-lateral.html")
+                    .then(res => res.ok ? res.text() : Promise.reject("Erro ao carregar menu."))
+                    .then(html => {
+                        sidebarPlaceholder.innerHTML = html;
+
+                        const activeLink = document.querySelector(
+                            '.sidebar-links a[href="agenda.html"]'
+                        );
+
+                        if (activeLink) {
+                            document
+                                .querySelectorAll(".sidebar-links a.active")
+                                .forEach(link => link.classList.remove("active"));
+
+                            activeLink.classList.add("active");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro ao carregar o menu lateral:", error);
+
+                        sidebarPlaceholder.innerHTML =
+                            '<p style="color:red; padding:20px;">Erro ao carregar menu.</p>';
+                    });
             }
-          })
-          .catch(error => {
-            console.error('Erro ao carregar o menu lateral:', error);
-            sidebarPlaceholder.innerHTML = '<p style="color:red; padding: 20px;">Erro ao carregar menu.</p>';
-          });
-      }
-    });
+        });
     </script>
-    
+
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="novo-agendamento.js" type="module"></script>
 </body>
