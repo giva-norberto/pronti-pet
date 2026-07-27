@@ -37,7 +37,6 @@ jobs:
           fi
           echo "::add-mask::$FIREBASE_SERVICE_ACCOUNT_VALUE"
           echo "service_account=$FIREBASE_SERVICE_ACCOUNT_VALUE" >> "$GITHUB_OUTPUT"
-          echo "FIREBASE_SERVICE_ACCOUNT_VALUE=$FIREBASE_SERVICE_ACCOUNT_VALUE" >> "$GITHUB_ENV"
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -52,7 +51,7 @@ jobs:
 
       - name: Setup Firebase credentials
         run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT_VALUE" > $HOME/firebase-credentials.json
+          echo '${{ steps.firebase-service-account.outputs.service_account }}' > $HOME/firebase-credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
       - name: Validate Functions code
