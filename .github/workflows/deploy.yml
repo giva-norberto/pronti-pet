@@ -28,7 +28,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET || secrets.FIREBASE_SERVICE_ACCOUNT }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET != '' && secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET || secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: pronti-pet
           channelId: live
 
@@ -37,7 +37,7 @@ jobs:
 
       - name: Setup Firebase credentials
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET || secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase-credentials.json
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET != '' && secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET || secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase-credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
       - name: Validate Functions code
