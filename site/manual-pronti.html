@@ -66,25 +66,34 @@
     }
 
     .sidebar-brand {
-      display: block;
-      padding: 0 28px 12px;
-      margin-bottom: 8px;
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 18px;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       text-decoration: none;
+      background: #ffffff;
+      border: 1px solid rgba(85, 34, 182, .14);
+      border-radius: 17px;
+      box-shadow: 0 8px 20px rgba(32, 16, 66, .14);
     }
 
     .sidebar-brand img {
-      width: 100%;
-      max-width: 148px;
-      min-height: 50px;
+      width: 56px;
+      height: 56px;
+      min-height: 0;
+      max-width: none;
       display: block;
-      margin: 0 auto;
-      object-fit: contain;
-      padding: 7px;
-      border: 3px solid rgba(255, 201, 40, .95);
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 12px 28px rgba(32, 16, 66, .20);
+      margin: 0;
+      padding: 0;
+      object-fit: cover;
+      border: 0;
+      border-radius: 13px;
+      background: #000;
+      box-shadow: none;
     }
 
     .sidebar hr {
@@ -285,11 +294,18 @@
       }
 
       .sidebar-brand {
-        padding: 0 0 10px;
+        width: 52px;
+        height: 52px;
+        margin-bottom: 12px;
+        padding: 4px;
+        border-radius: 14px;
       }
 
       .sidebar-brand img {
-        max-width: 105px;
+        width: 42px;
+        height: 42px;
+        max-width: none;
+        border-radius: 10px;
       }
 
       .sidebar hr {
@@ -343,7 +359,7 @@
 
     @media (max-width: 480px) {
       .sidebar-brand img {
-        max-width: 92px;
+        max-width: none;
       }
 
       .nav-item {
