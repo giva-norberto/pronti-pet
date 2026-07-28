@@ -1,3 +1,8 @@
+Biblioteca
+/
+equipe-pet-modal-mobile-corrigido.css
+
+
 /* ============================
    Arquivo: equipe.css
    Ajustes mínimos para corrigir scroll/modal no mobile (evitar "dança" e travamentos)
@@ -521,10 +526,12 @@ body {
 }
 
 /* ===================================================================
-   TEMA PRONTI PET — EQUIPE
-   Camada visual adicionada ao final para preservar toda a lógica,
-   modais, responsividade e comportamento já existentes.
-=================================================================== */
+   TEMA VISUAL PRONTI PET — CAMADA SEGURA
+   -------------------------------------------------------------------
+   Esta seção altera somente aparência.
+   Não modifica layout, grid, dimensões, posições, overflow, rolagem,
+   comportamento dos modais, responsividade ou integração com equipe.js.
+   =================================================================== */
 
 :root {
     --pet-roxo: #5522b6;
@@ -532,7 +539,6 @@ body {
     --pet-roxo-escuro: #201042;
     --pet-amarelo: #ffc928;
     --pet-fundo: #f8f5ff;
-    --pet-card: #ffffff;
     --pet-borda: #e7def8;
     --pet-texto: #17113d;
     --pet-muted: #726b86;
@@ -540,310 +546,111 @@ body {
     --pet-vermelho: #dc2626;
 }
 
-html,
+/* Fundo geral da página */
 body {
-    min-height: 100%;
-}
-
-body {
-    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--pet-texto);
     background:
-        radial-gradient(circle at 100% 0%, rgba(255, 201, 40, .13), transparent 19rem),
-        radial-gradient(circle at 14% 18%, rgba(113, 64, 220, .11), transparent 24rem),
+        radial-gradient(circle at 92% 5%, rgba(255, 201, 40, 0.14), transparent 20rem),
+        radial-gradient(circle at 10% 18%, rgba(113, 64, 220, 0.12), transparent 24rem),
         linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
-    background-attachment: fixed;
+    color: var(--pet-texto);
 }
 
+/* Estrutura externa: apenas acabamento */
 .container {
-    position: relative;
-    background: rgba(255, 255, 255, .78);
-    border: 1px solid rgba(231, 222, 248, .95);
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(32, 16, 66, .10);
-    backdrop-filter: blur(8px);
+    border: 1px solid var(--pet-borda);
+    box-shadow: 0 18px 45px rgba(32, 16, 66, 0.10);
 }
 
+/* Cabeçalho Pet */
 .header {
-    position: relative;
-    overflow: hidden;
-    color: var(--pet-roxo-escuro);
-    text-align: left;
     background:
-        radial-gradient(circle at 92% 20%, rgba(255, 201, 40, .22), transparent 12rem),
-        linear-gradient(135deg, #ffffff 0%, #f7f1ff 100%);
-    border-bottom: 1px solid var(--pet-borda);
-    border-top: 5px solid var(--pet-amarelo);
-    padding: 28px 32px;
-}
-
-.header::before {
-    content: "🐾";
-    position: absolute;
-    right: 28px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-10deg);
-    font-size: 4.6rem;
-    opacity: .12;
-    pointer-events: none;
-}
-
-.header::after {
-    content: "Equipe Pronti Pet";
-    display: inline-flex;
-    align-items: center;
-    margin-top: 12px;
-    padding: 6px 11px;
-    color: var(--pet-roxo);
-    background: #f4efff;
-    border: 1px solid #dfd3fb;
-    border-radius: 999px;
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .03em;
+        radial-gradient(circle at 90% 20%, rgba(255, 201, 40, 0.22), transparent 11rem),
+        linear-gradient(135deg, var(--pet-roxo) 0%, var(--pet-roxo-2) 100%);
+    color: #ffffff;
+    border-bottom: 4px solid var(--pet-amarelo);
 }
 
 .header h1 {
-    position: relative;
-    z-index: 1;
-    color: var(--pet-roxo-escuro);
-    font-size: clamp(1.55rem, 3vw, 2.25rem);
-    line-height: 1.15;
-    font-weight: 900;
-    letter-spacing: -.03em;
+    color: #ffffff;
+    font-weight: 800;
 }
 
 .header p {
-    position: relative;
-    z-index: 1;
-    max-width: 650px;
-    margin-top: 7px;
-    color: var(--pet-muted);
-    font-size: .98rem;
-    line-height: 1.5;
-    opacity: 1;
+    color: rgba(255, 255, 255, 0.86);
 }
 
-.content {
-    padding: 28px 32px 34px;
-}
-
-.actions {
-    padding: 16px;
-    margin-bottom: 20px;
-    background: rgba(255, 255, 255, .95);
-    border: 1px solid var(--pet-borda);
-    border-radius: 18px;
-    box-shadow: 0 10px 26px rgba(32, 16, 66, .06);
-}
-
-.actions h2 {
-    margin-right: auto;
+.actions h2,
+.modal-header h2,
+.profissional-nome,
+.dia-nome,
+.form-group label,
+.tab-content h3,
+.tab-content h4 {
     color: var(--pet-roxo-escuro);
-    font-size: 1.12rem;
-    font-weight: 900;
 }
 
-.actions h2::before {
-    content: "🐾";
-    margin-right: 8px;
-    font-size: .92rem;
-}
-
-.btn {
-    min-height: 38px;
-    height: auto;
-    padding: 9px 14px;
-    border-radius: 11px;
-    font-weight: 800;
-    line-height: 1.1;
-    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
-    box-shadow: 0 8px 18px rgba(85, 34, 182, .16);
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 11px 24px rgba(85, 34, 182, .22);
-    filter: brightness(1.03);
-}
-
+/* Botões: somente identidade visual */
+.btn,
+.btn-success,
 .btn-info,
-.btn-success {
-    color: #fff;
-    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
-}
-
-.btn-secondary {
-    color: #5d5670;
-    background: #f4f1f8;
-    border: 1px solid #ddd6e7;
-    box-shadow: none;
-}
-
 .btn-profile {
-    color: #fff;
-    background: linear-gradient(135deg, #6b35ca, #8b5cf6);
+    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
+    color: #ffffff;
+}
+
+.btn:hover,
+.btn-success:hover,
+.btn-info:hover,
+.btn-profile:hover {
+    box-shadow: 0 10px 22px rgba(85, 34, 182, 0.22);
 }
 
 .btn-edit {
-    color: #5f4300;
-    background: linear-gradient(135deg, #ffe37d, var(--pet-amarelo));
+    background: linear-gradient(135deg, #ffe27a, var(--pet-amarelo));
+    color: var(--pet-roxo-escuro);
+}
+
+.btn-secondary {
+    background: #ede8f5;
+    color: #5f5871;
+    border: 1px solid #d8cdec;
 }
 
 .btn-danger {
-    color: #fff;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, #ef4444, var(--pet-vermelho));
 }
 
-.equipe-grid {
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    gap: 16px;
-}
-
+/* Cards dos profissionais */
 .profissional-card {
-    overflow: hidden;
-    padding: 18px;
-    gap: 11px;
-    background: linear-gradient(180deg, #ffffff 0%, #fcfaff 100%);
-    border: 1px solid var(--pet-borda);
-    border-top: 4px solid var(--pet-roxo);
-    border-radius: 18px;
-    box-shadow: 0 11px 28px rgba(32, 16, 66, .07);
-}
-
-.profissional-card::after {
-    content: "🐾";
-    position: absolute;
-    right: 14px;
-    top: 12px;
-    font-size: 1.25rem;
-    opacity: .12;
-    pointer-events: none;
+    border-color: var(--pet-borda);
+    box-shadow: 0 8px 24px rgba(32, 16, 66, 0.07);
 }
 
 .profissional-card:hover {
-    transform: translateY(-3px);
-    border-color: #d9ccf7;
-    box-shadow: 0 16px 34px rgba(32, 16, 66, .12);
+    box-shadow: 0 15px 32px rgba(32, 16, 66, 0.13);
 }
 
 .profissional-foto {
-    width: 68px;
-    height: 68px;
-    border: 3px solid #fff;
-    outline: 3px solid var(--pet-amarelo);
-    box-shadow: 0 8px 18px rgba(32, 16, 66, .12);
-}
-
-.profissional-nome {
-    color: var(--pet-roxo-escuro);
-    font-size: 1.08rem;
-    font-weight: 900;
+    border-color: var(--pet-amarelo);
+    box-shadow: 0 0 0 3px rgba(85, 34, 182, 0.10);
 }
 
 .profissional-status {
-    color: #fff;
     background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
-    border-radius: 999px;
-    font-weight: 800;
-    box-shadow: 0 5px 12px rgba(85, 34, 182, .13);
 }
 
-.profissional-actions {
-    padding-top: 12px;
-    border-top: 1px solid #eee8f8;
-}
-
-.modal {
-    background: rgba(32, 16, 66, .58);
-    backdrop-filter: blur(6px);
-}
-
-.modal-content {
-    background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
-    border: 1px solid var(--pet-borda);
-    border-top: 5px solid var(--pet-amarelo);
-    border-radius: 22px;
-    box-shadow: 0 24px 65px rgba(32, 16, 66, .25);
-}
-
-.modal-header {
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee8f8;
-}
-
-.modal-header h2 {
-    color: var(--pet-roxo-escuro);
-    font-weight: 900;
-}
-
-.modal-header p,
-.tab-content > p,
-.form-group small {
-    color: var(--pet-muted) !important;
-}
-
-.form-group label {
-    color: var(--pet-roxo-escuro);
-    font-weight: 800;
-}
-
-.form-control {
+/* Campos e áreas internas */
+.form-control,
+.horario-inputs input[type="time"] {
+    border-color: var(--pet-borda);
     color: var(--pet-texto);
-    background: #ffffff;
-    border-color: #ddd3f3;
-    border-radius: 11px;
+    background-color: #ffffff;
 }
 
-.form-control:focus {
+.form-control:focus,
+.horario-inputs input[type="time"]:focus {
     border-color: var(--pet-roxo);
-    box-shadow: 0 0 0 3px rgba(85, 34, 182, .12);
-}
-
-.tabs {
-    justify-content: flex-start;
-    gap: 7px;
-    padding: 7px;
-    overflow-x: auto;
-    background: #f5f0ff;
-    border: 1px solid #e6dcfa;
-    border-radius: 14px;
-    scrollbar-width: none;
-}
-
-.tabs::-webkit-scrollbar {
-    display: none;
-}
-
-.tab-btn {
-    min-width: max-content;
-    padding: 9px 12px;
-    color: var(--pet-roxo);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    font-size: .86rem;
-    font-weight: 800;
-}
-
-.tab-btn:hover {
-    background: #eee6ff;
-}
-
-.tab-btn.active {
-    color: #fff;
-    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
-    border-color: transparent;
-    box-shadow: 0 8px 18px rgba(85, 34, 182, .18);
-}
-
-.tab-content {
-    padding-top: 10px;
-}
-
-.tab-content h3 {
-    color: var(--pet-roxo-escuro);
-    font-weight: 900;
+    box-shadow: 0 0 0 3px rgba(85, 34, 182, 0.12);
 }
 
 .servicos-grid {
@@ -851,213 +658,165 @@ body {
     background: #fcfaff;
 }
 
-.servico-item {
-    color: var(--pet-texto);
-    background: #ffffff;
-    border-color: #e6def6;
-}
-
-.servico-item:hover {
-    border-color: #cdbcf2;
+.servico-item,
+.dia-horario,
+.agenda-especial-item {
     background: #faf7ff;
+    border-color: var(--pet-borda);
+    color: var(--pet-texto);
 }
 
 .servico-item.selected {
-    color: var(--pet-roxo-escuro);
-    background: #f2ecff;
     border-color: var(--pet-roxo);
-    box-shadow: 0 0 0 2px rgba(85, 34, 182, .08);
-}
-
-.dia-horario,
-.agenda-especial-item {
-    color: var(--pet-texto);
-    background: #fbf9ff;
-    border: 1px solid #e8e0f6;
-}
-
-.dia-nome {
+    background: #f0e9ff;
     color: var(--pet-roxo-escuro);
-    font-weight: 900;
 }
 
-.horario-inputs input[type="time"] {
-    border-color: #ddd3f3;
-    border-radius: 8px;
+.servico-preco {
+    color: var(--pet-verde);
 }
 
 .btn-incluir-intervalo {
-    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
-    border-radius: 9px;
-    font-weight: 800;
+    background: var(--pet-roxo);
 }
 
 .btn-incluir-intervalo:hover {
-    background: linear-gradient(135deg, #482098, #6734c7);
+    background: var(--pet-roxo-2);
 }
 
-.capacidade-pet-card {
-    border-color: #ded1fa !important;
-    background:
-        radial-gradient(circle at 100% 0%, rgba(255, 201, 40, .14), transparent 8rem),
-        linear-gradient(135deg, #f8f3ff, #ffffff) !important;
-    box-shadow: 0 10px 25px rgba(85, 34, 182, .08) !important;
+/* Modais: mantém todas as regras funcionais existentes */
+.modal,
+.modal-overlay {
+    background: rgba(32, 16, 66, 0.58);
 }
 
-.capacidade-pet-icon {
+.modal-content,
+.modal-card {
+    border: 1px solid var(--pet-borda);
+    box-shadow: 0 18px 52px rgba(32, 16, 66, 0.24);
+}
+
+/* As abas possuem CSS inline depois do equipe.css.
+   A especificidade e o !important abaixo substituem somente as cores. */
+body .tabs {
+    background: linear-gradient(180deg, #f8f4ff 0%, #ffffff 100%) !important;
+    border: 1px solid var(--pet-borda) !important;
+}
+
+body .tab-btn {
+    color: var(--pet-roxo-escuro) !important;
+    background: transparent !important;
+}
+
+body .tab-btn:hover {
+    background: #f0e9ff !important;
+}
+
+body .tab-btn.active {
     background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
-    box-shadow: 0 7px 16px rgba(85, 34, 182, .18);
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 10px 24px rgba(85, 34, 182, 0.20) !important;
 }
 
-.capacidade-pet-header h4 {
+body .tab-btn.active::after {
+    background: var(--pet-amarelo) !important;
+}
+
+/* Recurso específico de capacidade de pets */
+body .capacidade-pet-card {
+    background: linear-gradient(135deg, #f7f1ff, #ffffff) !important;
+    border-color: var(--pet-borda) !important;
+    box-shadow: 0 8px 22px rgba(32, 16, 66, 0.07) !important;
+}
+
+body .capacidade-pet-icon {
+    background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
+    color: var(--pet-amarelo) !important;
+}
+
+body .capacidade-pet-header h4,
+body .capacidade-pet-qtd label {
     color: var(--pet-roxo-escuro) !important;
 }
 
-/* Modal de confirmação incluído no próprio HTML */
-.modal-overlay {
-    background: rgba(32, 16, 66, .58) !important;
-    backdrop-filter: blur(6px);
+body .capacidade-pet-header p,
+body .capacidade-pet-card small {
+    color: var(--pet-muted) !important;
 }
 
-.modal-overlay .modal-card {
-    background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%) !important;
-    border: 1px solid var(--pet-borda);
-    border-top: 5px solid var(--pet-amarelo);
-    border-radius: 20px !important;
-    box-shadow: 0 24px 60px rgba(32, 16, 66, .24) !important;
-}
-
-.modal-botoes button {
+/* Botões do modal de confirmação definidos no HTML */
+body .modal-botoes button {
     background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
-    border-radius: 10px !important;
 }
 
-.modal-botoes button#modal-btn-cancelar {
-    background: #8a8494 !important;
+body .modal-botoes button#modal-btn-cancelar {
+    background: #8a8299 !important;
+}
+
+
+/* ===================================================================
+   CORREÇÃO MOBILE — MODAL EM TELA CHEIA E FUNDO TRAVADO
+   Não altera JS, abas, formulários ou estrutura interna.
+   =================================================================== */
+
+/* Evita que a rolagem interna continue na página de trás. */
+body:has(.modal.show),
+body:has(.modal.ativo),
+body:has(.modal-overlay.ativo) {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none !important;
+}
+
+.modal,
+.modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain !important;
+}
+
+.modal-content,
+.modal-card {
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-        background:
-            radial-gradient(circle at 100% 0%, rgba(255, 201, 40, .10), transparent 12rem),
-            linear-gradient(180deg, #fbf9ff 0%, #f5f1fc 100%);
-        background-attachment: scroll;
+    .modal,
+    .modal-overlay {
+        align-items: stretch !important;
+        justify-content: stretch !important;
+        padding: 0 !important;
     }
 
-    .container {
-        margin: 0;
-        border-radius: 20px;
-    }
-
-    .header {
-        padding: 22px 18px;
-    }
-
-    .header::before {
-        right: 12px;
-        font-size: 3.5rem;
-    }
-
-    .header h1 {
-        max-width: calc(100% - 50px);
-        font-size: 1.55rem;
-    }
-
-    .header p {
-        max-width: calc(100% - 20px);
-        font-size: .9rem;
-    }
-
-    .content {
-        padding: 18px 14px 24px;
-    }
-
-    .actions {
-        align-items: stretch;
-        padding: 14px;
-    }
-
-    .actions h2 {
-        width: 100%;
-    }
-
-    .actions .btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .equipe-grid {
-        gap: 12px;
-        margin-top: 14px;
-    }
-
-    .profissional-card {
-        padding: 16px;
-    }
-
-    .modal-content {
-        padding: 20px 14px 24px;
-        border-radius: 18px;
-    }
-
-    .tabs {
-        justify-content: flex-start;
-    }
-
-    .tab-btn {
-        min-width: max-content;
-        max-width: none;
-        padding: 8px 10px;
-        font-size: .8rem;
-    }
-}
-
-@media (max-width: 430px) {
-    body {
-        padding: 6px;
-    }
-
-    .container {
-        border-radius: 17px;
-    }
-
-    .header {
-        border-radius: 17px 17px 0 0;
-    }
-
-    .profissional-actions {
-        flex-direction: column;
-    }
-
-    .profissional-actions .btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-@media (max-width: 480px) {
-    .tabs {
-        justify-content: flex-start !important;
-        overflow-x: auto !important;
-        flex-wrap: nowrap !important;
-        gap: 8px !important;
-        padding: 6px !important;
-    }
-
-    .tab-btn {
-        flex: 0 0 auto !important;
-        min-width: 118px !important;
-        max-width: none !important;
-        white-space: nowrap !important;
-        word-break: normal !important;
-        font-size: 0.82rem !important;
-        line-height: 1.1 !important;
-        padding: 8px 10px !important;
+    .modal-content,
+    .modal-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        min-height: 100dvh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior-y: contain !important;
+        padding-top: max(22px, env(safe-area-inset-top)) !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
     }
 
     #modal-perfil-profissional .modal-content {
-        width: calc(100% - 20px) !important;
-        padding-left: 14px !important;
-        padding-right: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
     }
 }
