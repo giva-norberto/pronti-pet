@@ -482,92 +482,164 @@
     }
     </style>
 
-    <!-- CORREÇÃO SEGURA: trava a página atrás enquanto qualquer modal estiver aberto -->
+    <!-- =========================================================
+         CORREÇÃO FINAL MOBILE — EQUIPE PRONTI PET
+         Mantém:
+         - tema Pet do equipe.css;
+         - abas horizontais sem quebra;
+         - rolagem interna do modal;
+         - página de trás completamente travada.
+         Não altera IDs, Firebase ou equipe.js.
+    ========================================================== -->
     <style>
-      html.modal-aberto,
-      body.modal-aberto {
+      /* Abas: mantém a versão horizontal aprovada, sem quebrar palavras. */
+      @media (max-width: 768px) {
+        #modal-perfil-profissional .tabs {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          justify-content: flex-start !important;
+          align-items: center !important;
+          gap: 8px !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          padding: 7px !important;
+          margin-bottom: 16px !important;
+          scroll-behavior: smooth;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+        }
+
+        #modal-perfil-profissional .tabs::-webkit-scrollbar {
+          display: none !important;
+        }
+
+        #modal-perfil-profissional .tab-btn {
+          flex: 0 0 auto !important;
+          min-width: 128px !important;
+          max-width: none !important;
+          width: auto !important;
+          padding: 9px 13px !important;
+          font-size: 0.84rem !important;
+          line-height: 1.15 !important;
+          white-space: nowrap !important;
+          word-break: normal !important;
+          overflow-wrap: normal !important;
+          text-align: center !important;
+        }
+
+        #modal-perfil-profissional .tab-btn.active {
+          transform: none !important;
+        }
+      }
+
+      /* Trava real da página de trás enquanto o modal está aberto. */
+      html.equipe-modal-aberto,
+      body.equipe-modal-aberto {
         overflow: hidden !important;
         overscroll-behavior: none !important;
+      }
+
+      body.equipe-modal-aberto {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         touch-action: none !important;
       }
 
-      body.modal-aberto {
-        position: fixed !important;
-        width: 100% !important;
-        left: 0 !important;
-        right: 0 !important;
-      }
-
-      body.modal-aberto .modal.show,
-      body.modal-aberto .modal.ativo {
+      /* Mantém o overlay cobrindo a viewport completa. */
+      body.equipe-modal-aberto .modal.show,
+      body.equipe-modal-aberto .modal.ativo {
         position: fixed !important;
         inset: 0 !important;
         width: 100vw !important;
         height: 100dvh !important;
         max-width: none !important;
         max-height: none !important;
-        overscroll-behavior: contain !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
         touch-action: none !important;
       }
 
-      body.modal-aberto .modal.show .modal-content,
-      body.modal-aberto .modal.ativo .modal-content {
-        overscroll-behavior: contain !important;
-        touch-action: pan-y !important;
-        -webkit-overflow-scrolling: touch !important;
+      /* No celular, o cartão usa toda a área disponível e só ele rola. */
+      @media (max-width: 768px) {
+        body.equipe-modal-aberto #modal-perfil-profissional .modal-content,
+        body.equipe-modal-aberto #modal-add-profissional .modal-content {
+          width: calc(100% - 20px) !important;
+          max-width: none !important;
+          height: calc(100dvh - 20px) !important;
+          max-height: calc(100dvh - 20px) !important;
+          margin: 10px !important;
+          padding:
+            max(18px, env(safe-area-inset-top))
+            14px
+            max(22px, env(safe-area-inset-bottom)) !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          border-radius: 24px !important;
+          box-sizing: border-box !important;
+          -webkit-overflow-scrolling: touch !important;
+          overscroll-behavior-y: contain !important;
+          touch-action: pan-y !important;
+        }
       }
     </style>
 
     <script>
       (() => {
-        let scrollYTravado = 0;
+        let posicaoAnterior = 0;
 
-        function existeModalAberto() {
-          return Boolean(
-            document.querySelector(
-              '.modal.show, .modal.ativo, .modal-overlay.ativo'
-            )
+        function modalPrincipalAberto() {
+          return document.querySelector(
+            '#modal-perfil-profissional.show, ' +
+            '#modal-perfil-profissional.ativo, ' +
+            '#modal-add-profissional.show, ' +
+            '#modal-add-profissional.ativo'
           );
         }
 
-        function travarPagina() {
-          if (document.body.classList.contains('modal-aberto')) return;
+        function travarFundo() {
+          if (document.body.classList.contains('equipe-modal-aberto')) return;
 
-          scrollYTravado = window.scrollY || window.pageYOffset || 0;
+          posicaoAnterior = window.scrollY || window.pageYOffset || 0;
 
-          document.documentElement.classList.add('modal-aberto');
-          document.body.classList.add('modal-aberto');
-          document.body.style.top = `-${scrollYTravado}px`;
+          document.documentElement.classList.add('equipe-modal-aberto');
+          document.body.classList.add('equipe-modal-aberto');
+          document.body.style.top = `-${posicaoAnterior}px`;
         }
 
-        function liberarPagina() {
-          if (!document.body.classList.contains('modal-aberto')) return;
+        function liberarFundo() {
+          if (!document.body.classList.contains('equipe-modal-aberto')) return;
 
-          document.documentElement.classList.remove('modal-aberto');
-          document.body.classList.remove('modal-aberto');
+          document.documentElement.classList.remove('equipe-modal-aberto');
+          document.body.classList.remove('equipe-modal-aberto');
           document.body.style.top = '';
 
-          window.scrollTo(0, scrollYTravado);
+          window.scrollTo(0, posicaoAnterior);
         }
 
-        function sincronizarEstadoModal() {
-          if (existeModalAberto()) {
-            travarPagina();
+        function sincronizarModal() {
+          if (modalPrincipalAberto()) {
+            travarFundo();
           } else {
-            liberarPagina();
+            liberarFundo();
           }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-          const observer = new MutationObserver(sincronizarEstadoModal);
+          const observador = new MutationObserver(sincronizarModal);
 
-          observer.observe(document.body, {
+          observador.observe(document.body, {
             subtree: true,
             attributes: true,
-            attributeFilter: ['class', 'style']
+            attributeFilter: ['class']
           });
 
-          sincronizarEstadoModal();
+          sincronizarModal();
         });
       })();
     </script>
