@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pronti - Minha Agenda</title>
+    <title>Pronti Pet - Minha Agenda</title>
 
     <!-- Google Fonts e Font Awesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,46 +97,110 @@
            BLOCO 04 — CABEÇALHO DA AGENDA
         ====================================================== */
         .page-header {
+            position: relative;
+            overflow: hidden;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--card-bg);
-            padding: 16px 24px;
-            border-radius: 14px;
-            box-shadow: var(--shadow);
+            gap: 20px;
+            padding: 18px 22px;
             margin-bottom: 24px;
-            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 20px;
+            border: 1px solid rgba(85, 34, 182, 0.14);
+            border-top: 4px solid #ffc928;
+            background:
+                radial-gradient(circle at 92% 18%, rgba(255, 201, 40, 0.18), transparent 9rem),
+                linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,243,255,0.98) 72%, rgba(255,249,226,0.96) 100%);
+            box-shadow: 0 14px 34px rgba(32, 16, 66, 0.10);
+        }
+
+        .page-header::after {
+            content: "\f1b0";
+            position: absolute;
+            right: 205px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-13deg);
+            color: #5522b6;
+            font-family: "Font Awesome 6 Free";
+            font-size: 4.7rem;
+            font-weight: 900;
+            opacity: 0.055;
+            pointer-events: none;
+        }
+
+        .page-title-pet {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-width: 0;
+        }
+
+        .page-title-icon {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            color: #5522b6;
+            background: linear-gradient(145deg, #fff5c9, #ffc928);
+            box-shadow: 0 9px 20px rgba(180, 133, 0, 0.18);
+        }
+
+        .page-title-icon i {
+            font-size: 1.3rem;
         }
 
         .page-header h1 {
-            font-size: 1.9rem;
-            font-weight: 800;
-            color: var(--text-main);
             margin: 0;
+            color: #201042;
+            font-size: 1.75rem;
+            line-height: 1.15;
+            font-weight: 800;
+        }
+
+        .page-header p {
+            margin: 4px 0 0;
+            color: #726b86;
+            font-size: 0.83rem;
+            line-height: 1.35;
+            font-weight: 600;
         }
 
         /* =====================================================
            BLOCO 05 — BOTÕES PRINCIPAIS
         ====================================================== */
         .btn-pronti {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
+            position: relative;
+            z-index: 1;
+            padding: 11px 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            border: none;
+            gap: 9px;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 12px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #5522b6, #7140dc);
+            box-shadow: 0 10px 22px rgba(85, 34, 182, 0.22);
+            text-decoration: none;
+            font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s;
             white-space: nowrap;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .btn-pronti i {
+            color: #ffc928;
         }
 
         .btn-pronti:hover {
-            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(85, 34, 182, 0.28);
+            filter: brightness(1.04);
         }
 
         .btn-ausencia {
@@ -533,6 +597,18 @@
             }
         }
 
+        @media (max-width: 900px) {
+            .page-title-pet {
+                width: 100%;
+            }
+
+            .page-header::after {
+                right: 18px;
+                top: 34px;
+                font-size: 3.7rem;
+            }
+        }
+
         @media (max-width: 430px) {
             .main-content {
                 padding-left: 10px;
@@ -583,16 +659,19 @@
             }
         }
 
-                 /* =====================================================
+        /* =====================================================
            BLOCO 14 — FUNDO FINAL DA AGENDA
-           Mesmo fundo do index.html.
-           Azul/Roxo padrão Pronti.
-           Não altera lógica.
+           Mesmo padrão visual do index do Pronti Pet.
+           Fundo claro com detalhes roxo e amarelo.
+           Não altera nenhuma lógica da agenda.
         ====================================================== */
         html,
         body,
         body.agenda-body {
-            background: linear-gradient(135deg, #4f46e5 0%, #222664 100%) !important;
+            background:
+                radial-gradient(circle at 84% 4%, rgba(255, 201, 40, 0.14), transparent 22rem),
+                radial-gradient(circle at 54% 8%, rgba(113, 64, 220, 0.12), transparent 24rem),
+                linear-gradient(180deg, #fbfaff 0%, #f8f5ff 100%) !important;
             background-attachment: fixed !important;
         }
 
@@ -610,6 +689,17 @@
         #lista-agendamentos {
             background: transparent !important;
         }
+
+        @media (max-width: 680px) {
+            html,
+            body,
+            body.agenda-body {
+                background:
+                    radial-gradient(circle at 100% 0%, rgba(255, 201, 40, 0.10), transparent 12rem),
+                    linear-gradient(180deg, #fbf9ff 0%, #f5f1fc 100%) !important;
+                background-attachment: scroll !important;
+            }
+        }
     </style>
 </head>
 
@@ -618,7 +708,15 @@
 
     <main class="main-content">
         <div class="page-header">
-            <h1>Minha Agenda</h1>
+            <div class="page-title-pet">
+                <span class="page-title-icon" aria-hidden="true">
+                    <i class="fa-solid fa-paw"></i>
+                </span>
+                <div>
+                    <h1>Minha Agenda</h1>
+                    <p>Organize os atendimentos do seu pet shop</p>
+                </div>
+            </div>
             <a href="novo-agendamento.html" class="btn btn-pronti" id="btn-novo-agendamento">
                 <i class="fa-solid fa-plus"></i>
                 Novo Agendamento
