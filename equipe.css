@@ -1035,3 +1035,29 @@ body {
         justify-content: center;
     }
 }
+@media (max-width: 480px) {
+    .tabs {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        padding: 6px !important;
+    }
+
+    .tab-btn {
+        flex: 0 0 auto !important;
+        min-width: 118px !important;
+        max-width: none !important;
+        white-space: nowrap !important;
+        word-break: normal !important;
+        font-size: 0.82rem !important;
+        line-height: 1.1 !important;
+        padding: 8px 10px !important;
+    }
+
+    #modal-perfil-profissional .modal-content {
+        width: calc(100% - 20px) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+}
