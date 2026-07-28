@@ -12,8 +12,7 @@ import {
     setAgendamento,
     resetarAgendamento,
     setCurrentUser,
-    setClienteId,
-    getClienteIdAtivo
+    setClienteId
 } from './vitrini-state.js';
 
 import {
@@ -95,9 +94,7 @@ function calcularPrecoServico(servico) {
     }
 
     if (servico.promocao) {
-        return Number(
-            servico.promocao.precoComDesconto || 0
-        );
+        return Number(servico.promocao.precoComDesconto || 0);
     }
 
     return Number(servico.preco || 0);
@@ -108,471 +105,122 @@ function calcularDuracaoServico(servico) {
 }
 
 // =====================================================================
-// CLIENTE ATIVO / VINCULAÇÃO SEGURA
+// IDENTIFICAÇÃO DO CLIENTE
 // =====================================================================
 
-let promessaResolucaoCliente = null;
-let dadosClienteAtivo = null;
-let versaoAutenticacao = 0;
+let promessaClienteResolvido = null;
 
 function normalizarEmail(email) {
-    return String(email || "")
-        .trim()
-        .toLowerCase();
+    return String(email || "").trim().toLowerCase();
 }
 
-function normalizarTelefone(telefone) {
-    return String(telefone || "")
-        .replace(/\D/g, "")
-        .trim();
-}
-
-function obterUidVinculado(dadosCliente = {}) {
+function obterUidVinculado(perfil = {}) {
     return String(
-        dadosCliente.authUid ||
-        dadosCliente.clienteUid ||
-        dadosCliente.userUid ||
-        dadosCliente.uid ||
+        perfil.authUid ||
+        perfil.clienteUid ||
+        perfil.userUid ||
+        perfil.uid ||
         ""
     ).trim();
 }
 
-function criarContextoCliente(
-    user,
-    clienteId = null
-) {
-    if (!user) return null;
-
-    const idReal = String(
-        clienteId ||
-        state.clienteId ||
-        user.uid ||
-        ""
-    ).trim();
-
+function criarContextoCliente(user, clienteId) {
     return {
-        /*
-         * O UID autenticado continua preservado
-         * para compatibilidade com notificações.
-         */
         uid: user.uid,
         authUid: user.uid,
-
-        /*
-         * ID verdadeiro do documento do cliente.
-         */
-        clienteId: idReal,
-
-        displayName:
-            dadosClienteAtivo?.nome ||
-            user.displayName ||
-            "Cliente",
-
-        email:
-            dadosClienteAtivo?.email ||
-            user.email ||
-            "",
-
-        photoURL:
-            user.photoURL ||
-            dadosClienteAtivo?.fotoUrl ||
-            ""
+        clienteId,
+        displayName: user.displayName || "Cliente",
+        email: user.email || "",
+        photoURL: user.photoURL || ""
     };
 }
 
-async function consultarClientesPorCampo(
-    clientesRef,
-    campo,
-    valor,
-    obrigatoria = false
-) {
+async function buscarDocumentosClientePorCampo(clientesRef, campo, valor) {
     if (!valor) return [];
 
-    try {
-        const consulta = query(
-            clientesRef,
-            where(campo, "==", valor),
-            limit(3)
-        );
+    const q = query(
+        clientesRef,
+        where(campo, "==", valor),
+        limit(3)
+    );
 
-        const snapshot = await getDocs(consulta);
-
-        return snapshot.docs;
-    } catch (error) {
-        console.warn(
-            `[Vitrine] Não foi possível consultar clientes por ${campo}:`,
-            error
-        );
-
-        if (obrigatoria) {
-            const erroVinculacao = new Error(
-                "Não foi possível verificar com segurança se já existe um cadastro para este e-mail. Revise as regras do Firestore antes de tentar novamente."
-            );
-
-            erroVinculacao.code =
-                "cliente/vinculacao-nao-autorizada";
-
-            erroVinculacao.cause = error;
-
-            throw erroVinculacao;
-        }
-
-        return [];
-    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs;
 }
 
-function selecionarClienteUnico(
-    documentos = [],
-    userUid,
-    origemBusca
-) {
+function escolherDocumentoCliente(documentos, user) {
     const unicos = new Map();
 
-    documentos.forEach((docSnap) => {
+    documentos.forEach(docSnap => {
         if (docSnap?.id) {
-            unicos.set(
-                docSnap.id,
-                docSnap
-            );
+            unicos.set(docSnap.id, docSnap);
         }
     });
 
-    const candidatos =
-        [...unicos.values()];
+    const lista = [...unicos.values()];
 
-    if (candidatos.length === 0) {
-        return null;
-    }
-
-    const vinculadosAoMesmoUsuario =
-        candidatos.filter((docSnap) => {
-            const uidVinculado =
-                obterUidVinculado(
-                    docSnap.data()
-                );
-
-            return uidVinculado === userUid;
-        });
-
-    if (
-        vinculadosAoMesmoUsuario.length === 1
-    ) {
-        return vinculadosAoMesmoUsuario[0];
-    }
-
-    if (
-        vinculadosAoMesmoUsuario.length > 1
-    ) {
-        const error = new Error(
-            `Foram encontrados vários cadastros vinculados à mesma conta durante a busca por ${origemBusca}.`
-        );
-
-        error.code =
-            "cliente/vinculos-duplicados";
-
-        throw error;
-    }
-
-    const semVinculo =
-        candidatos.filter((docSnap) => {
-            return !obterUidVinculado(
-                docSnap.data()
-            );
-        });
-
-    if (semVinculo.length === 1) {
-        return semVinculo[0];
-    }
-
-    if (semVinculo.length > 1) {
-        const error = new Error(
-            "Existe mais de um cadastro manual com este e-mail. A vinculação automática foi interrompida para evitar unir a conta ao cliente errado."
-        );
-
-        error.code =
-            "cliente/cadastros-duplicados";
-
-        throw error;
-    }
-
-    const error = new Error(
-        "Este cadastro já está vinculado a outra conta de acesso."
+    const vinculadosAoUsuario = lista.filter(docSnap =>
+        obterUidVinculado(docSnap.data()) === user.uid
     );
 
-    error.code =
-        "cliente/email-ja-vinculado";
-
-    throw error;
-}
-
-async function completarDocumentoCliente(
-    clienteRef,
-    clienteSnap,
-    user,
-    origemPadrao
-) {
-    const perfil =
-        clienteSnap?.exists()
-            ? clienteSnap.data()
-            : {};
-
-    const email =
-        String(
-            perfil.email ||
-            user.email ||
-            ""
-        ).trim();
-
-    const nome =
-        String(
-            perfil.nome ||
-            user.displayName ||
-            "Cliente"
-        ).trim();
-
-    const payload = {
-        /*
-         * Preserva os dados existentes.
-         * Completa somente campos ausentes.
-         */
-        nome,
-        email,
-
-        emailNormalizado:
-            normalizarEmail(
-                email ||
-                user.email
-            ),
-
-        /*
-         * Campo canônico da vinculação.
-         */
-        authUid: user.uid,
-
-        contaVinculada: true,
-
-        atualizadoEm:
-            serverTimestamp(),
-
-        ultimoLoginEm:
-            serverTimestamp()
-    };
-
-    if (!perfil.dataCadastro) {
-        payload.dataCadastro =
-            serverTimestamp();
-    }
-
-    if (!perfil.vinculadoEm) {
-        payload.vinculadoEm =
-            serverTimestamp();
-    }
-
-    if (!perfil.origemCadastro) {
-        payload.origemCadastro =
-            origemPadrao;
-    }
-
-    await setDoc(
-        clienteRef,
-        payload,
-        {
-            merge: true
-        }
-    );
-
-    dadosClienteAtivo = {
-        id: clienteRef.id,
-        ...perfil,
-
-        nome,
-        email,
-
-        emailNormalizado:
-            payload.emailNormalizado,
-
-        authUid: user.uid,
-        contaVinculada: true,
-
-        origemCadastro:
-            perfil.origemCadastro ||
-            origemPadrao
-    };
-
-    return clienteRef.id;
-}
-
-async function criarOuCompletarCliente(user) {
-    if (
-        !user?.uid ||
-        !state.empresaId
-    ) {
+    if (vinculadosAoUsuario.length > 1) {
         throw new Error(
-            "Não foi possível identificar o usuário ou a empresa."
+            "Há mais de um cadastro vinculado a esta conta."
         );
     }
 
-    const clientesRef = collection(
-        db,
-        "empresarios",
-        state.empresaId,
-        "clientes"
+    if (vinculadosAoUsuario.length === 1) {
+        return vinculadosAoUsuario[0];
+    }
+
+    const manuaisSemVinculo = lista.filter(docSnap => {
+        const uidVinculado = obterUidVinculado(docSnap.data());
+
+        return (
+            docSnap.id !== user.uid &&
+            !uidVinculado
+        );
+    });
+
+    if (manuaisSemVinculo.length > 1) {
+        throw new Error(
+            "Existe mais de um cadastro manual com este e-mail. " +
+            "A vinculação automática foi interrompida para evitar duplicidade."
+        );
+    }
+
+    if (manuaisSemVinculo.length === 1) {
+        return manuaisSemVinculo[0];
+    }
+
+    const documentoUid = lista.find(
+        docSnap => docSnap.id === user.uid
     );
 
-    /*
-     * 1. Compatibilidade com clientes antigos:
-     * primeiro verifica o documento cujo ID é o UID.
-     */
-    const clienteUidRef = doc(
-        db,
-        "empresarios",
-        state.empresaId,
-        "clientes",
-        user.uid
-    );
+    if (documentoUid) {
+        return documentoUid;
+    }
 
-    const clienteUidSnap =
-        await getDoc(clienteUidRef);
+    const vinculadosAOutraConta = lista.filter(docSnap => {
+        const uidVinculado = obterUidVinculado(docSnap.data());
 
-    if (clienteUidSnap.exists()) {
-        return completarDocumentoCliente(
-            clienteUidRef,
-            clienteUidSnap,
-            user,
-            clienteUidSnap
-                .data()
-                ?.origemCadastro ||
-            "vitrine"
+        return (
+            uidVinculado &&
+            uidVinculado !== user.uid
+        );
+    });
+
+    if (vinculadosAOutraConta.length > 0) {
+        throw new Error(
+            "Este cadastro já está vinculado a outra conta."
         );
     }
 
-    /*
-     * 2. Procura um cadastro que já tenha sido
-     * vinculado anteriormente pelo authUid.
-     */
-    const docsPorAuthUid =
-        await consultarClientesPorCampo(
-            clientesRef,
-            "authUid",
-            user.uid,
-            false
-        );
-
-    const clienteJaVinculado =
-        selecionarClienteUnico(
-            docsPorAuthUid,
-            user.uid,
-            "authUid"
-        );
-
-    if (clienteJaVinculado) {
-        const clienteRef = doc(
-            db,
-            "empresarios",
-            state.empresaId,
-            "clientes",
-            clienteJaVinculado.id
-        );
-
-        return completarDocumentoCliente(
-            clienteRef,
-            clienteJaVinculado,
-            user,
-            clienteJaVinculado
-                .data()
-                ?.origemCadastro ||
-            "manual"
-        );
-    }
-
-    /*
-     * 3. Procura cadastro manual pelo e-mail normalizado.
-     *
-     * Esta consulta é obrigatória para evitar a criação
-     * de um cliente duplicado.
-     */
-    const emailNormalizado =
-        normalizarEmail(user.email);
-
-    let clientePorEmail = null;
-
-    if (emailNormalizado) {
-        const docsPorEmailNormalizado =
-            await consultarClientesPorCampo(
-                clientesRef,
-                "emailNormalizado",
-                emailNormalizado,
-                true
-            );
-
-        clientePorEmail =
-            selecionarClienteUnico(
-                docsPorEmailNormalizado,
-                user.uid,
-                "emailNormalizado"
-            );
-
-        /*
-         * Compatibilidade com cadastros antigos
-         * que ainda não possuem emailNormalizado.
-         */
-        if (!clientePorEmail) {
-            const docsPorEmail =
-                await consultarClientesPorCampo(
-                    clientesRef,
-                    "email",
-                    user.email,
-                    true
-                );
-
-            clientePorEmail =
-                selecionarClienteUnico(
-                    docsPorEmail,
-                    user.uid,
-                    "email"
-                );
-        }
-    }
-
-    if (clientePorEmail) {
-        const clienteRef = doc(
-            db,
-            "empresarios",
-            state.empresaId,
-            "clientes",
-            clientePorEmail.id
-        );
-
-        return completarDocumentoCliente(
-            clienteRef,
-            clientePorEmail,
-            user,
-            clientePorEmail
-                .data()
-                ?.origemCadastro ||
-            "manual"
-        );
-    }
-
-    /*
-     * 4. Nenhum cadastro existente encontrado.
-     *
-     * Mantém o comportamento antigo:
-     * cria o cliente usando o UID como ID.
-     */
-    return completarDocumentoCliente(
-        clienteUidRef,
-        null,
-        user,
-        "vitrine"
-    );
+    return null;
 }
 
 async function obterClienteIdResolvido() {
-    if (
-        !state.currentUser ||
-        !state.empresaId
-    ) {
+    if (!state.currentUser || !state.empresaId) {
         return null;
     }
 
@@ -580,239 +228,151 @@ async function obterClienteIdResolvido() {
         return state.clienteId;
     }
 
-    if (!promessaResolucaoCliente) {
-        promessaResolucaoCliente =
-            criarOuCompletarCliente(
-                state.currentUser
-            );
+    if (!promessaClienteResolvido) {
+        promessaClienteResolvido =
+            criarOuCompletarCliente(state.currentUser);
     }
 
-    const clienteId =
-        await promessaResolucaoCliente;
-
-    if (clienteId) {
-        setClienteId(clienteId);
-    }
-
-    return clienteId || null;
-}
-
-function notificarClienteResolvido(
-    clienteId,
-    user
-) {
-    document.dispatchEvent(
-        new CustomEvent(
-            "pronti:cliente-resolvido",
-            {
-                detail: {
-                    empresaId:
-                        state.empresaId,
-
-                    clienteId,
-
-                    authUid:
-                        user?.uid ||
-                        null
-                }
-            }
-        )
-    );
+    return promessaClienteResolvido;
 }
 
 // =====================================================================
 // INICIALIZAÇÃO DA PÁGINA
 // =====================================================================
 
-document.addEventListener(
-    'DOMContentLoaded',
-    async () => {
-        try {
-            UI.toggleLoader(true);
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        UI.toggleLoader(true);
 
-            const params =
-                new URLSearchParams(
-                    window.location.search
-                );
+        const params = new URLSearchParams(window.location.search);
+        let empresaId = params.get('empresa');
 
-            let empresaId =
-                params.get('empresa');
+        const slug = window.location.pathname.substring(1);
 
-            const slug =
-                window.location.pathname
-                    .substring(1);
+        if (
+            !empresaId &&
+            slug &&
+            slug !== 'vitrine.html' &&
+            slug !== 'index.html' &&
+            !slug.startsWith('r.html')
+        ) {
+            console.log(
+                `[Vitrine] ID não encontrado. Buscando empresa pelo slug: ${slug}`
+            );
 
-            if (
-                !empresaId &&
-                slug &&
-                slug !== 'vitrine.html' &&
-                slug !== 'index.html' &&
-                !slug.startsWith('r.html')
-            ) {
+            const q = query(
+                collection(db, "empresarios"),
+                where("slug", "==", slug),
+                limit(1)
+            );
+
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+                empresaId = snapshot.docs[0].id;
+
                 console.log(
-                    `[Vitrine] ID não encontrado. Buscando empresa pelo slug: ${slug}`
+                    `[Vitrine] Empresa encontrada pelo slug. ID: ${empresaId}`
                 );
-
-                const consultaEmpresa =
-                    query(
-                        collection(
-                            db,
-                            "empresarios"
-                        ),
-                        where(
-                            "slug",
-                            "==",
-                            slug
-                        ),
-                        limit(1)
-                    );
-
-                const snapshot =
-                    await getDocs(
-                        consultaEmpresa
-                    );
-
-                if (!snapshot.empty) {
-                    empresaId =
-                        snapshot.docs[0].id;
-
-                    console.log(
-                        `[Vitrine] Empresa encontrada pelo slug. ID: ${empresaId}`
-                    );
-                }
-            }
-
-            if (!empresaId) {
-                empresaId =
-                    getEmpresaIdFromURL();
-
-                if (!empresaId) {
-                    throw new Error(
-                        "ID da Empresa não pôde ser determinado a partir da URL."
-                    );
-                }
-            }
-
-            const [
-                dados,
-                profissionais,
-                todosServicos
-            ] = await Promise.all([
-                getDadosEmpresa(
-                    empresaId
-                ),
-
-                getProfissionaisDaEmpresa(
-                    empresaId
-                ),
-
-                getTodosServicosDaEmpresa(
-                    empresaId
-                )
-            ]);
-
-            if (!dados) {
-                throw new Error(
-                    "Empresa não encontrada."
-                );
-            }
-
-            setEmpresa(
-                empresaId,
-                dados
-            );
-
-            const logoPublico =
-                document.getElementById(
-                    "logo-publico"
-                );
-
-            if (logoPublico) {
-                logoPublico.src =
-                    dados.logoUrl ||
-                    "https://placehold.co/100x100/eef2ff/4f46e5?text=Pet";
-            }
-
-            const nomePublico =
-                document.getElementById(
-                    "nome-negocio-publico"
-                );
-
-            if (nomePublico) {
-                nomePublico.textContent =
-                    dados.nomeFantasia ||
-                    "Pet Shop";
-            }
-
-            setProfissionais(
-                profissionais
-            );
-
-            setTodosOsServicos(
-                todosServicos
-            );
-
-            await aplicarPromocoesNaVitrine(
-                state.todosOsServicos,
-                empresaId,
-                null,
-                true
-            );
-
-            try {
-                await marcarServicosInclusosParaUsuario(
-                    state.todosOsServicos,
-                    empresaId
-                );
-            } catch (err) {
-                console.info(
-                    "Não foi possível verificar assinatura na carga inicial:",
-                    err.message
-                );
-            }
-
-            UI.renderizarDadosIniciaisEmpresa(
-                state.dadosEmpresa,
-                state.todosOsServicos
-            );
-
-            UI.renderizarProfissionais(
-                state.listaProfissionais
-            );
-
-            await renderizarPlanosDeAssinatura(
-                empresaId
-            );
-
-            configurarEventosGerais();
-
-            setupAuthListener(
-                handleUserAuthStateChange
-            );
-
-            UI.toggleLoader(false);
-
-        } catch (error) {
-            console.error(
-                "Erro fatal na inicialização:",
-                error.stack || error
-            );
-
-            const loader =
-                document.getElementById(
-                    "vitrine-loader"
-                );
-
-            if (loader) {
-                loader.innerHTML = `
-                    <p style="text-align:center;color:red;padding:20px;">
-                        ${error.message}
-                    </p>
-                `;
             }
         }
+
+        if (!empresaId) {
+            empresaId = getEmpresaIdFromURL();
+
+            if (!empresaId) {
+                throw new Error(
+                    "ID da Empresa não pôde ser determinado a partir da URL."
+                );
+            }
+        }
+
+        const [dados, profissionais, todosServicos] = await Promise.all([
+            getDadosEmpresa(empresaId),
+            getProfissionaisDaEmpresa(empresaId),
+            getTodosServicosDaEmpresa(empresaId)
+        ]);
+
+        if (!dados) {
+            throw new Error("Empresa não encontrada.");
+        }
+
+        setEmpresa(empresaId, dados);
+
+        const logoPublico =
+            document.getElementById("logo-publico");
+
+        if (logoPublico) {
+            logoPublico.src =
+                dados.logoUrl ||
+                "https://placehold.co/100x100/eef2ff/4f46e5?text=Pet";
+        }
+
+        const nomePublico =
+            document.getElementById("nome-negocio-publico");
+
+        if (nomePublico) {
+            nomePublico.textContent =
+                dados.nomeFantasia ||
+                "Pet Shop";
+        }
+
+        setProfissionais(profissionais);
+        setTodosOsServicos(todosServicos);
+
+        await aplicarPromocoesNaVitrine(
+            state.todosOsServicos,
+            empresaId,
+            null,
+            true
+        );
+
+        try {
+            await marcarServicosInclusosParaUsuario(
+                state.todosOsServicos,
+                empresaId
+            );
+        } catch (err) {
+            console.info(
+                "Não foi possível verificar assinatura na carga inicial:",
+                err.message
+            );
+        }
+
+        UI.renderizarDadosIniciaisEmpresa(
+            state.dadosEmpresa,
+            state.todosOsServicos
+        );
+
+        UI.renderizarProfissionais(
+            state.listaProfissionais
+        );
+
+        await renderizarPlanosDeAssinatura(empresaId);
+
+        configurarEventosGerais();
+        setupAuthListener(handleUserAuthStateChange);
+
+        UI.toggleLoader(false);
+
+    } catch (error) {
+        console.error(
+            "Erro fatal na inicialização:",
+            error.stack || error
+        );
+
+        const loader =
+            document.getElementById("vitrine-loader");
+
+        if (loader) {
+            loader.innerHTML = `
+                <p style="text-align:center;color:red;padding:20px;">
+                    ${error.message}
+                </p>
+            `;
+        }
     }
-);
+});
 
 // =====================================================================
 // PROMOÇÕES
@@ -824,197 +384,133 @@ async function aplicarPromocoesNaVitrine(
     dataSelecionadaISO = null,
     forceNoPromo = false
 ) {
-    if (
-        !empresaId ||
-        !Array.isArray(listaServicos)
-    ) {
+    if (!empresaId || !Array.isArray(listaServicos)) {
         return;
     }
 
-    listaServicos.forEach(
-        (servico) => {
-            servico.promocao = null;
-        }
+    listaServicos.forEach(s => {
+        s.promocao = null;
+    });
+
+    if (forceNoPromo || !dataSelecionadaISO) {
+        return;
+    }
+
+    const data = parseDataISO(dataSelecionadaISO);
+
+    if (!data || isNaN(data.getTime())) {
+        return;
+    }
+
+    const diaSemana = data.getDay();
+
+    const promocoesRef = collection(
+        db,
+        "empresarios",
+        empresaId,
+        "precos_especiais"
     );
 
-    if (
-        forceNoPromo ||
-        !dataSelecionadaISO
-    ) {
-        return;
-    }
-
-    const data =
-        parseDataISO(
-            dataSelecionadaISO
-        );
-
-    if (
-        !data ||
-        isNaN(data.getTime())
-    ) {
-        return;
-    }
-
-    const diaSemana =
-        data.getDay();
-
-    const promocoesRef =
-        collection(
-            db,
-            "empresarios",
-            empresaId,
-            "precos_especiais"
-        );
-
-    const snapshot =
-        await getDocs(
-            promocoesRef
-        );
+    const snapshot = await getDocs(promocoesRef);
 
     const promocoesAtivas = [];
 
-    snapshot.forEach(
-        (docSnap) => {
-            const promo =
-                docSnap.data();
+    snapshot.forEach(docSnap => {
+        const promo = docSnap.data();
 
-            const dias =
-                Array.isArray(
-                    promo.diasSemana
-                )
-                    ? promo.diasSemana
-                        .map(Number)
-                    : [];
+        const dias = Array.isArray(promo.diasSemana)
+            ? promo.diasSemana.map(Number)
+            : [];
+
+        if (
+            promo.ativo &&
+            dias.includes(diaSemana)
+        ) {
+            promocoesAtivas.push({
+                id: docSnap.id,
+                ...promo
+            });
+        }
+    });
+
+    listaServicos.forEach(servico => {
+        let melhorPromocao = null;
+
+        for (const promo of promocoesAtivas) {
+            if (
+                Array.isArray(promo.servicoIds) &&
+                promo.servicoIds.includes(servico.id)
+            ) {
+                melhorPromocao = promo;
+                break;
+            }
+        }
+
+        if (!melhorPromocao) {
+            melhorPromocao = promocoesAtivas.find(
+                promo =>
+                    promo.servicoIds == null ||
+                    (
+                        Array.isArray(promo.servicoIds) &&
+                        promo.servicoIds.length === 0
+                    )
+            );
+        }
+
+        if (melhorPromocao) {
+            const precoAntigo =
+                Number(servico.preco || 0);
+
+            let precoNovo = precoAntigo;
+
+            if (precoAntigo <= 0) {
+                return;
+            }
 
             if (
-                promo.ativo &&
-                dias.includes(
-                    diaSemana
-                )
+                melhorPromocao.tipoDesconto ===
+                "percentual"
             ) {
-                promocoesAtivas.push({
-                    id: docSnap.id,
-                    ...promo
-                });
-            }
-        }
-    );
-
-    listaServicos.forEach(
-        (servico) => {
-            let melhorPromocao = null;
-
-            for (
-                const promo
-                of promocoesAtivas
-            ) {
-                if (
-                    Array.isArray(
-                        promo.servicoIds
-                    ) &&
-                    promo.servicoIds
-                        .includes(servico.id)
-                ) {
-                    melhorPromocao =
-                        promo;
-
-                    break;
-                }
-            }
-
-            if (!melhorPromocao) {
-                melhorPromocao =
-                    promocoesAtivas.find(
-                        (promo) =>
-                            promo.servicoIds == null ||
-                            (
-                                Array.isArray(
-                                    promo.servicoIds
-                                ) &&
-                                promo.servicoIds
-                                    .length === 0
-                            )
-                    );
-            }
-
-            if (melhorPromocao) {
-                const precoAntigo =
-                    Number(
-                        servico.preco || 0
+                precoNovo =
+                    precoAntigo *
+                    (
+                        1 -
+                        Number(
+                            melhorPromocao.valor || 0
+                        ) / 100
                     );
 
-                let precoNovo =
-                    precoAntigo;
-
-                if (precoAntigo <= 0) {
-                    return;
-                }
-
-                if (
-                    melhorPromocao
-                        .tipoDesconto ===
-                    "percentual"
-                ) {
-                    precoNovo =
-                        precoAntigo *
-                        (
-                            1 -
-                            Number(
-                                melhorPromocao
-                                    .valor || 0
-                            ) /
-                            100
-                        );
-                } else if (
-                    melhorPromocao
-                        .tipoDesconto ===
-                    "valorFixo"
-                ) {
-                    precoNovo =
-                        Math.max(
-                            precoAntigo -
-                            Number(
-                                melhorPromocao
-                                    .valor || 0
-                            ),
-                            0
-                        );
-                }
-
-                servico.promocao = {
-                    nome:
-                        melhorPromocao.nome,
-
-                    precoOriginal:
-                        precoAntigo,
-
-                    precoComDesconto:
-                        precoNovo,
-
-                    tipoDesconto:
-                        melhorPromocao
-                            .tipoDesconto,
-
-                    valorDesconto:
-                        melhorPromocao.valor
-                };
+            } else if (
+                melhorPromocao.tipoDesconto ===
+                "valorFixo"
+            ) {
+                precoNovo = Math.max(
+                    precoAntigo -
+                    Number(melhorPromocao.valor || 0),
+                    0
+                );
             }
+
+            servico.promocao = {
+                nome: melhorPromocao.nome,
+                precoOriginal: precoAntigo,
+                precoComDesconto: precoNovo,
+                tipoDesconto:
+                    melhorPromocao.tipoDesconto,
+                valorDesconto:
+                    melhorPromocao.valor
+            };
         }
-    );
+    });
 }
 
 // =====================================================================
 // PLANOS DE ASSINATURA
 // =====================================================================
 
-async function renderizarPlanosDeAssinatura(
-    empresaId
-) {
+async function renderizarPlanosDeAssinatura(empresaId) {
     const planosDiv =
-        document.getElementById(
-            'lista-de-planos'
-        );
+        document.getElementById('lista-de-planos');
 
     if (!planosDiv) {
         console.warn(
@@ -1028,14 +524,12 @@ async function renderizarPlanosDeAssinatura(
         '<p style="text-align:center;">Carregando planos...</p>';
 
     try {
-        const planosRef =
-            collection(
-                db,
-                `empresarios/${empresaId}/planosDeAssinatura`
-            );
+        const planosRef = collection(
+            db,
+            `empresarios/${empresaId}/planosDeAssinatura`
+        );
 
-        const snapshot =
-            await getDocs(planosRef);
+        const snapshot = await getDocs(planosRef);
 
         if (snapshot.empty) {
             planosDiv.innerHTML =
@@ -1046,108 +540,84 @@ async function renderizarPlanosDeAssinatura(
 
         planosDiv.innerHTML = '';
 
-        snapshot.forEach(
-            (docSnap) => {
-                const plano =
-                    docSnap.data();
+        snapshot.forEach(docSnap => {
+            const plano = docSnap.data();
+            const planoId = docSnap.id;
 
-                const planoId =
-                    docSnap.id;
-
-                if (!plano.ativo) {
-                    return;
-                }
-
-                const precoFormatado =
-                    Number(
-                        plano.preco || 0
-                    ).toLocaleString(
-                        'pt-BR',
-                        {
-                            style:
-                                'currency',
-
-                            currency:
-                                'BRL'
-                        }
-                    );
-
-                const servicosHTML =
-                    Array.isArray(
-                        plano.servicosInclusos
-                    )
-                        ? plano
-                            .servicosInclusos
-                            .map(
-                                (servico) =>
-                                    `<li>${servico.quantidade}x ${servico.nomeServico}</li>`
-                            )
-                            .join('')
-                        : '';
-
-                const card =
-                    document.createElement(
-                        'div'
-                    );
-
-                card.className =
-                    'card-plano-vitrine';
-
-                card.style = `
-                    background:#fff;
-                    border-radius:14px;
-                    box-shadow:0 4px 18px rgba(99,102,241,0.06);
-                    margin:18px 0;
-                    padding:22px;
-                    text-align:center;
-                    color:#333;
-                `;
-
-                card.innerHTML = `
-                    <h3 style="color:#4f46e5;">
-                        ${plano.nome || "Plano"}
-                    </h3>
-
-                    <p
-                        class="preco"
-                        style="color:#6366f1;font-weight:bold;font-size:1.2em;"
-                    >
-                        ${precoFormatado} / mês
-                    </p>
-
-                    <p>
-                        ${plano.descricao || ''}
-                    </p>
-
-                    <ul style="list-style:'✓ ';padding-left:20px;text-align:left;">
-                        ${servicosHTML}
-                    </ul>
-
-                    <button
-                        class="btn-assinar-plano"
-                        style="background:linear-gradient(90deg,#6366f1 0%,#4f46e5 100%);color:#fff;border:none;border-radius:8px;padding:8px 22px;margin-top:14px;font-size:1em;cursor:pointer;"
-                    >
-                        Assinar
-                    </button>
-                `;
-
-                card
-                    .querySelector(
-                        '.btn-assinar-plano'
-                    )
-                    .addEventListener(
-                        'click',
-                        () => {
-                            window.location.href =
-                                `vitrine-assinatura.html?empresaId=${encodeURIComponent(empresaId)}&planoId=${encodeURIComponent(planoId)}`;
-                        }
-                    );
-
-                planosDiv.appendChild(
-                    card
-                );
+            if (!plano.ativo) {
+                return;
             }
-        );
+
+            const precoFormatado =
+                Number(plano.preco || 0).toLocaleString(
+                    'pt-BR',
+                    {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }
+                );
+
+            const servicosHTML =
+                Array.isArray(plano.servicosInclusos)
+                    ? plano.servicosInclusos
+                        .map(
+                            s =>
+                                `<li>${s.quantidade}x ${s.nomeServico}</li>`
+                        )
+                        .join('')
+                    : '';
+
+            const card =
+                document.createElement('div');
+
+            card.className =
+                'card-plano-vitrine';
+
+            card.style = `
+                background:#fff;
+                border-radius:14px;
+                box-shadow:0 4px 18px rgba(99,102,241,0.06);
+                margin:18px 0;
+                padding:22px;
+                text-align:center;
+                color:#333;
+            `;
+
+            card.innerHTML = `
+                <h3 style="color:#4f46e5;">
+                    ${plano.nome || "Plano"}
+                </h3>
+
+                <p
+                    class="preco"
+                    style="color:#6366f1;font-weight:bold;font-size:1.2em;"
+                >
+                    ${precoFormatado} / mês
+                </p>
+
+                <p>${plano.descricao || ''}</p>
+
+                <ul style="list-style:'✓ ';padding-left:20px;text-align:left;">
+                    ${servicosHTML}
+                </ul>
+
+                <button
+                    class="btn-assinar-plano"
+                    style="background:linear-gradient(90deg,#6366f1 0%,#4f46e5 100%);color:#fff;border:none;border-radius:8px;padding:8px 22px;margin-top:14px;font-size:1em;cursor:pointer;"
+                >
+                    Assinar
+                </button>
+            `;
+
+            card
+                .querySelector('.btn-assinar-plano')
+                .addEventListener('click', () => {
+                    window.location.href =
+                        `vitrine-assinatura.html?empresaId=${encodeURIComponent(empresaId)}&planoId=${encodeURIComponent(planoId)}`;
+                });
+
+            planosDiv.appendChild(card);
+        });
 
     } catch (err) {
         console.error(
@@ -1171,20 +641,12 @@ function configurarEventosGerais() {
         handler,
         isQuerySelector = false
     ) => {
-        const element =
-            isQuerySelector
-                ? document.querySelector(
-                    selector
-                )
-                : document.getElementById(
-                    selector
-                );
+        const element = isQuerySelector
+            ? document.querySelector(selector)
+            : document.getElementById(selector);
 
         if (element) {
-            element.addEventListener(
-                event,
-                handler
-            );
+            element.addEventListener(event, handler);
         }
     };
 
@@ -1273,167 +735,267 @@ function configurarEventosGerais() {
 // AUTENTICAÇÃO
 // =====================================================================
 
-async function handleUserAuthStateChange(
-    user
-) {
-    const versaoAtual =
-        ++versaoAutenticacao;
-
+async function handleUserAuthStateChange(user) {
     setCurrentUser(user);
     setClienteId(null);
-
-    dadosClienteAtivo = null;
-    promessaResolucaoCliente = null;
+    promessaClienteResolvido = null;
 
     UI.atualizarUIdeAuth(user);
+    UI.toggleAgendamentoLoginPrompt(!user);
 
-    UI.toggleAgendamentoLoginPrompt(
-        !user
-    );
-
-    if (
-        user &&
-        state.empresaId
-    ) {
-        promessaResolucaoCliente =
-            criarOuCompletarCliente(
-                user
-            );
-
+    if (user && state.empresaId) {
         try {
-            const clienteId =
-                await promessaResolucaoCliente;
-
-            /*
-             * Evita aplicar o resultado de uma
-             * autenticação antiga caso o usuário
-             * tenha saído ou trocado de conta.
-             */
-            if (
-                versaoAtual !==
-                    versaoAutenticacao ||
-                auth.currentUser?.uid !==
-                    user.uid
-            ) {
-                return;
-            }
-
-            setClienteId(
-                clienteId
-            );
-
-            notificarClienteResolvido(
-                clienteId,
-                user
-            );
-
-            await atualizarAssinaturasDoCliente(
-                clienteId
-            );
-
-        } catch (error) {
-            console.error(
-                "[Vitrine] Não foi possível resolver ou vincular o cliente:",
-                error
-            );
-
-            setClienteId(null);
-
-            document.dispatchEvent(
-                new CustomEvent(
-                    "pronti:cliente-resolucao-erro",
-                    {
-                        detail: {
-                            empresaId:
-                                state.empresaId,
-
-                            authUid:
-                                user.uid,
-
-                            code:
-                                error?.code ||
-                                null,
-
-                            message:
-                                error?.message ||
-                                "Falha ao identificar o cliente."
-                        }
-                    }
-                )
+            await obterClienteIdResolvido();
+            await atualizarAssinaturasDoCliente();
+        } catch (e) {
+            console.warn(
+                "Erro ao identificar/vincular cliente:",
+                e
             );
         }
-    } else if (
-        !user &&
-        state.empresaId
-    ) {
+
+    } else if (!user && state.empresaId) {
         limparAssinaturasLocais();
     }
 
     if (user) {
         if (
             document
-                .getElementById(
-                    "menu-visualizacao"
-                )
+                .getElementById('menu-visualizacao')
                 ?.classList
-                .contains("ativo")
+                .contains('ativo')
         ) {
             handleFiltroAgendamentos({
                 target:
                     document.getElementById(
-                        "btn-ver-ativos"
+                        'btn-ver-ativos'
                     )
             });
         }
+
     } else {
         if (
             document
-                .getElementById(
-                    "menu-visualizacao"
-                )
+                .getElementById('menu-visualizacao')
                 ?.classList
-                .contains("ativo")
+                .contains('ativo')
         ) {
-            if (
-                UI.exibirMensagemDeLoginAgendamentos
-            ) {
+            if (UI.exibirMensagemDeLoginAgendamentos) {
                 UI.exibirMensagemDeLoginAgendamentos();
             }
         }
     }
 }
 
-async function atualizarAssinaturasDoCliente(
-    clienteId = null
-) {
-    try {
-        const idCliente =
-            clienteId ||
-            state.clienteId ||
-            getClienteIdAtivo();
+async function criarOuCompletarCliente(user) {
+    const clientesRef = collection(
+        db,
+        "empresarios",
+        state.empresaId,
+        "clientes"
+    );
 
+    const refClienteUid = doc(
+        db,
+        "empresarios",
+        state.empresaId,
+        "clientes",
+        user.uid
+    );
+
+    const documentosEncontrados = [];
+    const emailNormalizado =
+        normalizarEmail(user.email);
+
+    const snapUid = await getDoc(refClienteUid);
+
+    // Mantém o fluxo antigo quando o cliente já usa o UID como ID.
+    if (snapUid.exists()) {
+        const perfilUid = snapUid.data();
+
+        await setDoc(
+            refClienteUid,
+            {
+                nome:
+                    perfilUid.nome ||
+                    user.displayName ||
+                    "Cliente",
+
+                email:
+                    perfilUid.email ||
+                    user.email ||
+                    "",
+
+                emailNormalizado:
+                    perfilUid.emailNormalizado ||
+                    emailNormalizado,
+
+                authUid: user.uid,
+                contaVinculada: true,
+
+                dataCadastro:
+                    perfilUid.dataCadastro ||
+                    serverTimestamp(),
+
+                vinculadoEm:
+                    perfilUid.vinculadoEm ||
+                    serverTimestamp(),
+
+                atualizadoEm:
+                    serverTimestamp()
+            },
+            {
+                merge: true
+            }
+        );
+
+        setClienteId(refClienteUid.id);
+
+        return refClienteUid.id;
+    }
+
+    const porAuthUid =
+        await buscarDocumentosClientePorCampo(
+            clientesRef,
+            "authUid",
+            user.uid
+        );
+
+    documentosEncontrados.push(...porAuthUid);
+
+    if (emailNormalizado) {
+        const porEmailNormalizado =
+            await buscarDocumentosClientePorCampo(
+                clientesRef,
+                "emailNormalizado",
+                emailNormalizado
+            );
+
+        documentosEncontrados.push(
+            ...porEmailNormalizado
+        );
+
+        if (
+            porEmailNormalizado.length === 0 &&
+            user.email
+        ) {
+            const porEmailAntigo =
+                await buscarDocumentosClientePorCampo(
+                    clientesRef,
+                    "email",
+                    user.email
+                );
+
+            documentosEncontrados.push(
+                ...porEmailAntigo
+            );
+        }
+    }
+
+    const documentoEscolhido =
+        escolherDocumentoCliente(
+            documentosEncontrados,
+            user
+        );
+
+    const refCliente = documentoEscolhido
+        ? doc(
+            db,
+            "empresarios",
+            state.empresaId,
+            "clientes",
+            documentoEscolhido.id
+        )
+        : refClienteUid;
+
+    const perfil =
+        documentoEscolhido?.data() ||
+        {};
+
+    const uidVinculado =
+        obterUidVinculado(perfil);
+
+    if (
+        uidVinculado &&
+        uidVinculado !== user.uid
+    ) {
+        throw new Error(
+            "Este cadastro já está vinculado a outra conta."
+        );
+    }
+
+    await setDoc(
+        refCliente,
+        {
+            nome:
+                perfil.nome ||
+                user.displayName ||
+                "Cliente",
+
+            email:
+                perfil.email ||
+                user.email ||
+                "",
+
+            emailNormalizado:
+                perfil.emailNormalizado ||
+                emailNormalizado,
+
+            authUid:
+                user.uid,
+
+            contaVinculada:
+                true,
+
+            origemCadastro:
+                perfil.origemCadastro ||
+                (
+                    documentoEscolhido
+                        ? "manual"
+                        : "vitrine"
+                ),
+
+            dataCadastro:
+                perfil.dataCadastro ||
+                serverTimestamp(),
+
+            vinculadoEm:
+                perfil.vinculadoEm ||
+                serverTimestamp(),
+
+            atualizadoEm:
+                serverTimestamp()
+        },
+        {
+            merge: true
+        }
+    );
+
+    setClienteId(refCliente.id);
+
+    return refCliente.id;
+}
+
+async function atualizarAssinaturasDoCliente() {
+    try {
         await marcarServicosInclusosParaUsuario(
             state.todosOsServicos,
             state.empresaId,
-            idCliente
+            state.clienteId
         );
 
         if (
             document
-                .getElementById(
-                    "lista-servicos"
-                )
+                .getElementById('lista-servicos')
                 ?.offsetParent !== null
         ) {
             const servicosProfissional =
                 state.todosOsServicos.filter(
-                    (servico) =>
+                    s =>
                         state.agendamento
                             ?.profissional
                             ?.servicos
-                            ?.includes(
-                                servico.id
-                            )
+                            ?.includes(s.id)
                 );
 
             UI.renderizarServicos(
@@ -1447,10 +1009,10 @@ async function atualizarAssinaturasDoCliente(
             state.agendamento
                 ?.servicos
                 ?.forEach(
-                    (servico) =>
+                    s =>
                         UI.selecionarCard(
-                            "servico",
-                            servico.id
+                            'servico',
+                            s.id
                         )
                 );
 
@@ -1461,54 +1023,40 @@ async function atualizarAssinaturasDoCliente(
                     ?.permitirAgendamentoMultiplo
             ) {
                 UI.atualizarResumoAgendamento(
-                    state.agendamento
-                        .servicos
+                    state.agendamento.servicos
                 );
             } else {
                 UI.atualizarResumoAgendamentoFinal();
             }
         }
-    } catch (error) {
+
+    } catch (err) {
         console.info(
             "Não foi possível verificar assinatura após login:",
-            error.message
+            err.message
         );
     }
 }
 
 function limparAssinaturasLocais() {
-    state.todosOsServicos.forEach(
-        (servico) => {
-            servico.inclusoAssinatura =
-                false;
-
-            servico.fazParteDaAssinatura =
-                false;
-
-            servico.precoCobrado =
-                undefined;
-
-            servico.assinaturasCandidatas =
-                undefined;
-        }
-    );
+    state.todosOsServicos.forEach(s => {
+        s.inclusoAssinatura = false;
+        s.precoCobrado = undefined;
+        s.assinaturasCandidatas = undefined;
+    });
 
     if (
         document
-            .getElementById(
-                'lista-servicos'
-            )
+            .getElementById('lista-servicos')
             ?.offsetParent !== null
     ) {
         const servicosProfissional =
             state.todosOsServicos.filter(
-                (servico) =>
+                s =>
                     state.agendamento
                         ?.profissional
                         ?.servicos
-                        ?.includes(
-                            servico.id
-                        )
+                        ?.includes(s.id)
             );
 
         UI.renderizarServicos(
@@ -1522,10 +1070,10 @@ function limparAssinaturasLocais() {
         state.agendamento
             ?.servicos
             ?.forEach(
-                (servico) =>
+                s =>
                     UI.selecionarCard(
                         'servico',
-                        servico.id
+                        s.id
                     )
             );
 
@@ -1550,25 +1098,18 @@ function limparAssinaturasLocais() {
 
 function handleMenuClick(e) {
     const menuButton =
-        e.target.closest(
-            '[data-menu]'
-        );
+        e.target.closest('[data-menu]');
 
-    if (!menuButton) return;
+    if (!menuButton) {
+        return;
+    }
 
     const menuKey =
-        menuButton.getAttribute(
-            'data-menu'
-        );
+        menuButton.getAttribute('data-menu');
 
-    UI.trocarAba(
-        `menu-${menuKey}`
-    );
+    UI.trocarAba(`menu-${menuKey}`);
 
-    if (
-        menuKey ===
-        'visualizacao'
-    ) {
+    if (menuKey === 'visualizacao') {
         if (state.currentUser) {
             handleFiltroAgendamentos({
                 target:
@@ -1576,10 +1117,10 @@ function handleMenuClick(e) {
                         'btn-ver-ativos'
                     )
             });
-        } else if (
-            UI.exibirMensagemDeLoginAgendamentos
-        ) {
-            UI.exibirMensagemDeLoginAgendamentos();
+        } else {
+            if (UI.exibirMensagemDeLoginAgendamentos) {
+                UI.exibirMensagemDeLoginAgendamentos();
+            }
         }
     }
 }
@@ -1590,22 +1131,16 @@ function handleMenuClick(e) {
 
 async function handleProfissionalClick(e) {
     const card =
-        e.target.closest(
-            '.card-profissional'
-        );
+        e.target.closest('.card-profissional');
 
-    if (!card) return;
+    if (!card) {
+        return;
+    }
 
     resetarAgendamento();
 
-    UI.limparSelecao(
-        'servico'
-    );
-
-    UI.limparSelecao(
-        'horario'
-    );
-
+    UI.limparSelecao('servico');
+    UI.limparSelecao('horario');
     UI.desabilitarBotaoConfirmar();
     UI.mostrarContainerForm(false);
     UI.renderizarServicos([]);
@@ -1616,8 +1151,7 @@ async function handleProfissionalClick(e) {
 
     const profissional =
         state.listaProfissionais.find(
-            (item) =>
-                item.id === profissionalId
+            p => p.id === profissionalId
         );
 
     if (!profissional) {
@@ -1658,13 +1192,12 @@ async function handleProfissionalClick(e) {
                 []
             )
                 .map(
-                    (servicoId) =>
-                        state.todosOsServicos
-                            .find(
-                                (servico) =>
-                                    servico.id ===
-                                    servicoId
-                            )
+                    servicoId =>
+                        state.todosOsServicos.find(
+                            servico =>
+                                servico.id ===
+                                servicoId
+                        )
                 )
                 .filter(Boolean);
 
@@ -1674,6 +1207,7 @@ async function handleProfissionalClick(e) {
                 state.empresaId,
                 state.clienteId
             );
+
         } catch (err) {
             console.info(
                 "Não foi possível verificar assinatura ao selecionar profissional:",
@@ -1681,9 +1215,7 @@ async function handleProfissionalClick(e) {
             );
         }
 
-        UI.mostrarContainerForm(
-            true
-        );
+        UI.mostrarContainerForm(true);
 
         UI.renderizarServicos(
             servicosDoProfissional,
@@ -1720,15 +1252,13 @@ async function handleProfissionalClick(e) {
 
 async function handleServicoClick(e) {
     const card =
-        e.target.closest(
-            '.card-servico'
-        );
+        e.target.closest('.card-servico');
 
-    if (!card) return;
+    if (!card) {
+        return;
+    }
 
-    if (
-        !state.agendamento.profissional
-    ) {
+    if (!state.agendamento.profissional) {
         await UI.mostrarAlerta(
             "Atenção",
             "Por favor, selecione um profissional antes de escolher um serviço."
@@ -1750,34 +1280,8 @@ async function handleServicoClick(e) {
         return;
     }
 
-    let clienteId;
-
-    try {
-        clienteId =
-            await obterClienteIdResolvido();
-    } catch (error) {
-        console.error(
-            "[Vitrine] Erro ao identificar cliente para o pet:",
-            error
-        );
-
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            error.message ||
-            "Não foi possível identificar seu cadastro com segurança."
-        );
-
-        return;
-    }
-
-    if (!clienteId) {
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            "Não foi possível identificar o cadastro do cliente."
-        );
-
-        return;
-    }
+    const clienteId =
+        await obterClienteIdResolvido();
 
     const pet =
         await garantirPetParaAgendamento(
@@ -1806,8 +1310,7 @@ async function handleServicoClick(e) {
 
     const servicoOriginal =
         state.todosOsServicos.find(
-            (servico) =>
-                servico.id === servicoId
+            s => s.id === servicoId
         );
 
     if (!servicoOriginal) {
@@ -1839,17 +1342,20 @@ async function handleServicoClick(e) {
 
         preco:
             Number(
-                precoDuracao.preco || 0
+                precoDuracao.preco ||
+                0
             ),
 
         duracao:
             Number(
-                precoDuracao.duracao || 0
+                precoDuracao.duracao ||
+                0
             ),
 
         precoCobrado:
             Number(
-                precoDuracao.preco || 0
+                precoDuracao.preco ||
+                0
             )
     };
 
@@ -1872,9 +1378,7 @@ async function handleServicoClick(e) {
     if (permiteMultiplos) {
         const index =
             servicosAtuais.findIndex(
-                (servico) =>
-                    servico.id ===
-                    servicoId
+                s => s.id === servicoId
             );
 
         if (index > -1) {
@@ -1888,9 +1392,8 @@ async function handleServicoClick(e) {
             );
         }
 
-        card.classList.toggle(
-            'selecionado'
-        );
+        card.classList.toggle('selecionado');
+
     } else {
         servicosAtuais = [
             servicoSelecionado
@@ -1902,36 +1405,24 @@ async function handleServicoClick(e) {
         );
     }
 
-    setAgendamento(
-        'pet',
-        pet
-    );
+    setAgendamento('pet', pet);
 
     setAgendamento(
         'servicos',
         servicosAtuais
     );
 
-    setAgendamento(
-        'data',
-        null
-    );
+    setAgendamento('data', null);
+    setAgendamento('horario', null);
 
-    setAgendamento(
-        'horario',
-        null
-    );
-
-    UI.limparSelecao(
-        'horario'
-    );
-
+    UI.limparSelecao('horario');
     UI.desabilitarBotaoConfirmar();
 
     if (permiteMultiplos) {
         UI.atualizarResumoAgendamento(
             servicosAtuais
         );
+
     } else {
         const containerDataHorario =
             document.getElementById(
@@ -1939,15 +1430,11 @@ async function handleServicoClick(e) {
             );
 
         if (containerDataHorario) {
-            containerDataHorario
-                .style
-                .display =
+            containerDataHorario.style.display =
                 'block';
         }
 
-        if (
-            servicosAtuais.length > 0
-        ) {
+        if (servicosAtuais.length > 0) {
             await buscarPrimeiraDataDisponivel();
         }
     }
@@ -1993,23 +1480,18 @@ async function buscarPrimeiraDataDisponivel() {
     );
 
     const duracaoTotal =
-        state.agendamento
-            .servicos
-            .reduce(
-                (total, servico) =>
-                    total +
-                    calcularDuracaoServico(
-                        servico
-                    ),
-                0
-            );
+        state.agendamento.servicos.reduce(
+            (total, s) =>
+                total +
+                calcularDuracaoServico(s),
+            0
+        );
 
     try {
         const primeiraData =
             await encontrarPrimeiraDataComSlots(
                 state.empresaId,
-                state.agendamento
-                    .profissional,
+                state.agendamento.profissional,
                 duracaoTotal
             );
 
@@ -2018,10 +1500,7 @@ async function buscarPrimeiraDataDisponivel() {
                 'data-agendamento'
             );
 
-        if (
-            primeiraData &&
-            dataInput
-        ) {
+        if (primeiraData && dataInput) {
             dataInput.value =
                 primeiraData;
 
@@ -2031,15 +1510,14 @@ async function buscarPrimeiraDataDisponivel() {
             dataInput.dispatchEvent(
                 new Event('change')
             );
+
         } else {
             UI.renderizarHorarios(
                 [],
                 'Nenhuma data disponível para os serviços selecionados nos próximos 3 meses.'
             );
 
-            UI.atualizarStatusData(
-                false
-            );
+            UI.atualizarStatusData(false);
         }
 
     } catch (error) {
@@ -2053,9 +1531,7 @@ async function buscarPrimeiraDataDisponivel() {
             "Ocorreu um problema ao verificar a disponibilidade."
         );
 
-        UI.atualizarStatusData(
-            false
-        );
+        UI.atualizarStatusData(false);
     }
 }
 
@@ -2070,10 +1546,7 @@ async function handleDataChange(e) {
         null
     );
 
-    UI.limparSelecao(
-        'horario'
-    );
-
+    UI.limparSelecao('horario');
     UI.desabilitarBotaoConfirmar();
 
     const {
@@ -2084,11 +1557,9 @@ async function handleDataChange(e) {
 
     const duracaoTotal =
         servicos.reduce(
-            (total, servico) =>
+            (total, s) =>
                 total +
-                calcularDuracaoServico(
-                    servico
-                ),
+                calcularDuracaoServico(s),
             0
         );
 
@@ -2105,6 +1576,7 @@ async function handleDataChange(e) {
             state.empresaId,
             state.clienteId
         );
+
     } catch (err) {
         console.info(
             "Não foi possível verificar assinatura ao mudar data:",
@@ -2124,13 +1596,12 @@ async function handleDataChange(e) {
                 []
             )
                 .map(
-                    (servicoId) =>
-                        state.todosOsServicos
-                            .find(
-                                (servico) =>
-                                    servico.id ===
-                                    servicoId
-                            )
+                    servicoId =>
+                        state.todosOsServicos.find(
+                            servico =>
+                                servico.id ===
+                                servicoId
+                        )
                 )
                 .filter(Boolean);
 
@@ -2139,20 +1610,17 @@ async function handleDataChange(e) {
             permiteMultiplos
         );
 
-        state.agendamento
-            .servicos
-            .forEach(
-                (servico) =>
-                    UI.selecionarCard(
-                        'servico',
-                        servico.id
-                    )
-            );
+        state.agendamento.servicos.forEach(
+            s =>
+                UI.selecionarCard(
+                    'servico',
+                    s.id
+                )
+        );
 
         if (permiteMultiplos) {
             UI.atualizarResumoAgendamento(
-                state.agendamento
-                    .servicos
+                state.agendamento.servicos
             );
         } else {
             UI.atualizarResumoAgendamentoFinal();
@@ -2181,9 +1649,8 @@ async function handleDataChange(e) {
 
         const agendamentosProfissional =
             todosAgendamentos.filter(
-                (agendamento) =>
-                    agendamento
-                        .profissionalId ===
+                ag =>
+                    ag.profissionalId ===
                     profissional.id
             );
 
@@ -2195,9 +1662,7 @@ async function handleDataChange(e) {
                 duracaoTotal
             );
 
-        UI.renderizarHorarios(
-            slots
-        );
+        UI.renderizarHorarios(slots);
 
     } catch (error) {
         console.error(
@@ -2214,14 +1679,9 @@ async function handleDataChange(e) {
 
 function handleHorarioClick(e) {
     const btn =
-        e.target.closest(
-            '.btn-horario'
-        );
+        e.target.closest('.btn-horario');
 
-    if (
-        !btn ||
-        btn.disabled
-    ) {
+    if (!btn || btn.disabled) {
         return;
     }
 
@@ -2257,34 +1717,8 @@ async function handleConfirmarAgendamento() {
         return;
     }
 
-    let clienteId;
-
-    try {
-        clienteId =
-            await obterClienteIdResolvido();
-    } catch (error) {
-        console.error(
-            "[Vitrine] Erro ao identificar cliente para o agendamento:",
-            error
-        );
-
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            error.message ||
-            "Não foi possível identificar seu cadastro com segurança."
-        );
-
-        return;
-    }
-
-    if (!clienteId) {
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            "Não foi possível identificar o cadastro do cliente."
-        );
-
-        return;
-    }
+    const clienteId =
+        await obterClienteIdResolvido();
 
     const podeSeguir =
         await exigirCelularParaAgendamento(
@@ -2330,46 +1764,35 @@ async function handleConfirmarAgendamento() {
 
     if (btn) {
         btn.disabled = true;
-        btn.textContent =
-            'A agendar...';
+        btn.textContent = 'A agendar...';
     }
 
     try {
         const precoTotalCalculado =
             servicos.reduce(
-                (total, servico) =>
+                (total, s) =>
                     total +
-                    calcularPrecoServico(
-                        servico
-                    ),
+                    calcularPrecoServico(s),
                 0
             );
 
         const duracaoTotalCalculada =
             servicos.reduce(
-                (total, servico) =>
+                (total, s) =>
                     total +
-                    calcularDuracaoServico(
-                        servico
-                    ),
+                    calcularDuracaoServico(s),
                 0
             );
 
         const servicoParaSalvar = {
             id:
                 servicos
-                    .map(
-                        (servico) =>
-                            servico.id
-                    )
+                    .map(s => s.id)
                     .join(','),
 
             nome:
                 servicos
-                    .map(
-                        (servico) =>
-                            servico.nome
-                    )
+                    .map(s => s.nome)
                     .join(' + '),
 
             duracao:
@@ -2381,8 +1804,7 @@ async function handleConfirmarAgendamento() {
 
         const agendamentoParaSalvar = {
             profissional:
-                state.agendamento
-                    .profissional,
+                state.agendamento.profissional,
 
             data:
                 state.agendamento.data,
@@ -2429,31 +1851,17 @@ async function handleConfirmarAgendamento() {
                 : null
         };
 
-        const contextoCliente =
+        await salvarAgendamento(
+            state.empresaId,
             criarContextoCliente(
                 state.currentUser,
                 clienteId
-            );
-
-        /*
-         * Mantém a assinatura atual da função.
-         *
-         * O contexto possui:
-         * - uid: UID autenticado;
-         * - clienteId: documento real.
-         *
-         * O próximo ajuste será no
-         * vitrini-agendamento.js.
-         */
-        await salvarAgendamento(
-            state.empresaId,
-            contextoCliente,
+            ),
             agendamentoParaSalvar
         );
 
         const nomeEmpresa =
-            state.dadosEmpresa
-                .nomeFantasia ||
+            state.dadosEmpresa.nomeFantasia ||
             "A empresa";
 
         await UI.mostrarAlerta(
@@ -2467,27 +1875,22 @@ async function handleConfirmarAgendamento() {
             'menu-visualizacao'
         );
 
-        requestAnimationFrame(
-            () => {
-                const btnAtivos =
-                    document.getElementById(
-                        'btn-ver-ativos'
-                    );
+        requestAnimationFrame(() => {
+            const btnAtivos =
+                document.getElementById(
+                    'btn-ver-ativos'
+                );
 
-                if (!btnAtivos) {
-                    return;
-                }
-
-                btnAtivos
-                    .classList
-                    .add('ativo');
-
-                handleFiltroAgendamentos({
-                    target:
-                        btnAtivos
-                });
+            if (!btnAtivos) {
+                return;
             }
-        );
+
+            btnAtivos.classList.add('ativo');
+
+            handleFiltroAgendamentos({
+                target: btnAtivos
+            });
+        });
 
     } catch (error) {
         console.error(
@@ -2515,49 +1918,35 @@ async function handleConfirmarAgendamento() {
 
 async function handleFiltroAgendamentos(e) {
     if (
-        !e.target.matches(
-            ".btn-toggle"
-        ) ||
+        !e.target.matches('.btn-toggle') ||
         !state.currentUser
     ) {
         return;
     }
 
     const modo =
-        e.target.id ===
-        "btn-ver-ativos"
-            ? "ativos"
-            : "historico";
+        e.target.id === 'btn-ver-ativos'
+            ? 'ativos'
+            : 'historico';
 
-    UI.selecionarFiltro(
-        modo
-    );
+    UI.selecionarFiltro(modo);
 
     UI.renderizarAgendamentosComoCards(
         [],
-        "A buscar agendamentos..."
+        'A buscar agendamentos...'
     );
 
     try {
         const clienteId =
             await obterClienteIdResolvido();
 
-        if (!clienteId) {
-            throw new Error(
-                "Cliente não identificado."
-            );
-        }
-
-        const contextoCliente =
-            criarContextoCliente(
-                state.currentUser,
-                clienteId
-            );
-
         const agendamentos =
             await buscarAgendamentosDoCliente(
                 state.empresaId,
-                contextoCliente,
+                criarContextoCliente(
+                    state.currentUser,
+                    clienteId
+                ),
                 modo
             );
 
@@ -2574,22 +1963,19 @@ async function handleFiltroAgendamentos(e) {
 
         await UI.mostrarAlerta(
             "Erro de Busca",
-            error.message ||
             "Ocorreu um erro ao buscar os seus agendamentos."
         );
 
         UI.renderizarAgendamentosComoCards(
             [],
-            "Não foi possível carregar os seus agendamentos."
+            'Não foi possível carregar os seus agendamentos.'
         );
     }
 }
 
 async function handleCancelarClick(e) {
     const btnCancelar =
-        e.target.closest(
-            '.btn-cancelar'
-        );
+        e.target.closest('.btn-cancelar');
 
     if (!btnCancelar) {
         return;
@@ -2652,8 +2038,7 @@ async function handleCancelarClick(e) {
 // =====================================================================
 
 async function entrarNaFilaDeAgendamento() {
-    const user =
-        auth.currentUser;
+    const user = auth.currentUser;
 
     if (!user) {
         await UI.mostrarAlerta(
@@ -2672,8 +2057,7 @@ async function entrarNaFilaDeAgendamento() {
         state.empresaId;
 
     const profissional =
-        state.agendamento
-            .profissional;
+        state.agendamento.profissional;
 
     const pet =
         state.agendamento.pet ||
@@ -2690,8 +2074,7 @@ async function entrarNaFilaDeAgendamento() {
         state.agendamento.data;
 
     const servicosSelecionados =
-        state.agendamento
-            .servicos ||
+        state.agendamento.servicos ||
         [];
 
     if (!empresaId) {
@@ -2714,8 +2097,7 @@ async function entrarNaFilaDeAgendamento() {
 
     if (
         !dataSelecionada ||
-        servicosSelecionados
-            .length === 0
+        servicosSelecionados.length === 0
     ) {
         await UI.mostrarAlerta(
             "Atenção",
@@ -2725,103 +2107,51 @@ async function entrarNaFilaDeAgendamento() {
         return;
     }
 
-    let clienteId;
-
     try {
-        clienteId =
-            await obterClienteIdResolvido();
-    } catch (error) {
-        console.error(
-            "[Vitrine] Erro ao identificar cliente para a fila:",
-            error
+        const filaRef = collection(
+            db,
+            "fila_agendamentos"
         );
-
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            error.message ||
-            "Não foi possível identificar seu cadastro com segurança."
-        );
-
-        return;
-    }
-
-    if (!clienteId) {
-        await UI.mostrarAlerta(
-            "Cadastro não identificado",
-            "Não foi possível identificar o cadastro do cliente."
-        );
-
-        return;
-    }
-
-    const contextoCliente =
-        criarContextoCliente(
-            user,
-            clienteId
-        );
-
-    try {
-        const filaRef =
-            collection(
-                db,
-                "fila_agendamentos"
-            );
 
         const servicosNormalizados =
-            servicosSelecionados.map(
-                (servico) => ({
-                    id:
-                        servico.id,
+            servicosSelecionados.map(s => ({
+                id:
+                    s.id,
 
-                    nome:
-                        servico.nome,
+                nome:
+                    s.nome,
 
-                    duracao:
-                        calcularDuracaoServico(
-                            servico
-                        ),
+                duracao:
+                    calcularDuracaoServico(s),
 
-                    preco:
-                        calcularPrecoServico(
-                            servico
-                        )
-                })
-            );
+                preco:
+                    calcularPrecoServico(s)
+            }));
 
         const duracaoTotal =
             servicosNormalizados.reduce(
-                (total, servico) =>
+                (total, s) =>
                     total +
-                    Number(
-                        servico.duracao ||
-                        0
-                    ),
+                    Number(s.duracao || 0),
                 0
             );
+
+        const clienteId =
+            await obterClienteIdResolvido();
 
         await addDoc(
             filaRef,
             {
-                /*
-                 * ID real do cadastro.
-                 */
                 clienteId,
 
-                /*
-                 * UID de autenticação preservado.
-                 */
                 clienteAuthUid:
                     user.uid,
 
                 clienteNome:
-                    contextoCliente
-                        ?.displayName ||
                     user.displayName ||
                     "Cliente",
 
                 clienteEmail:
-                    contextoCliente
-                        ?.email ||
                     user.email ||
                     null,
 
@@ -2882,9 +2212,7 @@ async function entrarNaFilaDeAgendamento() {
             );
 
         if (containerFila) {
-            containerFila
-                .style
-                .display =
+            containerFila.style.display =
                 "none";
         }
 
@@ -2912,22 +2240,17 @@ async function exigirCelularParaAgendamento(
     userOuClienteId
 ) {
     const clienteId =
-        typeof userOuClienteId ===
-        "string"
-            ? userOuClienteId.trim()
-            : String(
-                userOuClienteId
-                    ?.clienteId ||
-                userOuClienteId
-                    ?.uid ||
-                ""
-            ).trim();
+        typeof userOuClienteId === "string"
+            ? userOuClienteId
+            : userOuClienteId?.clienteId ||
+              userOuClienteId?.uid ||
+              "";
 
     if (!clienteId) {
         return true;
     }
 
-    const clienteRef = doc(
+    const docRef = doc(
         db,
         "empresarios",
         state.empresaId,
@@ -2938,31 +2261,22 @@ async function exigirCelularParaAgendamento(
     let perfil = {};
 
     try {
-        const snapshot =
-            await getDoc(
-                clienteRef
-            );
+        const snap =
+            await getDoc(docRef);
 
         perfil =
-            snapshot.exists()
-                ? snapshot.data()
+            snap.exists()
+                ? snap.data()
                 : {};
 
-    } catch (error) {
-        console.warn(
-            "[Vitrine] Não foi possível ler o telefone do cliente:",
-            error
-        );
-
+    } catch {
         perfil = {};
     }
 
     const telefoneSalvo =
-        normalizarTelefone(
-            perfil.telefone ||
-            perfil.telefoneNormalizado ||
-            ""
-        );
+        String(perfil.telefone || "")
+            .replace(/\D/g, "")
+            .trim();
 
     if (
         telefoneSalvo.length >= 9 &&
@@ -2990,9 +2304,7 @@ async function exigirCelularParaAgendamento(
         }
 
         telefone =
-            normalizarTelefone(
-                telefone
-            );
+            telefone.replace(/\D/g, "");
 
         if (
             telefone.length >= 9 &&
@@ -3003,282 +2315,241 @@ async function exigirCelularParaAgendamento(
     }
 
     await setDoc(
-        clienteRef,
+        docRef,
         {
-            telefone,
-
-            telefoneNormalizado:
-                telefone,
-
-            atualizadoEm:
-                serverTimestamp()
+            ...perfil,
+            telefone
         },
         {
             merge: true
         }
     );
 
-    if (dadosClienteAtivo) {
-        dadosClienteAtivo.telefone =
-            telefone;
-
-        dadosClienteAtivo
-            .telefoneNormalizado =
-            telefone;
-    }
-
     return true;
 }
 
 function pedirTelefoneModalPronti() {
-    return new Promise(
-        (resolve) => {
-            const modal =
-                document.getElementById(
-                    "modal-telefone-pronti"
+    return new Promise(resolve => {
+        const modal =
+            document.getElementById(
+                "modal-telefone-pronti"
+            );
+
+        const input =
+            document.getElementById(
+                "modal-telefone-input"
+            );
+
+        const erro =
+            document.getElementById(
+                "modal-telefone-erro"
+            );
+
+        const btnOk =
+            document.getElementById(
+                "modal-telefone-ok"
+            );
+
+        const btnCancelar =
+            document.getElementById(
+                "modal-telefone-cancelar"
+            );
+
+        const btnSkip =
+            document.getElementById(
+                "modal-telefone-seguir-sem"
+            );
+
+        if (
+            !modal ||
+            !input ||
+            !btnOk ||
+            !btnCancelar ||
+            !btnSkip
+        ) {
+            console.error(
+                "Modal de telefone não encontrado no DOM"
+            );
+
+            resolve("skip");
+
+            return;
+        }
+
+        modal.style.display =
+            "flex";
+
+        input.value =
+            "";
+
+        erro.style.display =
+            "none";
+
+        setTimeout(
+            () => input.focus(),
+            100
+        );
+
+        function confirmar() {
+            const val =
+                input.value.replace(
+                    /\D/g,
+                    ""
                 );
 
-            const input =
-                document.getElementById(
-                    "modal-telefone-input"
-                );
+            if (val.length < 9) {
+                erro.textContent =
+                    "Telefone inválido. Informe com DDD.";
 
-            const erro =
-                document.getElementById(
-                    "modal-telefone-erro"
-                );
+                erro.style.display =
+                    "block";
 
-            const btnOk =
-                document.getElementById(
-                    "modal-telefone-ok"
-                );
+                input.focus();
 
-            const btnCancelar =
-                document.getElementById(
-                    "modal-telefone-cancelar"
-                );
-
-            const btnSkip =
-                document.getElementById(
-                    "modal-telefone-seguir-sem"
-                );
-
-            if (
-                !modal ||
-                !input ||
-                !btnOk ||
-                !btnCancelar ||
-                !btnSkip
-            ) {
-                console.error(
-                    "Modal de telefone não encontrado no DOM"
-                );
-
-                resolve("skip");
                 return;
             }
 
+            fechar(val);
+        }
+
+        function cancelar() {
+            fechar(null);
+        }
+
+        function skip() {
+            fechar("skip");
+        }
+
+        function fechar(retorno) {
             modal.style.display =
-                "flex";
-
-            input.value = "";
-
-            erro.style.display =
                 "none";
 
-            setTimeout(
-                () => input.focus(),
-                100
-            );
-
-            function confirmar() {
-                const val =
-                    input.value
-                        .replace(
-                            /\D/g,
-                            ""
-                        );
-
-                if (val.length < 9) {
-                    erro.textContent =
-                        "Telefone inválido. Informe com DDD.";
-
-                    erro.style.display =
-                        "block";
-
-                    input.focus();
-
-                    return;
-                }
-
-                fechar(val);
-            }
-
-            function cancelar() {
-                fechar(null);
-            }
-
-            function skip() {
-                fechar("skip");
-            }
-
-            function fechar(retorno) {
-                modal.style.display =
-                    "none";
-
-                btnOk.onclick =
-                    null;
-
-                btnCancelar.onclick =
-                    null;
-
-                btnSkip.onclick =
-                    null;
-
-                input.onkeydown =
-                    null;
-
-                modal.onmousedown =
-                    null;
-
-                window.removeEventListener(
-                    "keydown",
-                    escHandler
-                );
-
-                resolve(retorno);
-            }
-
-            function enterHandler(ev) {
-                if (
-                    ev.key === "Enter"
-                ) {
-                    confirmar();
-                }
-            }
-
-            function escHandler(ev) {
-                if (
-                    ev.key === "Escape"
-                ) {
-                    cancelar();
-                }
-            }
-
             btnOk.onclick =
-                confirmar;
+                null;
 
             btnCancelar.onclick =
-                cancelar;
+                null;
 
             btnSkip.onclick =
-                skip;
+                null;
 
             input.onkeydown =
-                enterHandler;
+                null;
 
             modal.onmousedown =
-                (ev) => {
-                    if (
-                        ev.target ===
-                        modal
-                    ) {
-                        cancelar();
-                    }
-                };
+                null;
 
-            window.addEventListener(
+            window.removeEventListener(
                 "keydown",
                 escHandler
             );
+
+            resolve(retorno);
         }
-    );
+
+        function enterHandler(ev) {
+            if (ev.key === "Enter") {
+                confirmar();
+            }
+        }
+
+        function escHandler(ev) {
+            if (ev.key === "Escape") {
+                cancelar();
+            }
+        }
+
+        btnOk.onclick =
+            confirmar;
+
+        btnCancelar.onclick =
+            cancelar;
+
+        btnSkip.onclick =
+            skip;
+
+        input.onkeydown =
+            enterHandler;
+
+        modal.onmousedown = ev => {
+            if (ev.target === modal) {
+                cancelar();
+            }
+        };
+
+        window.addEventListener(
+            "keydown",
+            escHandler
+        );
+    });
 }
 
 // =====================================================================
 // SALVAR LOGO NO CELULAR
 // =====================================================================
 
-window.salvarSalaoPronti =
-    async function () {
-        const img =
-            document.getElementById(
-                "logo-empresa"
-            );
+window.salvarSalaoPronti = async function () {
+    const img =
+        document.getElementById(
+            "logo-empresa"
+        );
 
-        if (!img) {
-            console.warn(
-                "Elemento #logo-empresa não encontrado no HTML"
-            );
+    if (!img) {
+        console.warn(
+            "Elemento #logo-empresa não encontrado no HTML"
+        );
 
-            alert(
-                "Erro: logo não encontrada na tela."
-            );
+        alert(
+            "Erro: logo não encontrada na tela."
+        );
 
-            return;
-        }
+        return;
+    }
 
-        const src =
-            img.src ||
-            img.getAttribute(
-                "src"
-            );
+    const src =
+        img.src ||
+        img.getAttribute("src");
 
-        if (
-            !src ||
-            src.trim() === ""
-        ) {
-            alert(
-                "A logo ainda não carregou. Aguarde um pouco e tente novamente."
-            );
+    if (!src || src.trim() === "") {
+        alert(
+            "A logo ainda não carregou. Aguarde um pouco e tente novamente."
+        );
 
-            return;
-        }
+        return;
+    }
 
-        try {
-            const response =
-                await fetch(src);
+    try {
+        const response =
+            await fetch(src);
 
-            const blob =
-                await response.blob();
+        const blob =
+            await response.blob();
 
-            const url =
-                window.URL
-                    .createObjectURL(
-                        blob
-                    );
+        const url =
+            window.URL.createObjectURL(blob);
 
-            const link =
-                document.createElement(
-                    "a"
-                );
+        const link =
+            document.createElement("a");
 
-            link.href = url;
+        link.href = url;
 
-            link.download =
-                "logo-salao.png";
+        link.download =
+            "logo-salao.png";
 
-            document.body
-                .appendChild(link);
+        document.body.appendChild(link);
 
-            link.click();
+        link.click();
 
-            document.body
-                .removeChild(link);
+        document.body.removeChild(link);
 
-            window.URL
-                .revokeObjectURL(url);
+        window.URL.revokeObjectURL(url);
 
-        } catch (error) {
-            console.warn(
-                "Download direto falhou, abrindo imagem...",
-                error
-            );
+    } catch (error) {
+        console.warn(
+            "Download direto falhou, abrindo imagem...",
+            error
+        );
 
-            window.open(
-                src,
-                "_blank"
-            );
-        }
-    };
-
+        window.open(src, "_blank");
+    }
+};
