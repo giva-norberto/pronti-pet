@@ -644,5 +644,145 @@
       })();
     </script>
 
+
+    <!-- =========================================================
+         REFINAMENTO VISUAL DESKTOP — EQUIPE PRONTI PET
+         Aplicado apenas acima de 901px.
+         Não altera mobile, IDs, JavaScript ou Firebase.
+    ========================================================== -->
+    <style>
+      @media (min-width: 901px) {
+        body {
+          background:
+            radial-gradient(circle at 88% 5%, rgba(255, 201, 40, .15), transparent 22rem),
+            radial-gradient(circle at 12% 18%, rgba(113, 64, 220, .13), transparent 26rem),
+            linear-gradient(180deg, #fbfaff 0%, #f4effd 100%) !important;
+        }
+
+        body > .container {
+          border: 1px solid #e2d7f7 !important;
+          border-radius: 22px !important;
+          box-shadow: 0 22px 55px rgba(32, 16, 66, .13) !important;
+          overflow: hidden !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,247,255,.98)) !important;
+        }
+
+        body > .container > .header {
+          position: relative !important;
+          overflow: hidden !important;
+          background:
+            radial-gradient(circle at 88% 22%, rgba(255, 201, 40, .28), transparent 12rem),
+            linear-gradient(135deg, #5522b6 0%, #7140dc 62%, #8a55e8 100%) !important;
+          border-bottom: 4px solid #ffc928 !important;
+          padding: 38px 34px !important;
+          box-shadow: inset 0 -1px 0 rgba(255,255,255,.18) !important;
+        }
+
+        body > .container > .header::after {
+          content: "🐾";
+          position: absolute;
+          right: 34px;
+          top: 50%;
+          transform: translateY(-50%) rotate(-12deg);
+          font-size: 5.3rem;
+          opacity: .14;
+          pointer-events: none;
+        }
+
+        body > .container > .header h1 {
+          font-weight: 900 !important;
+          letter-spacing: -.03em !important;
+          text-shadow: 0 3px 10px rgba(31,16,66,.22) !important;
+        }
+
+        body > .container > .header p {
+          color: rgba(255,255,255,.88) !important;
+          font-weight: 600 !important;
+        }
+
+        body > .container > .content {
+          background:
+            radial-gradient(circle at 100% 100%, rgba(255,201,40,.08), transparent 18rem),
+            linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%) !important;
+          padding: 34px 28px 32px !important;
+        }
+
+        body > .container .actions {
+          padding: 17px 18px !important;
+          border: 1px solid #e6dcf7 !important;
+          border-left: 5px solid #5522b6 !important;
+          border-radius: 16px !important;
+          background: linear-gradient(135deg, #fbf8ff 0%, #ffffff 100%) !important;
+          box-shadow: 0 10px 24px rgba(32,16,66,.06) !important;
+        }
+
+        body > .container .actions h2 {
+          color: #201042 !important;
+          font-weight: 900 !important;
+          letter-spacing: -.02em !important;
+        }
+
+        body > .container .equipe-grid {
+          gap: 22px !important;
+        }
+
+        body > .container .profissional-card {
+          border: 1px solid #e1d5f6 !important;
+          border-top: 5px solid #5522b6 !important;
+          border-radius: 18px !important;
+          background:
+            radial-gradient(circle at 100% 0%, rgba(255,201,40,.11), transparent 9rem),
+            linear-gradient(180deg, #ffffff 0%, #faf7ff 100%) !important;
+          box-shadow: 0 12px 28px rgba(32,16,66,.09) !important;
+          padding: 20px !important;
+        }
+
+        body > .container .profissional-card:hover {
+          transform: translateY(-4px) !important;
+          border-color: #cdb9ef !important;
+          box-shadow: 0 18px 36px rgba(32,16,66,.14) !important;
+        }
+
+        body > .container .profissional-foto {
+          width: 72px !important;
+          height: 72px !important;
+          border: 4px solid #ffc928 !important;
+          box-shadow: 0 0 0 4px rgba(85,34,182,.10) !important;
+        }
+
+        body > .container .profissional-nome {
+          color: #201042 !important;
+          font-size: 1.12rem !important;
+          font-weight: 900 !important;
+        }
+
+        body > .container .profissional-status {
+          background: linear-gradient(135deg, #5522b6, #7140dc) !important;
+          border: 1px solid rgba(255,255,255,.3) !important;
+          box-shadow: 0 5px 12px rgba(85,34,182,.18) !important;
+        }
+
+        body > .container .btn-info,
+        body > .container .btn-profile {
+          background: linear-gradient(135deg, #5522b6, #7140dc) !important;
+          color: #fff !important;
+          box-shadow: 0 7px 16px rgba(85,34,182,.18) !important;
+        }
+
+        body > .container .btn-edit {
+          background: linear-gradient(135deg, #ffd84a, #ffc928) !important;
+          color: #201042 !important;
+          box-shadow: 0 7px 16px rgba(255,201,40,.22) !important;
+        }
+
+        body > .container .btn-secondary {
+          background: #f7f3fc !important;
+          color: #5f5870 !important;
+          border: 1px solid #ded5eb !important;
+        }
+      }
+    </style>
+
 </body>
 </html>
