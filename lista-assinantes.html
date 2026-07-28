@@ -3,175 +3,381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes Assinantes - Pronti</title>
+    <title>Clientes Assinantes - Pronti Pet</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        :root {
+            --pet-roxo: #5522b6;
+            --pet-roxo-2: #7140dc;
+            --pet-roxo-escuro: #201042;
+            --pet-amarelo: #ffc928;
+            --pet-fundo: #f8f5ff;
+            --pet-card: #ffffff;
+            --pet-borda: #e7def8;
+            --pet-texto: #17113d;
+            --pet-muted: #726b86;
+            --pet-verde: #16a34a;
+            --pet-vermelho: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Poppins', sans-serif;
             margin: 0;
-            color: var(--cor-texto-escuro, #22223b);
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             min-height: 100vh;
             display: flex;
+            font-family: 'Poppins', sans-serif;
+            color: var(--pet-texto);
+            background:
+                radial-gradient(circle at 90% 5%, rgba(255, 201, 40, .15), transparent 22rem),
+                radial-gradient(circle at 15% 85%, rgba(113, 64, 220, .10), transparent 24rem),
+                linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
         }
+
         #menu-container {
             width: 250px;
             min-width: 250px;
             flex-shrink: 0;
         }
+
         main {
             flex-grow: 1;
-            padding: 40px;
-            margin-left: 0;
+            min-width: 0;
             min-height: 100vh;
-            box-sizing: border-box;
+            padding: 28px 30px 78px;
+            margin-left: 0;
             background: transparent;
             display: flex;
             flex-direction: column;
         }
-        /* Espaço extra entre cabeçalho e cards */
-        .espaco-cards { height: 20px; }
+
         .header-pagina {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 0;
-        }
-        .header-pagina h1 {
-            color: #fff;
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        .header-botoes {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-        .btn-header {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 26px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.18s;
-        }
-        .btn-assinantes {
-            background-color: #0891b2;
-            color: #fff;
-        }
-        .btn-assinantes:hover { background-color: #0e7490; }
-        .btn-dashboard {
-            background-color: #f59e0b;
-            color: #fff;
-        }
-        .btn-dashboard:hover { background-color: #d97706; }
-        .btn-novo {
-            background-color: #10b981;
-            color: #fff;
-        }
-        .btn-novo:hover { background-color: #059669; }
-        #lista-clientes {
-            display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            margin-top: 0;
-        }
-        .card-cliente {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 0;
-        }
-        .card-cliente .nome {
-            font-weight: 700;
-            color: #1e3a8a;
-            font-size: 1.15rem;
-            margin-bottom: 2px;
-        }
-        .card-cliente .email {
-            font-size: 0.97em; 
-            color: #64748b;
-            font-weight: 400;
-            margin-bottom: 8px;
-        }
-        .assinatura-info {
+            position: relative;
+            overflow: hidden;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
+            gap: 16px;
+            margin-bottom: 22px;
+            padding: 22px 24px;
+            border: 1px solid var(--pet-borda);
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at 90% 20%, rgba(255,201,40,.18), transparent 10rem),
+                linear-gradient(135deg, #ffffff 0%, #f8f3ff 100%);
+            box-shadow: 0 16px 38px rgba(32,16,66,.08);
         }
-        .badge-ativo {
-            background-color: #dcfce7;
-            color: #166534;
-            font-size: 0.92em;
+
+        .header-pagina::after {
+            content: "🐾";
+            position: absolute;
+            right: 22px;
+            bottom: -22px;
+            font-size: 5rem;
+            opacity: .05;
+            transform: rotate(-18deg);
+            pointer-events: none;
+        }
+
+        .header-pagina h1 {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            color: var(--pet-roxo-escuro);
+            font-size: clamp(1.55rem, 3vw, 2.2rem);
             font-weight: 700;
-            padding: 5px 18px;
-            border-radius: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 1px 4px #dcfce7;
+            line-height: 1.1;
+            letter-spacing: -.035em;
         }
-        .plano {
-            color: #22223b;
-            font-weight: 500;
-            font-size: 1em;
+
+        .header-botoes {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .vence {
-            color: #475569;
-            font-size: 0.96em;
-            margin-top: 2px;
+
+        .btn-header {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: .78rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(32,16,66,.10);
+            transition: transform .18s ease, box-shadow .18s ease;
         }
-        .pagamento-info {
-            background: #f3f6fd;
-            border-radius: 7px;
-            padding: 8px 12px;
-            font-size: 0.97em;
-            color: #333;
-            box-shadow: 0 1px 4px rgba(99,102,241,0.04);
+
+        .btn-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(32,16,66,.16);
+        }
+
+        .btn-assinantes {
+            background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
+            color: #fff;
+        }
+
+        .btn-dashboard {
+            background: linear-gradient(135deg, #d99b00, var(--pet-amarelo));
+            color: #2b1558;
+        }
+
+        .btn-novo {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: #fff;
+        }
+
+        .espaco-cards {
+            height: 2px;
+        }
+
+        #lista-clientes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 0;
+            padding: 20px;
+            border: 1px solid var(--pet-borda);
+            border-radius: 22px;
+            background: rgba(255,255,255,.74);
+            box-shadow: 0 14px 34px rgba(32,16,66,.055);
+            backdrop-filter: blur(6px);
+        }
+
+        .card-cliente {
+            position: relative;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 1px;
-            font-weight: 400;
-            margin-top: 4px;
+            gap: 12px;
+            margin: 0;
+            padding: 22px;
+            border: 1px solid var(--pet-borda);
+            border-top: 5px solid var(--pet-roxo);
+            border-radius: 18px;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(255,201,40,.10), transparent 9rem),
+                linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+            box-shadow: 0 10px 25px rgba(32,16,66,.065);
         }
-        .pagamento-info span {
+
+        .card-cliente::after {
+            content: "🐾";
+            position: absolute;
+            right: 14px;
+            bottom: -8px;
+            font-size: 3.6rem;
+            opacity: .045;
+            transform: rotate(-18deg);
+            pointer-events: none;
+        }
+
+        .card-cliente .nome {
+            position: relative;
+            z-index: 1;
             margin-bottom: 2px;
+            color: var(--pet-roxo-escuro);
+            font-size: 1.12rem;
+            font-weight: 700;
         }
+
+        .card-cliente .email {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 6px;
+            color: var(--pet-muted);
+            font-size: .8rem;
+            font-weight: 400;
+        }
+
+        .assinatura-info {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .badge-ativo {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #ecfdf3;
+            color: #166534;
+            font-size: .65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            box-shadow: none;
+        }
+
+        .plano {
+            color: var(--pet-roxo);
+            font-size: .82rem;
+            font-weight: 700;
+        }
+
+        .vence {
+            position: relative;
+            z-index: 1;
+            margin-top: 2px;
+            color: #5f5872;
+            font-size: .78rem;
+        }
+
+        .pagamento-info {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+            padding: 11px 12px;
+            border: 1px solid #eee7fa;
+            border-radius: 12px;
+            background: #f8f4ff;
+            color: #4c455f;
+            font-size: .76rem;
+            line-height: 1.45;
+            box-shadow: none;
+        }
+
+        .pagamento-info span {
+            margin: 0;
+        }
+
         .pagamento-info strong {
-            color: #4f46e5;
-            font-weight: 600;
             margin-right: 4px;
+            color: var(--pet-roxo);
+            font-weight: 700;
         }
-        .erro, .error-message {
-            color: #fff; background-color: #ef4444; padding: 15px; border-radius: 8px; font-weight: 500; margin: 2rem 0;
+
+        .erro,
+        .error-message {
+            grid-column: 1 / -1;
+            margin: 0;
+            padding: 15px;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-weight: 700;
         }
+
         .info {
-            color: #e0e7ff; font-weight: 500; margin: 2rem 0; text-align: center;
+            grid-column: 1 / -1;
+            margin: 0;
+            padding: 28px;
+            color: var(--pet-muted);
+            font-weight: 700;
+            text-align: center;
         }
+
+        .card-plano-vazio {
+            grid-column: 1 / -1;
+            width: min(100%, 460px);
+            min-height: 300px;
+            margin: 14px auto;
+            padding: 32px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--pet-borda);
+            border-top: 5px solid var(--pet-amarelo);
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at 50% 0%, rgba(255,201,40,.14), transparent 11rem),
+                #fff;
+            text-align: center;
+            box-shadow: 0 14px 34px rgba(32,16,66,.08);
+        }
+
+        .card-vazio-content i {
+            display: block;
+            margin-bottom: 16px;
+            color: var(--pet-amarelo);
+            font-size: 2.7rem;
+        }
+
+        .card-vazio-content h2 {
+            margin: 0 0 10px;
+            color: var(--pet-roxo-escuro);
+            font-size: 1.2rem;
+        }
+
+        .card-vazio-content p {
+            margin: 0;
+            color: var(--pet-muted);
+            font-size: .86rem;
+            line-height: 1.55;
+        }
+
         @media (max-width: 992px) {
-            #menu-container { display: none; }
-            main { margin-left: 0; padding: 20px; }
+            #menu-container {
+                display: none;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 20px;
+            }
         }
+
         @media (max-width: 768px) {
-            main { padding: 16px; padding-top: 70px; }
-            .header-pagina h1 { font-size: 1.3rem; }
-            .btn-header { font-size: 0.95rem; padding: 10px 10px; }
-            #lista-clientes { gap: 12px; }
+            main {
+                padding: 70px 14px 70px;
+            }
+
+            .header-pagina {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 18px;
+                border-radius: 18px;
+            }
+
+            .header-pagina h1 {
+                font-size: 1.35rem;
+            }
+
+            .header-botoes {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .btn-header {
+                width: 100%;
+                min-height: 40px;
+                padding: 9px 12px;
+                font-size: .72rem;
+            }
+
+            #lista-clientes {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 14px;
+                border-radius: 18px;
+            }
+
+            .card-cliente {
+                padding: 18px;
+            }
         }
     </style>
 </head>
