@@ -660,43 +660,61 @@
         }
 
         /* =====================================================
-           BLOCO 14 — FUNDO FINAL DA AGENDA
-           Mesmo padrão visual do index do Pronti Pet.
-           Fundo claro com detalhes roxo e amarelo.
-           Não altera nenhuma lógica da agenda.
+           BLOCO 14 — BLINDAGEM FINAL DO TEMA PRONTI PET
+           Impede style.css, menu-lateral e body.loaded de
+           restaurarem o fundo azul antigo após o carregamento.
+           Alteração exclusivamente visual.
         ====================================================== */
-        html,
-        body,
-        body.agenda-body {
-            background:
+        html body.agenda-body,
+        html body.agenda-body.loaded,
+        html body.agenda-body.agenda-body {
+            background-color: #f8f5ff !important;
+            background-image:
                 radial-gradient(circle at 84% 4%, rgba(255, 201, 40, 0.14), transparent 22rem),
                 radial-gradient(circle at 54% 8%, rgba(113, 64, 220, 0.12), transparent 24rem),
                 linear-gradient(180deg, #fbfaff 0%, #f8f5ff 100%) !important;
+            background-repeat: no-repeat !important;
+            background-size: cover !important;
             background-attachment: fixed !important;
         }
 
-        body.agenda-body .main-content,
-        .main-content {
-            background: transparent !important;
+        /*
+         * O conteúdo recebe o próprio fundo. Assim, mesmo que uma
+         * regra global pinte o body de azul, a área da agenda não muda.
+         */
+        html body.agenda-body main.main-content,
+        html body.agenda-body.loaded main.main-content,
+        html body.agenda-body.agenda-body .main-content {
+            background-color: #f8f5ff !important;
+            background-image:
+                radial-gradient(circle at 84% 4%, rgba(255, 201, 40, 0.14), transparent 22rem),
+                radial-gradient(circle at 54% 8%, rgba(113, 64, 220, 0.12), transparent 24rem),
+                linear-gradient(180deg, #fbfaff 0%, #f8f5ff 100%) !important;
+            background-repeat: no-repeat !important;
+            background-size: cover !important;
+            background-attachment: fixed !important;
         }
 
-        body.agenda-body #menu-container,
-        #menu-container {
-            background: transparent !important;
-        }
-
-        body.agenda-body #lista-agendamentos,
-        #lista-agendamentos {
-            background: transparent !important;
+        html body.agenda-body #menu-container,
+        html body.agenda-body.loaded #menu-container,
+        html body.agenda-body #lista-agendamentos,
+        html body.agenda-body.loaded #lista-agendamentos {
+            background-color: transparent !important;
+            background-image: none !important;
         }
 
         @media (max-width: 680px) {
-            html,
-            body,
-            body.agenda-body {
-                background:
+            html body.agenda-body,
+            html body.agenda-body.loaded,
+            html body.agenda-body.agenda-body,
+            html body.agenda-body main.main-content,
+            html body.agenda-body.loaded main.main-content {
+                background-color: #f5f1fc !important;
+                background-image:
                     radial-gradient(circle at 100% 0%, rgba(255, 201, 40, 0.10), transparent 12rem),
                     linear-gradient(180deg, #fbf9ff 0%, #f5f1fc 100%) !important;
+                background-repeat: no-repeat !important;
+                background-size: cover !important;
                 background-attachment: scroll !important;
             }
         }
