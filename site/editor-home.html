@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Editor da Home - Pronti</title>
+  <title>Editor da Home - Pronti Pet</title>
 
   <style>
     :root {
@@ -242,15 +242,26 @@
         height: 190px;
       }
     }
+
+    .status a {
+      color: #5522b6;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .status a:hover {
+      text-decoration: underline;
+    }
+
   </style>
 </head>
 
 <body>
   <div class="container">
     <div class="topo">
-      <h1>Editor da Home do Pronti</h1>
+      <h1>Editor da Home do Pronti Pet</h1>
       <p>
-        Cadastre fotos, vídeos, banners, prints e depoimentos para aparecerem no site público do Pronti sem mexer no código.
+        Cadastre fotos, vídeos, banners, prints e depoimentos para aparecerem no site público do Pronti Pet sem mexer no código.
       </p>
     </div>
 
@@ -267,7 +278,7 @@
         </select>
 
         <label for="titulo">Título</label>
-        <input id="titulo" type="text" placeholder="Ex: Agenda inteligente do Pronti" />
+        <input id="titulo" type="text" placeholder="Ex: Agenda inteligente do Pronti Pet" />
 
         <label for="descricao">Descrição</label>
         <textarea id="descricao" placeholder="Explique rapidamente o que aparece nessa imagem ou vídeo"></textarea>
@@ -334,7 +345,7 @@
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-    const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+    const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
 
     const tipo = document.getElementById("tipo");
     const titulo = document.getElementById("titulo");
@@ -374,7 +385,7 @@
 
           mostrarStatus(
             `Você precisa estar logado como administrador para editar a Home.<br><br>
-            Primeiro acesse: <strong>https://prontiapp.com.br/login.html</strong><br>
+            Primeiro acesse: <a href="/login.html"><strong>Login do Pronti Pet</strong></a><br>
             Depois volte para esta tela.`,
             "erro"
           );
@@ -529,7 +540,7 @@
             `;
           } else {
             midiaHtml = `
-              <img class="preview" src="${item.url}" alt="${item.titulo || "Imagem do Pronti"}">
+              <img class="preview" src="${item.url}" alt="${item.titulo || "Imagem do Pronti Pet"}">
             `;
           }
 
