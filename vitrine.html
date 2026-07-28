@@ -497,7 +497,7 @@
                 try {
                     await abrirModalGestaoPets(
                         state.empresaId,
-                        state.currentUser
+                        state.clienteId || state.currentUser
                     );
                 } catch (error) {
                     console.error('Erro ao abrir gestão de pets:', error);
@@ -622,6 +622,7 @@
     </script>
     <script type="module">
         import { db } from './vitrini-firebase.js';
+        import { state } from './vitrini-state.js';
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
         import { marcarServicosInclusosParaUsuario } from './vitrine-assinatura-integration.js';
 
@@ -652,7 +653,11 @@
             await aplicarPromocoesNaVitrine(listaServicos, empresaId); 
 
             try {
-                await marcarServicosInclusosParaUsuario(listaServicos, empresaId); 
+                await marcarServicosInclusosParaUsuario(
+                    listaServicos,
+                    empresaId,
+                    state.clienteId || state.currentUser
+                ); 
             } catch (err) {
                 console.info('Não foi possível ler assinaturas do cliente.');
             }
@@ -850,6 +855,7 @@ if (menuKey === 'visualizacao') {
             limit
         } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { state } from './vitrini-state.js';
         import { confirmarOfertaFila, recusarOfertaFila } from './filaInteligenteEngine.js';
 
         let ofertaFilaAtual = null;
@@ -971,7 +977,12 @@ if (menuKey === 'visualizacao') {
                     return;
                 }
 
-                await verificarOfertaFilaPendente(empresaId, user.uid);
+                const clienteId = state.clienteId || user.uid;
+
+                await verificarOfertaFilaPendente(
+                    empresaId,
+                    clienteId
+                );
             });
         });
     </script>
