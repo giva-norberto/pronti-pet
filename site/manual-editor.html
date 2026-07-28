@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Editor do Manual - Pronti (Versão Completa)</title>
+  <title>Editor do Manual - Pronti Pet</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --secondary: #6366f1;
-      --bg: #f8fafc;
+      --primary: #5522b6;
+      --primary-dark: #3f178f;
+      --secondary: #7140dc;
+      --bg: #f8f5ff;
       --text-main: #0f172a;
       --text-muted: #64748b;
       --white: #ffffff;
@@ -44,7 +44,7 @@
 
     .sidebar {
       width: 280px;
-      background: linear-gradient(180deg, #1e40af, #2563eb, #4f46e5);
+      background: linear-gradient(180deg, #5522b6, #7140dc, #5f2bc6);
       color: white;
       padding: 24px 18px;
       position: fixed;
@@ -167,7 +167,7 @@
 
     .section-badge {
       display: inline-block;
-      background: #dbeafe;
+      background: #f1eaff;
       color: var(--primary);
       padding: 8px 16px;
       border-radius: 999px;
@@ -214,17 +214,17 @@
     }
 
     .upload-box {
-      border: 2px dashed #bfdbfe;
+      border: 2px dashed #d8c8f4;
       border-radius: 20px;
       padding: 30px;
-      background: #f8fbff;
+      background: #fbf8ff;
       text-align: center;
       transition: 0.2s;
     }
 
     .upload-box:hover {
       border-color: var(--primary);
-      background: #f0f7ff;
+      background: #f5efff;
     }
 
     .upload-box i {
@@ -393,10 +393,10 @@
     <aside class="sidebar">
       <div class="logo">
         <div class="logo-icon">
-          <img src="https://firebasestorage.googleapis.com/v0/b/pronti-app-37c6e.firebasestorage.app/o/config%2Flogo-pronti-app.png?alt=media&token=9a9983d1-bee4-4549-b878-8d3060792674" alt="Logo Pronti">
+          <img src="https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b" alt="Logo Pronti Pet">
         </div>
         <div class="logo-text">
-          <strong>Pronti</strong>
+          <strong>Pronti Pet</strong>
           <span>Editor do Manual</span>
         </div>
       </div>
@@ -427,8 +427,8 @@
     <main class="main">
       <div class="topbar">
         <div class="topbar-info">
-          <h1>Editor do Manual Global</h1>
-          <p>As alterações feitas aqui alimentam o manual interno e, se marcado, também aparecem no site público.</p>
+          <h1>Editor do Manual do Pronti Pet</h1>
+          <p>Edite os textos e imagens do manual interno do Pronti Pet.</p>
         </div>
         <a href="manual-pronti.html" target="_blank" class="btn btn-secondary">
           <i class="fa-solid fa-eye"></i> Ver como Cliente
@@ -446,50 +446,6 @@
         <div class="form-group">
           <label for="conteudo">Conteúdo Explicativo (Texto do Manual)</label>
           <textarea id="conteudo" placeholder="Descreva o passo a passo de forma clara para o seu cliente..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <div class="public-box">
-            <div class="public-box-title">
-              <i class="fa-solid fa-globe"></i>
-              Conteúdo público para o site
-            </div>
-
-            <label class="check-row" for="exibirPublico">
-              <input type="checkbox" id="exibirPublico">
-              <span>
-                Exibir este tópico no site público do Pronti
-                <div class="helper-text">
-                  Quando marcado, este assunto aparece automaticamente no bloco "Como funciona" da home, sem o visitante precisar fazer login.
-                </div>
-              </span>
-            </label>
-
-            <div class="form-group">
-              <label for="resumoPublico">Resumo público do botão/modal</label>
-              <textarea id="resumoPublico" placeholder="Resumo curto para aparecer no site público. Se deixar vazio, o sistema usa o início do texto do manual." style="min-height: 110px;"></textarea>
-            </div>
-
-            <div class="public-grid">
-              <div class="form-group">
-                <label for="iconePublico">Ícone público Font Awesome</label>
-                <input type="text" id="iconePublico" placeholder="Ex: fa-calendar-check" />
-                <div class="helper-text">
-                  Use somente o nome do ícone. Exemplo: fa-calendar-check, fa-users, fa-gear, fa-store.
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="ordemPublico">Ordem no site</label>
-                <input type="text" id="ordemPublico" placeholder="Ex: 1" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="beneficiosPublico">Benefícios públicos (um por linha)</label>
-              <textarea id="beneficiosPublico" placeholder="Ex:\nAjuda a organizar os horários.\nFacilita o atendimento ao cliente.\nDeixa o processo mais profissional." style="min-height: 130px;"></textarea>
-            </div>
-          </div>
         </div>
 
         <div class="form-group">
@@ -532,9 +488,8 @@
     import { doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
     import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
-    const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+    const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
     const COLECAO_MANUAL = "manual_global";
-    const COLECAO_MANUAL_PUBLICO = "manual_publico";
 
     const secoes = {
       inicio: "Início",
@@ -611,19 +566,21 @@
     const sectionName = document.getElementById("sectionName");
     const statusMsg = document.getElementById("statusMsg");
     const btnSalvar = document.getElementById("btnSalvar");
-    const exibirPublicoInput = document.getElementById("exibirPublico");
-    const resumoPublicoInput = document.getElementById("resumoPublico");
-    const iconePublicoInput = document.getElementById("iconePublico");
-    const ordemPublicoInput = document.getElementById("ordemPublico");
-    const beneficiosPublicoInput = document.getElementById("beneficiosPublico");
 
     onAuthStateChanged(auth, (user) => {
-      if (user && user.uid === ADMIN_UID) {
-        document.body.style.display = "block";
-        carregarDados(secaoAtual);
-      } else {
-        window.location.href = "../index.html";
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
       }
+
+      if (user.uid !== ADMIN_UID) {
+        console.warn("Acesso negado ao Editor do Manual. UID atual:", user.uid);
+        window.location.replace("../index.html");
+        return;
+      }
+
+      document.body.style.display = "block";
+      carregarDados(secaoAtual);
     });
 
     document.querySelectorAll(".menu button").forEach(btn => {
@@ -653,12 +610,6 @@
       arquivoParaUpload = null;
       imagemInput.value = "";
 
-      exibirPublicoInput.checked = false;
-      resumoPublicoInput.value = "";
-      iconePublicoInput.value = iconesPadrao[secao] || "fa-circle-info";
-      ordemPublicoInput.value = ordemPadrao[secao] || "";
-      beneficiosPublicoInput.value = "";
-
       try {
         const docRef = doc(db, COLECAO_MANUAL, secao);
         const snap = await getDoc(docRef);
@@ -672,24 +623,6 @@
           tituloInput.value = "";
           conteudoInput.value = "";
           imagemUrlExistente = "";
-        }
-
-        const docPublicoRef = doc(db, COLECAO_MANUAL_PUBLICO, secao);
-        const snapPublico = await getDoc(docPublicoRef);
-
-        if (snapPublico.exists()) {
-          const p = snapPublico.data();
-
-          exibirPublicoInput.checked = p.ativo === true;
-          resumoPublicoInput.value = p.resumo || "";
-          iconePublicoInput.value = p.icone || iconesPadrao[secao] || "fa-circle-info";
-          ordemPublicoInput.value = p.ordem || ordemPadrao[secao] || "";
-
-          if (Array.isArray(p.beneficios)) {
-            beneficiosPublicoInput.value = p.beneficios.join("\n");
-          } else {
-            beneficiosPublicoInput.value = "";
-          }
         }
 
         if (imagemUrlExistente) {
@@ -734,35 +667,9 @@
           dataAtualizacao: new Date()
         });
 
-        if (exibirPublicoInput.checked) {
-          const resumoFinal = resumoPublicoInput.value.trim() || gerarResumo(conteudoFinal);
-          const iconeFinal = limparIcone(iconePublicoInput.value.trim() || iconesPadrao[secaoAtual] || "fa-circle-info");
-          const ordemFinal = Number(ordemPublicoInput.value) || ordemPadrao[secaoAtual] || 999;
-          const beneficiosFinal = beneficiosPublicoInput.value
-            .split("\n")
-            .map(item => item.trim())
-            .filter(Boolean);
-
-          await setDoc(doc(db, COLECAO_MANUAL_PUBLICO, secaoAtual), {
-            id: secaoAtual,
-            origem: "manual-editor",
-            titulo: tituloFinal || secoes[secaoAtual],
-            resumo: resumoFinal,
-            descricao: conteudoFinal || resumoFinal,
-            icone: iconeFinal,
-            ordem: ordemFinal,
-            beneficios: beneficiosFinal,
-            imagem: urlFinal,
-            ativo: true,
-            dataAtualizacao: new Date()
-          });
-        } else {
-          await deleteDoc(doc(db, COLECAO_MANUAL_PUBLICO, secaoAtual));
-        }
-
         imagemUrlExistente = urlFinal;
         arquivoParaUpload = null;
-        mostrarStatus("Seção salva com sucesso no Firebase e sincronizada com o site público!", "success");
+        mostrarStatus("Seção salva com sucesso no manual do Pronti Pet!", "success");
       } catch (err) {
         console.error(err);
         mostrarStatus("Erro ao salvar: " + err.message, "error");
@@ -770,21 +677,6 @@
         btnSalvar.disabled = false;
         btnSalvar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar no Firebase';
       }
-    }
-
-    function gerarResumo(texto) {
-      if (!texto) return "";
-      const limpo = texto.replace(/\s+/g, " ").trim();
-      if (limpo.length <= 220) return limpo;
-      return limpo.substring(0, 220).trim() + "...";
-    }
-
-    function limparIcone(valor) {
-      return valor
-        .replace("fa-solid", "")
-        .replace("fa-regular", "")
-        .replace("fa-brands", "")
-        .trim();
     }
 
     function mostrarStatus(msg, tipo) {
@@ -804,9 +696,8 @@
     document.getElementById("btnLimparSecao").onclick = async () => {
       if (confirm("Deseja apagar esta seção do Firebase permanentemente?")) {
         await deleteDoc(doc(db, COLECAO_MANUAL, secaoAtual));
-        await deleteDoc(doc(db, COLECAO_MANUAL_PUBLICO, secaoAtual));
         carregarDados(secaoAtual);
-        mostrarStatus("Seção resetada no manual e removida do site público.", "success");
+        mostrarStatus("Seção resetada no manual.", "success");
       }
     };
 
