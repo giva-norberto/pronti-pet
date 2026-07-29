@@ -611,6 +611,173 @@ body {
 }
 
 </style>
+
+<style id="ajuste-final-datas-mobile">
+@media (max-width: 600px) {
+  .filtros-relatorios input[type="date"],
+  .filtros-relatorio input[type="date"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    border-radius: 11px !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    font-weight: 500 !important;
+    color: var(--pet-texto, #17113d) !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  .filtros-relatorios input[type="date"]::-webkit-date-and-time-value,
+  .filtros-relatorio input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    text-align: left !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    color: var(--pet-texto, #17113d) !important;
+  }
+
+  .filtros-relatorios input[type="date"]::-webkit-calendar-picker-indicator,
+  .filtros-relatorio input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: .72 !important;
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .filtros-relatorios input[type="date"],
+  .filtros-relatorio input[type="date"] {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 7px 10px !important;
+    font-size: 14px !important;
+  }
+
+  .filtros-relatorios input[type="date"]::-webkit-date-and-time-value,
+  .filtros-relatorio input[type="date"]::-webkit-date-and-time-value {
+    font-size: 14px !important;
+  }
+}
+</style>
+
+
+<style id="ajuste-tipografia-mobile">
+@media (max-width: 600px) {
+  /* Abas: maiores sem comprometer a rolagem horizontal */
+  .aba {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    padding: 8px 11px !important;
+  }
+
+  /* Dica de rolagem: legível, mas ainda discreta */
+  .dica-rolagem-abas {
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Labels dos filtros */
+  .filtros-relatorios label,
+  .filtros-relatorio label {
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Datas e seletor de profissional */
+  .filtros-relatorios input[type="date"],
+  .filtros-relatorio input[type="date"],
+  .filtros-relatorios select,
+  .filtros-relatorio select {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  .filtros-relatorios input[type="date"]::-webkit-date-and-time-value,
+  .filtros-relatorio input[type="date"]::-webkit-date-and-time-value {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Botão Aplicar */
+  #btn-aplicar-filtro {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Botão CSV */
+  .btn-exportar-csv {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Cartões dos relatórios */
+  .aba-conteudo td {
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+  }
+
+  .aba-conteudo td::before {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+
+  .aba-conteudo p {
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Títulos e valores gerados dentro do conteúdo */
+  .aba-conteudo h4 {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .aba {
+    font-size: 12.5px !important;
+    padding: 7px 10px !important;
+  }
+
+  .dica-rolagem-abas {
+    font-size: 11.5px !important;
+  }
+
+  .filtros-relatorios label,
+  .filtros-relatorio label {
+    font-size: 13.5px !important;
+  }
+
+  .filtros-relatorios input[type="date"],
+  .filtros-relatorio input[type="date"],
+  .filtros-relatorios select,
+  .filtros-relatorio select,
+  .filtros-relatorios input[type="date"]::-webkit-date-and-time-value,
+  .filtros-relatorio input[type="date"]::-webkit-date-and-time-value {
+    font-size: 15px !important;
+  }
+
+  .aba-conteudo td {
+    font-size: 14px !important;
+  }
+
+  .aba-conteudo td::before {
+    font-size: 13px !important;
+  }
+}
+</style>
+
 </head>
 <body>
   <div id="page-content">
