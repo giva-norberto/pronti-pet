@@ -537,6 +537,149 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+  
+    .dica-rolagem-abas {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .top-actions {
+        position: relative;
+      }
+
+      .abas-container {
+        padding-right: 44px;
+        mask-image: linear-gradient(to right, #000 0%, #000 86%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, #000 0%, #000 86%, transparent 100%);
+      }
+
+      .dica-rolagem-abas {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        margin-top: 2px;
+        padding: 7px 10px;
+        border: 1px solid rgba(255,255,255,.24);
+        border-radius: 10px;
+        background: rgba(255,255,255,.10);
+        color: rgba(255,255,255,.94);
+        font-size: .68rem;
+        font-weight: 700;
+      }
+
+      .dica-rolagem-abas .fa-hand-pointer,
+      .dica-rolagem-abas .fa-arrow-right {
+        color: var(--pet-amarelo, #ffc928);
+      }
+
+      .dica-rolagem-abas .fa-hand-pointer {
+        animation: petSwipeHint 1.8s ease-in-out infinite;
+      }
+
+      .dica-rolagem-abas .fa-arrow-right {
+        animation: petArrowHint 1.8s ease-in-out infinite;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .top-actions {
+        overflow: visible;
+      }
+
+      .abas-container {
+        width: 100%;
+        flex-basis: 100%;
+        padding-right: 54px;
+        scroll-padding-right: 54px;
+      }
+
+      .aba:last-child {
+        margin-right: 28px;
+      }
+
+      .filtros-relatorios,
+      .filtros-relatorio {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .filtros-relatorios label,
+      .filtros-relatorio label {
+        width: 100%;
+        min-width: 0;
+        margin: 0 0 4px;
+      }
+
+      .filtros-relatorios input[type="date"],
+      .filtros-relatorio input[type="date"],
+      .filtros-relatorios select,
+      .filtros-relatorio select {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        height: 40px;
+        padding: 7px 8px;
+        font-size: .76rem;
+      }
+
+      .filtros-relatorios input[type="date"]::-webkit-date-and-time-value,
+      .filtros-relatorio input[type="date"]::-webkit-date-and-time-value {
+        min-width: 0;
+        text-align: left;
+      }
+
+      #btn-aplicar-filtro {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .dica-rolagem-abas {
+        font-size: .65rem;
+        padding: 7px 8px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .main-relatorios {
+        width: calc(100% - 8px);
+        margin: 4px auto;
+        padding: 6px;
+      }
+
+      .filtros-relatorios,
+      .filtros-relatorio {
+        padding: 8px;
+      }
+
+      .filtros-relatorios input[type="date"],
+      .filtros-relatorio input[type="date"],
+      .filtros-relatorios select,
+      .filtros-relatorio select {
+        font-size: .72rem;
+        padding: 6px 7px;
+      }
+
+      .dica-rolagem-abas span {
+        font-size: .61rem;
+      }
+    }
+
+    @keyframes petSwipeHint {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    @keyframes petArrowHint {
+      0%, 100% { opacity: .45; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(4px); }
+    }
+
   </style>
 </head>
 <body>
@@ -556,6 +699,11 @@ body {
           <button class="aba" data-aba="agenda"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Agenda</button>
           <button class="aba" data-aba="comissao"><i class="fa-solid fa-percent" aria-hidden="true"></i> Comissão</button>
         </nav>
+        <div class="dica-rolagem-abas" aria-hidden="true">
+          <i class="fa-solid fa-hand-pointer"></i>
+          <span>Deslize para ver mais opções</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
       </div>
 
       <header class="filtros-relatorios" role="region" aria-label="Filtros de relatórios">
