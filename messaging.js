@@ -206,38 +206,134 @@ window.messagingService = new MessagingService();
 // ✅ CORREÇÃO CIRÚRGICA: aceita params opcionais (vitrine passa) e mantém fallback (painel)
 window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, empresaIdParam = null) {
   unlockAudio();
-  const ok = await window.messagingService.initialize();
-  if (ok) {
-    try {
+
+  const btn = document.querySelector('.notification-button');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+  }
+
+  try {
+    const inicializado = await window.messagingService.initialize();
+
+    if (!inicializado) {
       if (window.mostrarMensagemNotificacao) {
-        window.mostrarMensagemNotificacao('Notificações ativas!', 'success');
-        const btn = document.querySelector('.notification-button');
-        if (btn) btn.style.display = 'none';
+        window.mostrarMensagemNotificacao(
+          'Permita notificações no navegador para concluir a ativação.',
+          'error'
+        );
       }
-      // 1) tenta usar parâmetros (ideal para vitrine/agendamento)
-      let userId = userIdParam;
-      let empresaId = empresaIdParam;
-      // 2) fallback antigo (painel): usa verificarAcesso()
-      if (!userId || !empresaId) {
-        const sessionProfile = await verificarAcesso();
-        if (!sessionProfile || !sessionProfile.user || !sessionProfile.empresaId) {
-          console.error('[messaging.js] Perfil inválido. Não foi possível salvar o token.');
-          return;
-        }
-        userId = sessionProfile.user.uid;
-        empresaId = sessionProfile.empresaId;
-      }
-      await window.messagingService.sendTokenToServer(userId, empresaId);
-      iniciarOuvinteDeNotificacoes(userId);
-    } catch (e) {
-      console.error('[messaging.js] Erro ao configurar notificações:', e);
+      return false;
     }
-  } else {
+
+    let userId = userIdParam;
+    let empresaId = empresaIdParam;
+
+    if (!userId || !empresaId) {
+      const totalTentativas = 6;
+
+      for (let tentativa = 1; tentativa <= totalTentativas; tentativa++) {
+        try {
+          const sessionProfile = await verificarAcesso();
+
+          if (
+            sessionProfile &&
+            sessionProfile.user &&
+            sessionProfile.user.uid &&
+            sessionProfile.empresaId
+          ) {
+            userId = sessionProfile.user.uid;
+            empresaId = sessionProfile.empresaId;
+            break;
+          }
+        } catch (erroAcesso) {
+          console.warn(
+            `[messaging.js] Tentativa ${tentativa}/${totalTentativas} para obter o perfil falhou:`,
+            erroAcesso
+          );
+        }
+
+        if (tentativa < totalTentativas) {
+          await new Promise(resolve => setTimeout(resolve, 700));
+        }
+      }
+    }
+
+    if (!userId || !empresaId) {
+      console.error(
+        '[messaging.js] Perfil inválido. Não foi possível identificar usuário e empresa para salvar o token.'
+      );
+
+      if (window.mostrarMensagemNotificacao) {
+        window.mostrarMensagemNotificacao(
+          'Não foi possível identificar sua empresa. Tente ativar novamente.',
+          'error'
+        );
+      }
+      return false;
+    }
+
+    const tokenSalvo = await window.messagingService.sendTokenToServer(
+      userId,
+      empresaId
+    );
+
+    if (!tokenSalvo) {
+      console.error(
+        '[messaging.js] Token obtido, mas não foi salvo no Firestore.'
+      );
+
+      if (window.mostrarMensagemNotificacao) {
+        window.mostrarMensagemNotificacao(
+          'Não foi possível concluir a ativação das notificações.',
+          'error'
+        );
+      }
+      return false;
+    }
+
+    if (btn) {
+      btn.style.display = 'none';
+    }
+
     if (window.mostrarMensagemNotificacao) {
-      window.mostrarMensagemNotificacao('Permita notificações no navegador.', 'error');
+      window.mostrarMensagemNotificacao(
+        'Notificações ativas!',
+        'success'
+      );
+    }
+
+    iniciarOuvinteDeNotificacoes(userId);
+
+    console.log('[messaging.js] Notificações configuradas com sucesso.', {
+      userId,
+      empresaId
+    });
+
+    return true;
+  } catch (error) {
+    console.error(
+      '[messaging.js] Erro ao configurar notificações:',
+      error
+    );
+
+    if (window.mostrarMensagemNotificacao) {
+      window.mostrarMensagemNotificacao(
+        'Erro ao ativar notificações. Tente novamente.',
+        'error'
+      );
+    }
+
+    return false;
+  } finally {
+    if (btn && btn.style.display !== 'none') {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
     }
   }
 };
+
 let unsubscribeDeFila = null;
 export function iniciarOuvinteDeNotificacoes(donoId) {
   if (unsubscribeDeFila) {
