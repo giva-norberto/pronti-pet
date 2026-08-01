@@ -1,74 +1,128 @@
 // ======================================================================
-//             LOGIN.JS (VERSÃO FINAL E CORRIGIDA)
+//        LOGIN.JS — PRONTI PET (SESSÃO PERSISTENTE)
 // ======================================================================
 
-// Imports (mantidos como estavam)
-import { signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { auth, provider } from "./firebase-config.js"; 
+import {
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-window.addEventListener('DOMContentLoaded', () => {
-    // Captura dos elementos do DOM (mantida)
-    const btnLoginGoogle = document.getElementById('btn-login-google');
-    const loginForm = document.getElementById('login-form');
-    const loginStatusDiv = document.getElementById('login-status');
+import { auth, provider } from "./firebase-config.js";
 
-    // Lógica do Login com Google
+/**
+ * Define a persistência local do Firebase Authentication.
+ *
+ * Com browserLocalPersistence, a sessão deve permanecer ativa mesmo após:
+ * - fechar e reabrir o navegador;
+ * - fechar e reabrir o PWA;
+ * - atualizar a página.
+ */
+async function configurarPersistenciaLocal() {
+    await setPersistence(auth, browserLocalPersistence);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    const btnLoginGoogle = document.getElementById("btn-login-google");
+    const loginForm = document.getElementById("login-form");
+    const loginStatusDiv = document.getElementById("login-status");
+
+    function exibirMensagem(mensagem = "") {
+        if (loginStatusDiv) {
+            loginStatusDiv.textContent = mensagem;
+        }
+    }
+
+    // ==============================================================
+    // LOGIN COM GOOGLE
+    // ==============================================================
     if (btnLoginGoogle) {
-        btnLoginGoogle.addEventListener('click', async () => {
+        btnLoginGoogle.addEventListener("click", async () => {
             btnLoginGoogle.disabled = true;
-            if (loginStatusDiv) loginStatusDiv.textContent = "";
+            exibirMensagem("");
 
             try {
+                await configurarPersistenciaLocal();
                 await signInWithPopup(auth, provider);
-                
-                // =================================================================================
-                // ✅ CORREÇÃO PRINCIPAL 1: FIM DO PISCA-PISCA
-                // Agora, TODOS os usuários são enviados para a "recepção" do seu aplicativo.
-                // A página 'selecionar-empresa.html' vai decidir para onde o usuário deve ir.
-                window.location.href = 'selecionar-empresa.html';
-                // =================================================================================
 
+                // A tela selecionar-empresa.html decide o destino seguinte.
+                window.location.href = "selecionar-empresa.html";
             } catch (error) {
                 console.error("Erro no login com Google:", error);
-                if (loginStatusDiv && error.code !== 'auth/popup-closed-by-user') {
-                    loginStatusDiv.textContent = 'Não foi possível fazer login com o Google.';
+
+                if (error.code !== "auth/popup-closed-by-user") {
+                    exibirMensagem("Não foi possível fazer login com o Google.");
                 }
+
                 btnLoginGoogle.disabled = false;
             }
         });
     }
 
-    // Lógica do Login com E-mail e Senha
+    // ==============================================================
+    // LOGIN COM E-MAIL E SENHA
+    // ==============================================================
     if (loginForm) {
-        loginForm.addEventListener('submit', async (event) => {
+        loginForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            if (loginStatusDiv) loginStatusDiv.textContent = "";
+            exibirMensagem("");
 
-            const submitButton = loginForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
+            const submitButton = loginForm.querySelector(
+                'button[type="submit"]'
+            );
 
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-senha').value;
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+
+            const emailInput = document.getElementById("login-email");
+            const senhaInput = document.getElementById("login-senha");
+
+            const email = emailInput?.value.trim() || "";
+            const password = senhaInput?.value || "";
+
+            if (!email || !password) {
+                exibirMensagem("Informe o e-mail e a senha.");
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+
+                return;
+            }
 
             try {
+                await configurarPersistenciaLocal();
                 await signInWithEmailAndPassword(auth, email, password);
 
-                // =================================================================================
-                // ✅ CORREÇÃO PRINCIPAL 2: FIM DO PISCA-PISCA
-                // O mesmo destino é aplicado aqui para consistência no fluxo do aplicativo.
-                window.location.href = 'selecionar-empresa.html';
-                // =================================================================================
-
+                // A tela selecionar-empresa.html decide o destino seguinte.
+                window.location.href = "selecionar-empresa.html";
             } catch (error) {
-                console.error("Erro no login manual:", error.code);
-                if (loginStatusDiv) {
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                        loginStatusDiv.textContent = 'E-mail ou senha inválidos.';
-                    } else {
-                        loginStatusDiv.textContent = 'Ocorreu um erro. Tente novamente.';
-                    }
+                console.error("Erro no login manual:", error);
+
+                if (
+                    error.code === "auth/user-not-found" ||
+                    error.code === "auth/wrong-password" ||
+                    error.code === "auth/invalid-credential" ||
+                    error.code === "auth/invalid-login-credentials"
+                ) {
+                    exibirMensagem("E-mail ou senha inválidos.");
+                } else if (error.code === "auth/too-many-requests") {
+                    exibirMensagem(
+                        "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+                    );
+                } else if (error.code === "auth/network-request-failed") {
+                    exibirMensagem(
+                        "Não foi possível conectar. Verifique sua internet."
+                    );
+                } else {
+                    exibirMensagem("Ocorreu um erro. Tente novamente.");
                 }
-                submitButton.disabled = false;
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
             }
         });
     }
