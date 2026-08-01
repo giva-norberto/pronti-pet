@@ -2,7 +2,7 @@
 // CACHE OFFLINE - PRONTI APP
 // ======================================================
 
-const CACHE_NAME = "pronti-painel-v4";
+const CACHE_NAME = "pronti-painel-v5";
 
 const FILES_TO_CACHE = [
   "/",
