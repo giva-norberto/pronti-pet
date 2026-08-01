@@ -48,9 +48,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnToLogin =
     document.getElementById('modal-auth-btn-to-login');
 
-  const btnGoogle =
-    document.getElementById('modal-auth-btn-google');
-
   const formLogin =
     document.getElementById('modal-auth-form-login');
 
@@ -69,14 +66,6 @@ window.addEventListener('DOMContentLoaded', () => {
     btnToLogin.onclick = () => {
       if (typeof showStep === 'function') {
         showStep('login');
-      }
-    };
-  }
-
-  if (btnGoogle) {
-    btnGoogle.onclick = () => {
-      if (typeof handleLoginGoogle === 'function') {
-        handleLoginGoogle();
       }
     };
   }
