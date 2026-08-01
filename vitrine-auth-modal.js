@@ -1,69 +1,98 @@
-// Importa a função de listener de autenticação
+// ======================================================================
+//          VITRINE-AUTH-MODAL.JS — PRONTI PET
+// ======================================================================
+
+// Importa o listener de autenticação central da vitrine
 import { setupAuthListener } from './vitrini-auth.js';
 
-// --------- MULTIEMPRESA ---------
+// --------- MULTIEMPRESA: EMPRESA DO PET SHOP ---------
 function getEmpresaIdAtiva() {
-  return localStorage.getItem("empresaAtivaId") || null;
+  return localStorage.getItem('empresaAtivaId') || null;
 }
 
-// --------- CONTROLE DO MODAL ---------
-setupAuthListener((user) => {
+// --------- CONTROLE DO MODAL DE LOGIN ---------
+setupAuthListener(async (user) => {
   const empresaId = getEmpresaIdAtiva();
 
   if (!user) {
-    console.log("[Vitrine] Cliente não autenticado.", { empresaId });
+    console.log('[Pronti Pet] Cliente não autenticado.', {
+      empresaId
+    });
+
+    if (typeof showModalAuth === 'function') {
+      showModalAuth();
+    }
+
+    if (typeof showStep === 'function') {
+      showStep('login');
+    }
+
     return;
   }
 
-  if (typeof window.hideModalAuth === "function") {
-    window.hideModalAuth();
+  console.log('[Pronti Pet] Cliente autenticado.', {
+    uid: user.uid,
+    empresaId
+  });
+
+  if (typeof hideModalAuth === 'function') {
+    hideModalAuth();
   }
 });
 
-// --------- EVENTOS E TROCA DE TELA ---------
+// --------- EVENTOS DO MODAL ---------
 window.addEventListener('DOMContentLoaded', () => {
-  const btnToCadastro = document.getElementById('modal-auth-btn-to-cadastro');
-  const btnToLogin = document.getElementById('modal-auth-btn-to-login');
-  const btnGoogle = document.getElementById('modal-auth-btn-google');
-  const formLogin = document.getElementById('modal-auth-form-login');
-  const formCadastro = document.getElementById('modal-auth-form-cadastro');
+  const btnToCadastro =
+    document.getElementById('modal-auth-btn-to-cadastro');
+
+  const btnToLogin =
+    document.getElementById('modal-auth-btn-to-login');
+
+  const btnGoogle =
+    document.getElementById('modal-auth-btn-google');
+
+  const formLogin =
+    document.getElementById('modal-auth-form-login');
+
+  const formCadastro =
+    document.getElementById('modal-auth-form-cadastro');
 
   if (btnToCadastro) {
     btnToCadastro.onclick = () => {
-      if (typeof window.showStep === "function") {
-        window.showStep('cadastro');
+      if (typeof showStep === 'function') {
+        showStep('cadastro');
       }
     };
   }
 
   if (btnToLogin) {
     btnToLogin.onclick = () => {
-      if (typeof window.showStep === "function") {
-        window.showStep('login');
+      if (typeof showStep === 'function') {
+        showStep('login');
       }
     };
   }
 
   if (btnGoogle) {
     btnGoogle.onclick = () => {
-      if (typeof window.handleLoginGoogle === "function") {
-        window.handleLoginGoogle();
+      if (typeof handleLoginGoogle === 'function') {
+        handleLoginGoogle();
       }
     };
   }
 
   if (formLogin) {
     formLogin.onsubmit = (event) => {
-      if (typeof window.handleLoginEmail === "function") {
-        window.handleLoginEmail(event);
+      if (typeof handleLoginEmail === 'function') {
+        handleLoginEmail(event);
       }
     };
   }
 
   if (formCadastro) {
     formCadastro.onsubmit = (event) => {
-      if (typeof window.handleCadastro === "function") {
-        window.handleCadastro(event);
+      if (typeof handleCadastro === 'function') {
+        handleCadastro(event);
       }
     };
   }
