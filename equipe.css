@@ -1,4 +1,3 @@
-Biblioteca
 /
 equipe-pet-modal-mobile-corrigido.css
 
@@ -1082,3 +1081,232 @@ body > .container .btn-secondary {
   }
 }
 
+/* ===================================================================
+   REFINAMENTO VISUAL — MODAL ADICIONAR/EDITAR PROFISSIONAL
+   Altera somente #modal-add-profissional.
+   =================================================================== */
+
+#modal-add-profissional {
+  padding: 18px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#modal-add-profissional .modal-content {
+  width: min(94%, 560px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 36px) !important;
+  margin: 0 auto !important;
+  padding: 0 0 24px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  border: 1px solid var(--pet-borda) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255,201,40,.10), transparent 12rem),
+    linear-gradient(180deg, #fff 0%, #fbf8ff 100%) !important;
+  box-shadow: 0 24px 70px rgba(32,16,66,.28) !important;
+}
+
+#modal-add-profissional .modal-header {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 24px !important;
+  padding: 25px 24px 22px !important;
+  text-align: left !important;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(255,201,40,.24), transparent 9rem),
+    linear-gradient(135deg, #f7f1ff 0%, #fff 100%) !important;
+  border-bottom: 1px solid var(--pet-borda);
+}
+
+#modal-add-profissional .modal-header::after {
+  content: "🐾";
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  font-size: 2.7rem;
+  opacity: .10;
+  pointer-events: none;
+}
+
+#modal-add-profissional .modal-header h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 7px !important;
+  color: var(--pet-roxo-escuro) !important;
+  font-size: 1.55rem !important;
+  line-height: 1.2;
+  font-weight: 900 !important;
+}
+
+#modal-add-profissional .modal-header p {
+  position: relative;
+  z-index: 1;
+  margin: 0 !important;
+  color: var(--pet-muted) !important;
+  font-size: .98rem !important;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+#modal-add-profissional form {
+  padding: 0 24px;
+}
+
+#modal-add-profissional .form-group {
+  margin-bottom: 20px !important;
+  padding: 16px !important;
+  border: 1px solid #e8dff7;
+  border-radius: 16px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 7px 18px rgba(32,16,66,.05);
+}
+
+#modal-add-profissional .form-group label {
+  display: block;
+  margin-bottom: 9px !important;
+  color: var(--pet-roxo-escuro) !important;
+  font-size: .98rem;
+  font-weight: 900 !important;
+}
+
+#modal-add-profissional .form-control {
+  width: 100% !important;
+  min-height: 46px;
+  padding: 11px 13px !important;
+  border: 1.5px solid #dfd3f1 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--pet-texto) !important;
+  font-size: 1rem !important;
+  font-weight: 700;
+}
+
+#modal-add-profissional .form-control:focus {
+  border-color: var(--pet-roxo) !important;
+  box-shadow: 0 0 0 4px rgba(85,34,182,.11) !important;
+}
+
+#modal-add-profissional input[type="file"] {
+  min-height: auto !important;
+  padding: 7px !important;
+  background: #faf7ff !important;
+}
+
+#modal-add-profissional input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2));
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#modal-add-profissional .form-group small {
+  margin-top: 10px !important;
+  color: #8a8492 !important;
+  font-size: .84rem !important;
+  line-height: 1.4;
+}
+
+#modal-add-profissional .form-actions {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  gap: 12px !important;
+  margin-top: 8px !important;
+  padding: 4px 24px 0 !important;
+}
+
+#modal-add-profissional .form-actions .btn {
+  min-height: 46px;
+  height: auto !important;
+  padding: 11px 17px !important;
+  border-radius: 13px !important;
+  font-size: .96rem !important;
+  font-weight: 900 !important;
+  justify-content: center;
+}
+
+#modal-add-profissional .btn-submit {
+  background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
+  color: #fff !important;
+  box-shadow: 0 9px 20px rgba(85,34,182,.23) !important;
+}
+
+#modal-add-profissional #btn-cancelar-profissional {
+  min-width: 126px;
+  background: #f3eef9 !important;
+  color: #675e76 !important;
+  border: 1px solid #dcd1eb !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+  #modal-add-profissional {
+    align-items: center !important;
+    justify-content: center !important;
+    padding: max(12px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom)) !important;
+  }
+
+  #modal-add-profissional .modal-content {
+    width: 100% !important;
+    max-width: 520px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 24px) !important;
+    margin: 0 !important;
+    border-radius: 22px !important;
+  }
+
+  #modal-add-profissional .modal-header {
+    padding: 22px 18px 18px !important;
+    margin-bottom: 18px !important;
+  }
+
+  #modal-add-profissional .modal-header h2 {
+    max-width: 82%;
+    font-size: 1.42rem !important;
+  }
+
+  #modal-add-profissional .modal-header p {
+    max-width: 92%;
+    font-size: .92rem !important;
+  }
+
+  #modal-add-profissional form {
+    padding: 0 16px;
+  }
+
+  #modal-add-profissional .form-group {
+    margin-bottom: 15px !important;
+    padding: 14px !important;
+    border-radius: 14px;
+  }
+
+  #modal-add-profissional .form-actions {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 2px 16px 0 !important;
+  }
+
+  #modal-add-profissional .form-actions .btn,
+  #modal-add-profissional #btn-cancelar-profissional {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 47px;
+  }
+
+  #modal-add-profissional input[type="file"] {
+    font-size: .88rem !important;
+  }
+
+  #modal-add-profissional input[type="file"]::file-selector-button {
+    padding: 9px 11px;
+    font-size: .86rem;
+  }
+}
