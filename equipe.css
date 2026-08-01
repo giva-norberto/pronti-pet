@@ -820,3 +820,265 @@ body:has(.modal-overlay.ativo) {
         max-height: 100dvh !important;
     }
 }
+
+/* ===================================================================
+   REFINAMENTO FINAL — TELA PRINCIPAL DA EQUIPE PRONTI PET
+   Melhora somente a tela principal. Não altera modais, abas, JS ou Firebase.
+   =================================================================== */
+
+:root {
+  --pet-roxo: #5522b6;
+  --pet-roxo-2: #7140dc;
+  --pet-roxo-escuro: #201042;
+  --pet-amarelo: #ffc928;
+  --pet-amarelo-claro: #ffe899;
+  --pet-fundo: #f8f5ff;
+  --pet-card: #ffffff;
+  --pet-borda: #e7def8;
+  --pet-texto: #17113d;
+  --pet-muted: #726b86;
+}
+
+body {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(255,201,40,.17), transparent 22rem),
+    radial-gradient(circle at 6% 18%, rgba(113,64,220,.15), transparent 25rem),
+    linear-gradient(180deg, #fcfbff 0%, #f6f1ff 100%) !important;
+}
+
+body > .container {
+  position: relative;
+  border: 1px solid var(--pet-borda) !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: var(--pet-card) !important;
+  box-shadow: 0 24px 58px rgba(32,16,66,.14) !important;
+}
+
+body > .container > .header {
+  position: relative;
+  overflow: hidden;
+  padding: 38px 34px !important;
+  text-align: left !important;
+  background:
+    radial-gradient(circle at 88% 22%, rgba(255,201,40,.30), transparent 13rem),
+    linear-gradient(135deg, var(--pet-roxo) 0%, var(--pet-roxo-2) 62%, #8a55e8 100%) !important;
+  border-bottom: 4px solid var(--pet-amarelo) !important;
+}
+
+body > .container > .header::after {
+  content: "🐾";
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  font-size: 5.2rem;
+  opacity: .15;
+  pointer-events: none;
+}
+
+body > .container > .header h1 {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 8px !important;
+  color: #fff !important;
+  font-size: clamp(1.75rem, 3vw, 2.45rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.035em;
+  text-shadow: 0 4px 14px rgba(31,16,66,.23);
+}
+
+body > .container > .header p {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  color: rgba(255,255,255,.89) !important;
+  font-size: 1rem !important;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+body > .container > .content {
+  padding: 32px 28px 36px !important;
+  background:
+    radial-gradient(circle at 100% 100%, rgba(255,201,40,.08), transparent 18rem),
+    linear-gradient(180deg, #fff 0%, #fbf9ff 100%) !important;
+}
+
+body > .container .actions {
+  display: grid !important;
+  grid-template-columns: minmax(180px,1fr) auto auto;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 28px !important;
+  padding: 18px !important;
+  border: 1px solid #e5daf8 !important;
+  border-left: 5px solid var(--pet-roxo) !important;
+  border-radius: 17px !important;
+  background: linear-gradient(135deg, #faf6ff 0%, #fff 100%) !important;
+  box-shadow: 0 10px 26px rgba(32,16,66,.07) !important;
+}
+
+body > .container .actions h2 {
+  margin: 0 !important;
+  color: var(--pet-roxo-escuro) !important;
+  font-size: 1.28rem !important;
+  font-weight: 900 !important;
+}
+
+body > .container .actions .btn {
+  min-height: 40px;
+  height: auto !important;
+  padding: 9px 15px !important;
+  border-radius: 12px !important;
+  font-size: .9rem !important;
+  font-weight: 800 !important;
+  justify-content: center;
+}
+
+body > .container .equipe-grid {
+  gap: 22px !important;
+  margin-top: 0 !important;
+}
+
+body > .container .profissional-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 190px;
+  padding: 21px !important;
+  border: 1px solid #e2d7f6 !important;
+  border-top: 5px solid var(--pet-roxo) !important;
+  border-radius: 19px !important;
+  background:
+    radial-gradient(circle at 104% -5%, rgba(255,201,40,.14), transparent 9rem),
+    linear-gradient(180deg, #fff 0%, #faf7ff 100%) !important;
+  box-shadow: 0 12px 30px rgba(32,16,66,.09) !important;
+}
+
+body > .container .profissional-card::after {
+  content: "🐾";
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  font-size: 1.35rem;
+  opacity: .10;
+  pointer-events: none;
+}
+
+body > .container .profissional-card:hover {
+  transform: translateY(-5px) !important;
+  border-color: #cdb9ef !important;
+  box-shadow: 0 19px 40px rgba(32,16,66,.15) !important;
+}
+
+body > .container .profissional-foto {
+  width: 72px !important;
+  height: 72px !important;
+  border: 4px solid var(--pet-amarelo) !important;
+  box-shadow: 0 0 0 4px rgba(85,34,182,.10), 0 10px 20px rgba(32,16,66,.12) !important;
+}
+
+body > .container .profissional-nome {
+  color: var(--pet-roxo-escuro) !important;
+  font-size: 1.12rem !important;
+  font-weight: 900 !important;
+}
+
+body > .container .profissional-status {
+  padding: 5px 12px !important;
+  background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
+  box-shadow: 0 5px 13px rgba(85,34,182,.19);
+  font-weight: 800 !important;
+}
+
+body > .container .profissional-actions {
+  gap: 9px !important;
+  padding-top: 8px;
+  margin-top: auto !important;
+  border-top: 1px solid #eee7f7;
+}
+
+body > .container .profissional-actions .btn {
+  min-height: 36px;
+  height: auto !important;
+  padding: 8px 12px !important;
+  border-radius: 11px !important;
+  font-size: .85rem !important;
+  font-weight: 800 !important;
+}
+
+body > .container .btn-info,
+body > .container .btn-profile {
+  background: linear-gradient(135deg, var(--pet-roxo), var(--pet-roxo-2)) !important;
+  color: #fff !important;
+  box-shadow: 0 7px 17px rgba(85,34,182,.18) !important;
+}
+
+body > .container .btn-edit {
+  background: linear-gradient(135deg, var(--pet-amarelo-claro), var(--pet-amarelo)) !important;
+  color: var(--pet-roxo-escuro) !important;
+  box-shadow: 0 7px 17px rgba(255,201,40,.22) !important;
+}
+
+body > .container .btn-secondary {
+  background: #f4f0fa !important;
+  color: #655d75 !important;
+  border: 1px solid #ddd3eb !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  body { padding: 12px !important; }
+  body > .container { border-radius: 20px !important; }
+  body > .container > .header { padding: 28px 22px !important; }
+  body > .container > .header::after { right: 20px; font-size: 4rem; }
+  body > .container > .content { padding: 24px 18px 28px !important; }
+  body > .container .actions { grid-template-columns: 1fr 1fr !important; }
+  body > .container .actions h2 { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  body { padding: 8px !important; }
+  body > .container { margin: 0 !important; border-radius: 18px !important; }
+  body > .container > .header { padding: 25px 18px !important; }
+  body > .container > .header h1 { max-width: 82%; font-size: 1.72rem !important; line-height: 1.12; }
+  body > .container > .header p { max-width: 88%; font-size: .92rem !important; line-height: 1.45; }
+  body > .container > .header::after { right: 12px; font-size: 3.25rem; }
+  body > .container > .content { padding: 18px 12px 24px !important; }
+  body > .container .actions { grid-template-columns: 1fr !important; padding: 15px !important; }
+  body > .container .actions h2 { grid-column: auto; font-size: 1.18rem !important; }
+  body > .container .actions .btn { width: 100%; min-height: 43px; font-size: .92rem !important; }
+  body > .container .equipe-grid { gap: 16px !important; }
+  body > .container .profissional-card { min-height: auto; padding: 18px !important; border-radius: 17px !important; }
+  body > .container .profissional-foto { width: 68px !important; height: 68px !important; }
+  body > .container .profissional-actions { justify-content: stretch !important; }
+  body > .container .profissional-actions .btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 120px;
+    min-height: 40px;
+    justify-content: center;
+  }
+}
+
+/* ===================================================================
+   CORREÇÃO DESKTOP — CONTEÚDO NÃO PODE FICAR SOB O MENU LATERAL
+   -------------------------------------------------------------------
+   Reserva o espaço do menu fixo apenas em telas de computador.
+   Não altera menu, cards, modais, mobile, JavaScript ou Firebase.
+   =================================================================== */
+@media (min-width: 901px) {
+  body {
+    padding:
+      28px
+      28px
+      28px
+      calc(250px + 28px) !important;
+  }
+
+  body > .container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+}
+
