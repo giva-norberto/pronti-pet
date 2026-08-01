@@ -1,103 +1,64 @@
 // ======================================================================
 //          VITRINE-AUTH-MODAL.JS — PRONTI PET
+//          FLUXO ORIGINAL PRESERVADO
 // ======================================================================
 
-import {
-    setupAuthListener,
-    fazerLogin
-} from "./vitrini-auth.js";
+import { setupAuthListener } from "./vitrini-auth.js";
 
 // ----------------------------------------------------------------------
 // MULTIEMPRESA
+// Mantido para compatibilidade com o fluxo atual da vitrine.
 // ----------------------------------------------------------------------
 function getEmpresaIdAtiva() {
     return localStorage.getItem("empresaAtivaId") || null;
 }
 
 // ----------------------------------------------------------------------
-// FUNÇÕES VISUAIS SEGURAS
-// ----------------------------------------------------------------------
-function abrirModalAutenticacao() {
-    if (typeof window.showModalAuth === "function") {
-        window.showModalAuth();
-        return;
-    }
-
-    const modal =
-        document.getElementById("modal-auth") ||
-        document.getElementById("modal-login");
-
-    if (!modal) {
-        console.warn("[Vitrine] Modal de autenticação não encontrado.");
-        return;
-    }
-
-    modal.style.display = "flex";
-    modal.classList.add("ativo");
-    modal.setAttribute("aria-hidden", "false");
-}
-
-function fecharModalAutenticacao() {
-    if (typeof window.hideModalAuth === "function") {
-        window.hideModalAuth();
-        return;
-    }
-
-    const modal =
-        document.getElementById("modal-auth") ||
-        document.getElementById("modal-login");
-
-    if (!modal) return;
-
-    modal.style.display = "none";
-    modal.classList.remove("ativo");
-    modal.setAttribute("aria-hidden", "true");
-}
-
-function exibirEtapa(etapa) {
-    if (typeof window.showStep === "function") {
-        window.showStep(etapa);
-    }
-}
-
-// ----------------------------------------------------------------------
 // ESTADO DE AUTENTICAÇÃO
-// Não abre o login automaticamente.
-// O cliente pode navegar livremente na vitrine.
+//
+// Regra preservada:
+// - o cliente pode entrar e navegar na vitrine sem login;
+// - o modal NÃO abre automaticamente ao carregar a página;
+// - o login continua sendo solicitado pelo fluxo original do botão Agendar;
+// - quando a autenticação é concluída, o modal é fechado.
 // ----------------------------------------------------------------------
 setupAuthListener((user) => {
     const empresaId = getEmpresaIdAtiva();
 
-    if (user) {
-        console.log("[Vitrine] Cliente autenticado:", {
-            uid: user.uid,
+    if (!user) {
+        console.log("[Vitrine] Cliente navegando sem login.", {
             empresaId
         });
 
-        fecharModalAutenticacao();
+        // Não abrir o modal automaticamente.
+        // O fluxo original do botão Agendar continua responsável por isso.
         return;
     }
 
-    console.log("[Vitrine] Cliente navegando sem login.", {
+    console.log("[Vitrine] Cliente autenticado:", {
+        uid: user.uid,
         empresaId
     });
 
-    // Não abrir modal aqui.
-    // O modal será chamado apenas quando uma ação exigir autenticação.
+    // Preserva a função visual já existente na vitrine.
+    if (typeof window.hideModalAuth === "function") {
+        window.hideModalAuth();
+    }
 });
 
 // ----------------------------------------------------------------------
-// FUNÇÃO PÚBLICA PARA EXIGIR LOGIN SOMENTE AO AGENDAR
-// Outros arquivos podem chamar:
-// window.exigirLoginVitrine()
-// ----------------------------------------------------------------------
-window.exigirLoginVitrine = function exigirLoginVitrine() {
-    abrirModalAutenticacao();
-    exibirEtapa("login");
-};
-
-// ----------------------------------------------------------------------
 // EVENTOS DO MODAL
+//
+// Importante:
+// As funções handleLoginGoogle, handleLoginEmail, handleCadastro e showStep
+// pertencem ao fluxo original da vitrine e podem realizar outras ações além
+// do Firebase Authentication, como:
+// - vincular o cadastro do cliente;
+// - atualizar o estado da vitrine;
+// - fechar o modal;
+// - continuar o agendamento.
+//
+// Por isso, elas são preservadas e chamadas por window.
 // ----------------------------------------------------------------------
 window.addEventListener("DOMContentLoaded", () => {
     const btnToCadastro = document.getElementById(
@@ -120,68 +81,99 @@ window.addEventListener("DOMContentLoaded", () => {
         "modal-auth-form-cadastro"
     );
 
+    // --------------------------------------------------------------
+    // TROCA PARA A TELA DE CADASTRO
+    // --------------------------------------------------------------
     if (btnToCadastro) {
-        btnToCadastro.addEventListener("click", () => {
-            exibirEtapa("cadastro");
-        });
+        btnToCadastro.onclick = () => {
+            if (typeof window.showStep === "function") {
+                window.showStep("cadastro");
+            } else {
+                console.error(
+                    "[Vitrine] A função showStep não foi encontrada."
+                );
+            }
+        };
     }
 
+    // --------------------------------------------------------------
+    // VOLTA PARA A TELA DE LOGIN
+    // --------------------------------------------------------------
     if (btnToLogin) {
-        btnToLogin.addEventListener("click", () => {
-            exibirEtapa("login");
-        });
+        btnToLogin.onclick = () => {
+            if (typeof window.showStep === "function") {
+                window.showStep("login");
+            } else {
+                console.error(
+                    "[Vitrine] A função showStep não foi encontrada."
+                );
+            }
+        };
     }
 
+    // --------------------------------------------------------------
+    // LOGIN COM GOOGLE
+    // Preserva integralmente o manipulador original da vitrine.
+    // --------------------------------------------------------------
     if (btnGoogle) {
-        btnGoogle.addEventListener("click", async () => {
+        btnGoogle.onclick = async () => {
             if (btnGoogle.disabled) return;
+
+            if (typeof window.handleLoginGoogle !== "function") {
+                console.error(
+                    "[Vitrine] A função handleLoginGoogle não foi encontrada."
+                );
+                return;
+            }
 
             btnGoogle.disabled = true;
 
             try {
-                const usuario = await fazerLogin();
-
-                if (usuario) {
-                    fecharModalAutenticacao();
-                }
+                await window.handleLoginGoogle();
             } catch (error) {
                 console.error(
-                    "[Vitrine] Erro inesperado no login Google:",
+                    "[Vitrine] Erro no fluxo original de login Google:",
                     error
                 );
             } finally {
                 btnGoogle.disabled = false;
             }
-        });
+        };
     }
 
+    // --------------------------------------------------------------
+    // LOGIN COM E-MAIL
+    // --------------------------------------------------------------
     if (formLogin) {
-        formLogin.addEventListener("submit", async (event) => {
+        formLogin.onsubmit = async (event) => {
             event.preventDefault();
 
             if (typeof window.handleLoginEmail !== "function") {
                 console.error(
-                    "[Vitrine] handleLoginEmail não foi encontrada."
+                    "[Vitrine] A função handleLoginEmail não foi encontrada."
                 );
                 return;
             }
 
             await window.handleLoginEmail(event);
-        });
+        };
     }
 
+    // --------------------------------------------------------------
+    // CADASTRO DO CLIENTE
+    // --------------------------------------------------------------
     if (formCadastro) {
-        formCadastro.addEventListener("submit", async (event) => {
+        formCadastro.onsubmit = async (event) => {
             event.preventDefault();
 
             if (typeof window.handleCadastro !== "function") {
                 console.error(
-                    "[Vitrine] handleCadastro não foi encontrada."
+                    "[Vitrine] A função handleCadastro não foi encontrada."
                 );
                 return;
             }
 
             await window.handleCadastro(event);
-        });
+        };
     }
 });
