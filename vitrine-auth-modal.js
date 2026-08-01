@@ -15,8 +15,7 @@ function getEmpresaIdAtiva() {
 }
 
 // ----------------------------------------------------------------------
-// FUNÇÕES AUXILIARES SEGURAS
-// Usa window porque as funções visuais podem estar em outro arquivo.
+// FUNÇÕES VISUAIS SEGURAS
 // ----------------------------------------------------------------------
 function abrirModalAutenticacao() {
     if (typeof window.showModalAuth === "function") {
@@ -24,13 +23,18 @@ function abrirModalAutenticacao() {
         return;
     }
 
-    const modal = document.getElementById("modal-auth");
+    const modal =
+        document.getElementById("modal-auth") ||
+        document.getElementById("modal-login");
 
-    if (modal) {
-        modal.style.display = "flex";
-        modal.classList.add("ativo");
-        modal.setAttribute("aria-hidden", "false");
+    if (!modal) {
+        console.warn("[Vitrine] Modal de autenticação não encontrado.");
+        return;
     }
+
+    modal.style.display = "flex";
+    modal.classList.add("ativo");
+    modal.setAttribute("aria-hidden", "false");
 }
 
 function fecharModalAutenticacao() {
@@ -39,49 +43,58 @@ function fecharModalAutenticacao() {
         return;
     }
 
-    const modal = document.getElementById("modal-auth");
+    const modal =
+        document.getElementById("modal-auth") ||
+        document.getElementById("modal-login");
 
-    if (modal) {
-        modal.style.display = "none";
-        modal.classList.remove("ativo");
-        modal.setAttribute("aria-hidden", "true");
-    }
+    if (!modal) return;
+
+    modal.style.display = "none";
+    modal.classList.remove("ativo");
+    modal.setAttribute("aria-hidden", "true");
 }
 
 function exibirEtapa(etapa) {
     if (typeof window.showStep === "function") {
         window.showStep(etapa);
-        return;
     }
-
-    console.warn(
-        `[Vitrine] A função showStep não foi encontrada. Etapa solicitada: ${etapa}`
-    );
 }
 
 // ----------------------------------------------------------------------
-// LISTENER DE AUTENTICAÇÃO
+// ESTADO DE AUTENTICAÇÃO
+// Não abre o login automaticamente.
+// O cliente pode navegar livremente na vitrine.
 // ----------------------------------------------------------------------
 setupAuthListener((user) => {
     const empresaId = getEmpresaIdAtiva();
 
-    if (!user) {
-        console.log("[Vitrine] Cliente não autenticado.", {
+    if (user) {
+        console.log("[Vitrine] Cliente autenticado:", {
+            uid: user.uid,
             empresaId
         });
 
-        abrirModalAutenticacao();
-        exibirEtapa("login");
+        fecharModalAutenticacao();
         return;
     }
 
-    console.log("[Vitrine] Cliente autenticado:", {
-        uid: user.uid,
+    console.log("[Vitrine] Cliente navegando sem login.", {
         empresaId
     });
 
-    fecharModalAutenticacao();
+    // Não abrir modal aqui.
+    // O modal será chamado apenas quando uma ação exigir autenticação.
 });
+
+// ----------------------------------------------------------------------
+// FUNÇÃO PÚBLICA PARA EXIGIR LOGIN SOMENTE AO AGENDAR
+// Outros arquivos podem chamar:
+// window.exigirLoginVitrine()
+// ----------------------------------------------------------------------
+window.exigirLoginVitrine = function exigirLoginVitrine() {
+    abrirModalAutenticacao();
+    exibirEtapa("login");
+};
 
 // ----------------------------------------------------------------------
 // EVENTOS DO MODAL
@@ -107,21 +120,18 @@ window.addEventListener("DOMContentLoaded", () => {
         "modal-auth-form-cadastro"
     );
 
-    // Trocar para cadastro
     if (btnToCadastro) {
         btnToCadastro.addEventListener("click", () => {
             exibirEtapa("cadastro");
         });
     }
 
-    // Voltar para login
     if (btnToLogin) {
         btnToLogin.addEventListener("click", () => {
             exibirEtapa("login");
         });
     }
 
-    // Login Google
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
             if (btnGoogle.disabled) return;
@@ -136,7 +146,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
             } catch (error) {
                 console.error(
-                    "[Vitrine] Erro inesperado no botão Google:",
+                    "[Vitrine] Erro inesperado no login Google:",
                     error
                 );
             } finally {
@@ -145,14 +155,13 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Login por e-mail
     if (formLogin) {
         formLogin.addEventListener("submit", async (event) => {
             event.preventDefault();
 
             if (typeof window.handleLoginEmail !== "function") {
                 console.error(
-                    "[Vitrine] A função handleLoginEmail não foi encontrada."
+                    "[Vitrine] handleLoginEmail não foi encontrada."
                 );
                 return;
             }
@@ -161,14 +170,13 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Cadastro
     if (formCadastro) {
         formCadastro.addEventListener("submit", async (event) => {
             event.preventDefault();
 
             if (typeof window.handleCadastro !== "function") {
                 console.error(
-                    "[Vitrine] A função handleCadastro não foi encontrada."
+                    "[Vitrine] handleCadastro não foi encontrada."
                 );
                 return;
             }
