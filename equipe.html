@@ -5,6 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Equipe</title>
     <link rel="stylesheet" href="equipe.css">
+
+    <style>
+        /* ============================================================
+           PRÉ-VISUALIZAÇÃO DA FOTO — MODAL ADICIONAR/EDITAR
+           Camada isolada: não interfere nos cards nem no equipe.js.
+           ============================================================ */
+        #modal-add-profissional .foto-profissional-preview {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            align-items: center;
+            gap: 14px;
+            margin-top: 14px;
+            padding: 14px;
+            border: 1px solid #e2d6f4;
+            border-radius: 15px;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(255, 201, 40, .12), transparent 8rem),
+                linear-gradient(135deg, #f8f3ff 0%, #ffffff 100%);
+            box-shadow: 0 8px 20px rgba(32, 16, 66, .07);
+        }
+
+        #modal-add-profissional .foto-profissional-preview[hidden],
+        #modal-add-profissional .foto-profissional-preview-erro[hidden] {
+            display: none !important;
+        }
+
+        #modal-add-profissional .foto-profissional-preview__imagem {
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #ffc928;
+            background: #f0e9ff;
+            box-shadow: 0 0 0 4px rgba(85, 34, 182, .10);
+        }
+
+        #modal-add-profissional .foto-profissional-preview__imagem img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #modal-add-profissional .foto-profissional-preview__conteudo {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+
+        #modal-add-profissional .foto-profissional-preview__conteudo strong {
+            color: #201042;
+            font-size: .96rem;
+            font-weight: 900;
+        }
+
+        #modal-add-profissional #foto-profissional-preview-nome {
+            width: 100%;
+            overflow: hidden;
+            color: #726b86;
+            font-size: .82rem;
+            line-height: 1.35;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #modal-add-profissional .foto-profissional-preview__remover {
+            margin-top: 4px;
+            padding: 7px 10px;
+            border: 1px solid #d9cdec;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #5522b6;
+            font-size: .78rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        #modal-add-profissional .foto-profissional-preview__remover:hover {
+            background: #f2ebff;
+        }
+
+        #modal-add-profissional .foto-profissional-preview-erro {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: #fff1f2;
+            color: #b91c1c;
+            font-size: .84rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            #modal-add-profissional .foto-profissional-preview {
+                grid-template-columns: 76px minmax(0, 1fr);
+                gap: 12px;
+                padding: 12px;
+            }
+
+            #modal-add-profissional .foto-profissional-preview__imagem {
+                width: 76px;
+                height: 76px;
+            }
+        }
+    </style>
+
 </head>
 <body>
     <!-- Menu lateral dinâmico -->
@@ -59,6 +168,38 @@
                         class="form-control"
                         accept="image/*"
                     >
+
+                    <!-- Pré-visualização segura da foto escolhida.
+                         Não altera o input, o upload ou a lógica do equipe.js. -->
+                    <div id="foto-profissional-preview" class="foto-profissional-preview" hidden>
+                        <div class="foto-profissional-preview__imagem">
+                            <img
+                                id="foto-profissional-preview-img"
+                                src=""
+                                alt="Pré-visualização da foto do profissional"
+                            >
+                        </div>
+                        <div class="foto-profissional-preview__conteudo">
+                            <strong>Pré-visualização</strong>
+                            <span id="foto-profissional-preview-nome"></span>
+                            <button
+                                type="button"
+                                id="btn-remover-preview-foto"
+                                class="foto-profissional-preview__remover"
+                            >
+                                Remover foto escolhida
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        id="foto-profissional-preview-erro"
+                        class="foto-profissional-preview-erro"
+                        role="alert"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
                     <small style="color: #7f8c8d; margin-top: 5px; display: block;">
                         Formatos aceitos: JPG, PNG, GIF (máx. 5MB)
                     </small>
@@ -783,6 +924,152 @@
         }
       }
     </style>
+
+
+    <script>
+        /* ============================================================
+           PRÉ-VISUALIZAÇÃO SEGURA DA FOTO DO PROFISSIONAL
+           - não envia arquivos;
+           - não altera o salvamento;
+           - não modifica cards;
+           - trabalha somente com o input #foto-profissional.
+           ============================================================ */
+        (() => {
+            const LIMITE_FOTO_BYTES = 5 * 1024 * 1024;
+            let urlTemporariaPreview = null;
+
+            function obterElementosPreview() {
+                return {
+                    input: document.getElementById('foto-profissional'),
+                    preview: document.getElementById('foto-profissional-preview'),
+                    imagem: document.getElementById('foto-profissional-preview-img'),
+                    nome: document.getElementById('foto-profissional-preview-nome'),
+                    erro: document.getElementById('foto-profissional-preview-erro'),
+                    remover: document.getElementById('btn-remover-preview-foto'),
+                    formulario: document.getElementById('form-add-profissional'),
+                    cancelar: document.getElementById('btn-cancelar-profissional')
+                };
+            }
+
+            function liberarUrlTemporaria() {
+                if (urlTemporariaPreview) {
+                    URL.revokeObjectURL(urlTemporariaPreview);
+                    urlTemporariaPreview = null;
+                }
+            }
+
+            function limparErro(elementos) {
+                if (!elementos.erro) return;
+                elementos.erro.textContent = '';
+                elementos.erro.hidden = true;
+            }
+
+            function mostrarErro(elementos, mensagem) {
+                if (!elementos.erro) return;
+                elementos.erro.textContent = mensagem;
+                elementos.erro.hidden = false;
+            }
+
+            function esconderPreview(elementos, limparInput = false) {
+                liberarUrlTemporaria();
+
+                if (elementos.imagem) {
+                    elementos.imagem.removeAttribute('src');
+                }
+
+                if (elementos.nome) {
+                    elementos.nome.textContent = '';
+                }
+
+                if (elementos.preview) {
+                    elementos.preview.hidden = true;
+                }
+
+                if (limparInput && elementos.input) {
+                    elementos.input.value = '';
+                }
+            }
+
+            function arquivoEhImagem(arquivo) {
+                return Boolean(
+                    arquivo &&
+                    typeof arquivo.type === 'string' &&
+                    arquivo.type.toLowerCase().startsWith('image/')
+                );
+            }
+
+            function atualizarPreview(elementos) {
+                limparErro(elementos);
+                esconderPreview(elementos, false);
+
+                const arquivo = elementos.input?.files?.[0];
+
+                if (!arquivo) {
+                    return;
+                }
+
+                if (!arquivoEhImagem(arquivo)) {
+                    elementos.input.value = '';
+                    mostrarErro(elementos, 'Selecione um arquivo de imagem válido.');
+                    return;
+                }
+
+                if (arquivo.size > LIMITE_FOTO_BYTES) {
+                    elementos.input.value = '';
+                    mostrarErro(elementos, 'A imagem ultrapassa o limite máximo de 5 MB.');
+                    return;
+                }
+
+                urlTemporariaPreview = URL.createObjectURL(arquivo);
+
+                if (elementos.imagem) {
+                    elementos.imagem.src = urlTemporariaPreview;
+                }
+
+                if (elementos.nome) {
+                    elementos.nome.textContent = arquivo.name || 'Imagem selecionada';
+                    elementos.nome.title = arquivo.name || 'Imagem selecionada';
+                }
+
+                if (elementos.preview) {
+                    elementos.preview.hidden = false;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const elementos = obterElementosPreview();
+
+                if (!elementos.input || !elementos.preview || !elementos.imagem) {
+                    console.warn('[Equipe] Área de pré-visualização da foto não encontrada.');
+                    return;
+                }
+
+                elementos.input.addEventListener('change', () => {
+                    atualizarPreview(elementos);
+                });
+
+                elementos.remover?.addEventListener('click', () => {
+                    limparErro(elementos);
+                    esconderPreview(elementos, true);
+                    elementos.input?.focus();
+                });
+
+                elementos.cancelar?.addEventListener('click', () => {
+                    limparErro(elementos);
+                    esconderPreview(elementos, true);
+                });
+
+                elementos.formulario?.addEventListener('reset', () => {
+                    window.setTimeout(() => {
+                        limparErro(elementos);
+                        esconderPreview(elementos, false);
+                    }, 0);
+                });
+
+                window.addEventListener('beforeunload', liberarUrlTemporaria);
+            });
+        })();
+    </script>
 
 </body>
 </html>
