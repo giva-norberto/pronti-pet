@@ -20,35 +20,129 @@
     <div id="vitrine-content" class="vitrine-container" style="display: none;">
         <main class="main-content-vitrine">
             <div id="main-navigation-container" class="vitrine-home">
-                <header class="header-vitrine-card vitrine-home-header">
-                    <div class="vitrine-home-marca">
-                        <img id="logo-publico" src="https://placehold.co/100x100/e0e7ff/6366f1?text=..." alt="Logo do Negócio">
+                <header class="vitrine-home-topbar">
+                    <div class="vitrine-home-brand">
+                        <img
+                            id="logo-publico"
+                            src="https://placehold.co/100x100/e0e7ff/6366f1?text=..."
+                            alt="Logo do Negócio"
+                        >
 
-                        <div class="vitrine-home-marca-texto">
-                            <span class="vitrine-home-tag">Seu pet bem cuidado</span>
+                        <div class="vitrine-home-brand-texto">
                             <h1 id="nome-negocio-publico">Carregando...</h1>
+                            <p id="vitrine-home-subtitulo">Pet Shop e Estética</p>
                             <p id="boas-vindas-usuario" class="boas-vindas-usuario">Bem-vindo(a)!</p>
                             <div id="usuario-logado-nome" class="usuario-logado-nome"></div>
                         </div>
                     </div>
+
+                    <div class="vitrine-home-acoes">
+                        <div class="vitrine-home-status" aria-label="Status do atendimento online">
+                            <span></span>
+                            <div>
+                                <strong id="status-negocio-publico">Aberto para agendar</strong>
+                                <small id="status-negocio-horario">Atendimento online</small>
+                            </div>
+                        </div>
+
+                        <span class="vitrine-home-acao" aria-hidden="true">
+                            <i class="fa-regular fa-bell"></i>
+                        </span>
+
+                        <a
+                            href="#"
+                            class="vitrine-card vitrine-home-acao vitrine-home-perfil"
+                            data-menu-card="perfil"
+                            aria-label="Abrir perfil"
+                        >
+                            <i class="fa-solid fa-user"></i>
+                        </a>
+                    </div>
                 </header>
 
-                <a href="#" class="vitrine-home-hero vitrine-card" data-menu-card="agendamento">
+                <a href="#" class="vitrine-card vitrine-home-hero" data-menu-card="agendamento">
                     <div class="vitrine-home-hero-conteudo">
-                        <span class="vitrine-home-hero-tag">Agendamento online</span>
-                        <h2>Reserve o cuidado do seu pet</h2>
-                        <p>Escolha o serviço, a melhor data e o horário disponível.</p>
+                        <h2>Tudo o que o seu pet precisa, com o carinho que ele merece!</h2>
+                        <p>Agende de forma rápida e acompanhe cada etapa do atendimento.</p>
 
                         <span class="vitrine-home-hero-botao">
+                            <i class="fa-solid fa-paw" aria-hidden="true"></i>
                             Agendar agora
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </span>
+
+                        <small>
+                            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                            É rápido e fácil
+                        </small>
                     </div>
 
-                    <div class="vitrine-home-hero-icone" aria-hidden="true">
-                        <i class="fa-solid fa-paw"></i>
+                    <div class="vitrine-home-hero-visual" aria-hidden="true">
+                        <img id="vitrine-hero-imagem" alt="" hidden>
+
+                        <div id="vitrine-hero-fallback" class="vitrine-home-hero-fallback">
+                            <span class="vitrine-home-animal vitrine-home-animal-cachorro">
+                                <i class="fa-solid fa-dog"></i>
+                            </span>
+                            <span class="vitrine-home-animal vitrine-home-animal-gato">
+                                <i class="fa-solid fa-cat"></i>
+                            </span>
+                        </div>
                     </div>
                 </a>
+
+                <section class="dashboard-grid-cards vitrine-home-atalhos" id="vitrine-cards-grid" aria-label="Acessos rápidos">
+                    <a href="#" id="btn-meus-pets" class="vitrine-card vitrine-home-card" data-menu-card="pets">
+                        <span class="vitrine-home-card-icone icone-pets">
+                            <i class="fa-solid fa-paw" aria-hidden="true"></i>
+                        </span>
+
+                        <span class="vitrine-home-card-texto">
+                            <strong>Meus pets</strong>
+                            <small>Gerencie seus pets cadastrados</small>
+                        </span>
+
+                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="#" class="vitrine-card vitrine-home-card" data-menu-card="visualizacao">
+                        <span class="vitrine-home-card-icone icone-agendamentos">
+                            <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                        </span>
+
+                        <span class="vitrine-home-card-texto">
+                            <strong>Agendamentos</strong>
+                            <small>Veja seus próximos compromissos</small>
+                        </span>
+
+                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="#atendimento-em-andamento-container" id="btn-acompanhar-home" class="vitrine-home-card">
+                        <span class="vitrine-home-card-icone icone-acompanhar">
+                            <i class="fa-regular fa-clipboard" aria-hidden="true"></i>
+                        </span>
+
+                        <span class="vitrine-home-card-texto">
+                            <strong>Acompanhar</strong>
+                            <small>Acompanhe o atendimento do seu pet em tempo real</small>
+                        </span>
+
+                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="#" class="vitrine-card vitrine-home-card" data-menu-card="minhas-assinaturas">
+                        <span class="vitrine-home-card-icone icone-plano">
+                            <i class="fa-solid fa-crown" aria-hidden="true"></i>
+                        </span>
+
+                        <span class="vitrine-home-card-texto">
+                            <strong>Meu plano</strong>
+                            <small>Veja seu plano ativo e benefícios</small>
+                        </span>
+
+                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                    </a>
+                </section>
 
                 <section
                     id="atendimento-em-andamento-container"
@@ -56,47 +150,27 @@
                     hidden
                 ></section>
 
-                <section class="vitrine-home-secao" aria-labelledby="vitrine-atalhos-titulo">
-                    <div class="vitrine-home-secao-cabecalho">
-                        <div>
-                            <span>Área do cliente</span>
-                            <h2 id="vitrine-atalhos-titulo">Acesse rapidamente</h2>
-                        </div>
-                    </div>
+                <section
+                    id="proximo-atendimento-home"
+                    class="vitrine-proximo-atendimento"
+                    hidden
+                ></section>
 
-                    <div class="dashboard-grid-cards vitrine-home-atalhos" id="vitrine-cards-grid">
-                        <a href="#" id="btn-meus-pets" class="vitrine-card vitrine-home-card" data-menu-card="pets">
-                            <span class="vitrine-home-card-icone icone-pets">
-                                <i class="fa-solid fa-paw" aria-hidden="true"></i>
-                            </span>
-                            <strong>Meus pets</strong>
-                            <small>Cadastros e informações</small>
-                        </a>
+                <section class="vitrine-home-destaques" aria-label="Destaques">
+                    <a href="#" class="vitrine-card vitrine-home-destaque vitrine-home-promocao" data-menu-card="agendamento">
+                        <span class="vitrine-home-destaque-tag">Promoção da semana</span>
+                        <strong>Banho + Hidratação</strong>
+                        <small>Confira as condições para o porte do seu pet</small>
+                        <span>Agendar <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+                        <i class="fa-solid fa-heart vitrine-home-destaque-ilustracao" aria-hidden="true"></i>
+                    </a>
 
-                        <a href="#" class="vitrine-card vitrine-home-card" data-menu-card="visualizacao">
-                            <span class="vitrine-home-card-icone icone-agendamentos">
-                                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                            </span>
-                            <strong>Agendamentos</strong>
-                            <small>Próximos e histórico</small>
-                        </a>
-
-                        <a href="#atendimento-em-andamento-container" id="btn-acompanhar-home" class="vitrine-home-card">
-                            <span class="vitrine-home-card-icone icone-acompanhar">
-                                <i class="fa-solid fa-camera" aria-hidden="true"></i>
-                            </span>
-                            <strong>Acompanhar</strong>
-                            <small>Status e fotos do atendimento</small>
-                        </a>
-
-                        <a href="#" class="vitrine-card vitrine-home-card" data-menu-card="minhas-assinaturas">
-                            <span class="vitrine-home-card-icone icone-plano">
-                                <i class="fa-solid fa-crown" aria-hidden="true"></i>
-                            </span>
-                            <strong>Meu plano</strong>
-                            <small>Benefícios e utilização</small>
-                        </a>
-                    </div>
+                    <a href="#" class="vitrine-card vitrine-home-destaque vitrine-home-fila" data-menu-card="agendamento">
+                        <span class="vitrine-home-destaque-tag">Fila de espera</span>
+                        <strong>Não encontrou horário?</strong>
+                        <small>Entre na fila e receba aviso quando surgir uma oportunidade</small>
+                        <i class="fa-solid fa-users-clock vitrine-home-destaque-ilustracao" aria-hidden="true"></i>
+                    </a>
                 </section>
 
                 <section class="vitrine-home-links" aria-label="Mais opções">
@@ -104,7 +178,7 @@
                         <i class="fa-solid fa-store" aria-hidden="true"></i>
                         <span>
                             <strong>Sobre o local</strong>
-                            <small>Contato, endereço e serviços</small>
+                            <small>Contato, localização e serviços</small>
                         </span>
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </a>
@@ -128,8 +202,7 @@
                     </a>
                 </section>
             </div>
-            
-            <div id="menu-assinatura" class="menu-content" style="display: none;">
+                        <div id="menu-assinatura" class="menu-content" style="display: none;">
                 <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
                 <h2>Planos de Assinatura</h2> 
                 <div id="lista-de-planos">
@@ -276,6 +349,34 @@
             </div>
         </main>
     </div>
+
+
+    <nav class="bottom-nav-vitrine" aria-label="Navegação principal">
+        <button type="button" class="ativo" data-home-nav="inicio">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+            <span>Início</span>
+        </button>
+
+        <button type="button" data-home-nav="agendamento">
+            <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+            <span>Agendar</span>
+        </button>
+
+        <button type="button" data-home-nav="pets">
+            <i class="fa-solid fa-paw" aria-hidden="true"></i>
+            <span>Meus pets</span>
+        </button>
+
+        <button type="button" data-home-nav="acompanhar">
+            <i class="fa-regular fa-clipboard" aria-hidden="true"></i>
+            <span>Acompanhar</span>
+        </button>
+
+        <button type="button" data-home-nav="perfil">
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <span>Perfil</span>
+        </button>
+    </nav>
 
     <div id="custom-confirm-modal" class="modal-overlay"><div class="modal-box"><h3 id="modal-titulo">Confirmar Ação</h3><p id="modal-mensagem">Tem a certeza que deseja prosseguir?</p><div class="modal-botoes"><button id="modal-btn-cancelar">Cancelar</button><button id="modal-btn-confirmar">Confirmar</button></div></div></div>
     <div id="modal-auth-janela" class="modal-overlay">
