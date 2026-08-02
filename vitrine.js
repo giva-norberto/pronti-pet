@@ -322,6 +322,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 "Pet Shop";
         }
 
+        atualizarCabecalhoNovaHome(dados);
+
         setProfissionais(profissionais);
         setTodosOsServicos(todosServicos);
 
@@ -676,6 +678,13 @@ function configurarEventosGerais() {
     );
 
     addSafeListener(
+        '.bottom-nav-vitrine',
+        'click',
+        handleBottomNavigationClick,
+        true
+    );
+
+    addSafeListener(
         'lista-profissionais',
         'click',
         handleProfissionalClick
@@ -764,8 +773,11 @@ async function handleUserAuthStateChange(user) {
                 clienteId: state.clienteId,
                 currentUser: user
             });
+
+            await atualizarProximoAtendimentoHome();
         } catch (e) {
             encerrarAcompanhamentoVitrine();
+            esconderProximoAtendimentoHome();
 
             console.warn(
                 "Erro ao identificar/vincular cliente:",
@@ -775,6 +787,7 @@ async function handleUserAuthStateChange(user) {
 
     } else {
         encerrarAcompanhamentoVitrine();
+        esconderProximoAtendimentoHome();
 
         if (!user && state.empresaId) {
             limparAssinaturasLocais();
@@ -1113,6 +1126,271 @@ function limparAssinaturasLocais() {
             UI.atualizarResumoAgendamentoFinal();
         }
     }
+}
+
+// =====================================================================
+// NOVA HOME
+// =====================================================================
+
+function atualizarCabecalhoNovaHome(dadosEmpresa = {}) {
+    const subtitulo = document.getElementById('vitrine-home-subtitulo');
+    const statusTexto = document.getElementById('status-negocio-publico');
+    const statusHorario = document.getElementById('status-negocio-horario');
+    const heroImagem = document.getElementById('vitrine-hero-imagem');
+    const heroFallback = document.getElementById('vitrine-hero-fallback');
+
+    if (subtitulo) {
+        subtitulo.textContent =
+            dadosEmpresa.subtituloVitrine ||
+            dadosEmpresa.segmento ||
+            "Pet Shop e Estética";
+    }
+
+    if (statusTexto) {
+        statusTexto.textContent =
+            dadosEmpresa.statusVitrine ||
+            "Aberto para agendar";
+    }
+
+    if (statusHorario) {
+        statusHorario.textContent =
+            dadosEmpresa.horarioVitrine ||
+            "Atendimento online";
+    }
+
+    const imagemCapa = String(
+        dadosEmpresa.bannerVitrineUrl ||
+        dadosEmpresa.imagemCapaUrl ||
+        dadosEmpresa.capaUrl ||
+        ""
+    ).trim();
+
+    if (heroImagem && imagemCapa) {
+        heroImagem.src = imagemCapa;
+        heroImagem.hidden = false;
+
+        if (heroFallback) {
+            heroFallback.hidden = true;
+        }
+
+        heroImagem.onerror = () => {
+            heroImagem.hidden = true;
+
+            if (heroFallback) {
+                heroFallback.hidden = false;
+            }
+        };
+    }
+}
+
+function handleBottomNavigationClick(event) {
+    const botao = event.target.closest('[data-home-nav]');
+
+    if (!botao) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const destino = botao.dataset.homeNav;
+
+    document
+        .querySelectorAll('.bottom-nav-vitrine [data-home-nav]')
+        .forEach(item => item.classList.toggle('ativo', item === botao));
+
+    if (destino === 'inicio') {
+        mostrarHomePrincipal();
+        return;
+    }
+
+    if (destino === 'acompanhar') {
+        handleAcompanharHome(event);
+        return;
+    }
+
+    if (destino === 'pets') {
+        document.getElementById('btn-meus-pets')?.click();
+        return;
+    }
+
+    const cardDestino = document.querySelector(
+        `.vitrine-card[data-menu-card="${destino}"]`
+    );
+
+    cardDestino?.click();
+}
+
+function mostrarHomePrincipal() {
+    const home = document.getElementById('main-navigation-container');
+    const secoes = document.querySelectorAll(
+        '.main-content-vitrine > .menu-content'
+    );
+
+    secoes.forEach(secao => {
+        secao.style.display = 'none';
+        secao.classList.remove('ativo');
+    });
+
+    if (home) {
+        home.style.display = 'grid';
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+async function atualizarProximoAtendimentoHome() {
+    const container = document.getElementById(
+        'proximo-atendimento-home'
+    );
+
+    if (!container || !state.currentUser || !state.empresaId) {
+        esconderProximoAtendimentoHome();
+        return;
+    }
+
+    try {
+        const clienteId = await obterClienteIdResolvido();
+
+        const agendamentos = await buscarAgendamentosDoCliente(
+            state.empresaId,
+            criarContextoCliente(
+                state.currentUser,
+                clienteId
+            ),
+            'ativos'
+        );
+
+        const proximo = [...agendamentos]
+            .filter(agendamento => agendamento?.data)
+            .sort((a, b) => {
+                return montarDataAgendamento(a) - montarDataAgendamento(b);
+            })[0];
+
+        if (!proximo) {
+            esconderProximoAtendimentoHome();
+            return;
+        }
+
+        renderizarProximoAtendimentoHome(container, proximo);
+
+    } catch (error) {
+        console.info(
+            'Não foi possível carregar o próximo atendimento na home:',
+            error.message
+        );
+
+        esconderProximoAtendimentoHome();
+    }
+}
+
+function renderizarProximoAtendimentoHome(container, agendamento) {
+    const pet = agendamento.pet || {};
+    const nomePet =
+        pet.nome ||
+        agendamento.petNome ||
+        'Seu pet';
+
+    const fotoPet =
+        pet.fotoUrl ||
+        agendamento.petFotoUrl ||
+        '';
+
+    const servico =
+        agendamento.servico?.nome ||
+        agendamento.servicoNome ||
+        'Atendimento agendado';
+
+    const dataAgendamento = montarDataAgendamento(agendamento);
+    const dias = calcularDiasAte(dataAgendamento);
+
+    const dataFormatada = Number.isNaN(dataAgendamento.getTime())
+        ? agendamento.data || ''
+        : dataAgendamento.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit'
+        });
+
+    const fotoHtml = fotoPet
+        ? `<img class="vitrine-proximo-atendimento-avatar" src="${escaparHtmlBasico(fotoPet)}" alt="Foto de ${escaparHtmlBasico(nomePet)}">`
+        : `<div class="vitrine-proximo-atendimento-avatar vitrine-atendimento-avatar-vazio">${escaparHtmlBasico(nomePet.charAt(0).toUpperCase())}</div>`;
+
+    container.hidden = false;
+    container.style.display = 'block';
+
+    container.innerHTML = `
+        <a href="#" class="vitrine-card vitrine-proximo-atendimento-card" data-menu-card="visualizacao">
+            ${fotoHtml}
+
+            <span class="vitrine-proximo-atendimento-info">
+                <span class="vitrine-proximo-atendimento-tag">Próximo atendimento</span>
+                <strong>${escaparHtmlBasico(nomePet)}</strong>
+                <small>${escaparHtmlBasico(servico)}</small>
+                <small>${escaparHtmlBasico(dataFormatada)} às ${escaparHtmlBasico(agendamento.horario || '')}</small>
+            </span>
+
+            <span class="vitrine-proximo-atendimento-contador">
+                <small>Falta</small>
+                <strong>${dias}</strong>
+                <small>${dias === 1 ? 'dia' : 'dias'}</small>
+            </span>
+
+            <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+        </a>
+    `;
+}
+
+function esconderProximoAtendimentoHome() {
+    const container = document.getElementById(
+        'proximo-atendimento-home'
+    );
+
+    if (!container) {
+        return;
+    }
+
+    container.hidden = true;
+    container.style.display = 'none';
+    container.innerHTML = '';
+}
+
+function montarDataAgendamento(agendamento = {}) {
+    const data = String(agendamento.data || '').trim();
+    const horario = String(agendamento.horario || '00:00').trim();
+
+    const valor = /^\d{4}-\d{2}-\d{2}$/.test(data)
+        ? `${data}T${horario || '00:00'}:00`
+        : data;
+
+    return new Date(valor);
+}
+
+function calcularDiasAte(data) {
+    if (!(data instanceof Date) || Number.isNaN(data.getTime())) {
+        return 0;
+    }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const destino = new Date(data);
+    destino.setHours(0, 0, 0, 0);
+
+    return Math.max(
+        0,
+        Math.ceil((destino - hoje) / 86400000)
+    );
+}
+
+function escaparHtmlBasico(valor) {
+    return String(valor || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 // =====================================================================
@@ -1935,6 +2213,8 @@ async function handleConfirmarAgendamento() {
             `${nomeEmpresa} agradece pelo seu agendamento.`
         );
 
+        await atualizarProximoAtendimentoHome();
+
         resetarAgendamento();
 
         UI.trocarAba(
@@ -2074,6 +2354,8 @@ async function handleCancelarClick(e) {
             "Sucesso",
             "Agendamento cancelado com sucesso!"
         );
+
+        await atualizarProximoAtendimentoHome();
 
         handleFiltroAgendamentos({
             target:
