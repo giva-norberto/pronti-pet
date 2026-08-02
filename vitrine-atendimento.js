@@ -266,72 +266,97 @@ function renderizarCardCompacto(container, atendimento) {
     const servico = obterNomeServico(atendimento);
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
+    const indiceAtual = STATUS_FLUXO.indexOf(status);
+
+    const miniTimeline = STATUS_FLUXO.map((statusEtapa, indice) => {
+        const etapaConfig = STATUS_CONFIG[statusEtapa];
+        const classe = indice < indiceAtual
+            ? "concluida"
+            : indice === indiceAtual
+                ? "atual"
+                : "";
+
+        const textoCurto = {
+            aguardando: "Aguardando",
+            em_atendimento: "Em atendimento",
+            finalizado: "Finalizado",
+            liberado: "Liberado"
+        }[statusEtapa] || etapaConfig.texto;
+
+        return `
+            <span class="vitrine-atendimento-mini-etapa ${classe}">
+                ${escaparHtml(textoCurto)}
+            </span>
+        `;
+    }).join("");
 
     container.hidden = false;
     container.style.display = "block";
 
     container.innerHTML = `
         <article class="vitrine-atendimento-card ${config.classe}">
-            <div class="vitrine-atendimento-topo">
-                <div class="vitrine-atendimento-identidade">
-                    ${montarAvatarPet(fotoPet, nomePet)}
+            <span class="vitrine-atendimento-etiqueta">
+                Atendimento em andamento
+            </span>
 
-                    <div>
-                        <span class="vitrine-atendimento-etiqueta">
-                            Atendimento em andamento
+            <div class="vitrine-atendimento-resumo">
+                ${montarAvatarPet(fotoPet, nomePet)}
+
+                <div class="vitrine-atendimento-info">
+                    <h2>
+                        ${escaparHtml(nomePet)}
+                        <span class="vitrine-atendimento-status-texto">
+                            <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
+                            ${escaparHtml(config.texto)}
                         </span>
+                    </h2>
 
-                        <h2>${escaparHtml(nomePet)}</h2>
-                        ${servico ? `<p>${escaparHtml(servico)}</p>` : ""}
-                    </div>
+                    ${servico ? `<p>${escaparHtml(servico)}</p>` : ""}
+
+                    <p>
+                        ${
+                            ultimaAtualizacao
+                                ? `Atualizado ${formatarDataHora(ultimaAtualizacao)}`
+                                : "Acompanhe as atualizações do pet shop"
+                        }
+                    </p>
                 </div>
 
-                <span class="vitrine-atendimento-status">
-                    <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
-                    ${escaparHtml(config.texto)}
-                </span>
+                <button
+                    type="button"
+                    class="vitrine-atendimento-mini-foto ${fotoAtendimento ? "" : "vitrine-atendimento-mini-foto-vazia"}"
+                    data-acao-atendimento="abrir"
+                    aria-label="Abrir acompanhamento do atendimento"
+                >
+                    ${
+                        fotoAtendimento
+                            ? `
+                                <img
+                                    src="${escaparAtributo(fotoAtendimento.url)}"
+                                    alt="Foto recente do atendimento de ${escaparAtributo(nomePet)}"
+                                    loading="lazy"
+                                >
+                                <span>Nova foto</span>
+                            `
+                            : '<i class="fa-solid fa-camera" aria-hidden="true"></i>'
+                    }
+                </button>
             </div>
 
-            ${
-                fotoAtendimento
-                    ? `
-                        <button
-                            type="button"
-                            class="vitrine-atendimento-foto"
-                            data-acao-atendimento="abrir"
-                            aria-label="Abrir acompanhamento do atendimento"
-                        >
-                            <img
-                                src="${escaparAtributo(fotoAtendimento.url)}"
-                                alt="Foto recente do atendimento de ${escaparAtributo(nomePet)}"
-                                loading="lazy"
-                            >
-
-                            <span>
-                                <i class="fa-solid fa-camera" aria-hidden="true"></i>
-                                Nova foto do pet shop
-                            </span>
-                        </button>
-                    `
-                    : ""
-            }
+            <div class="vitrine-atendimento-mini-timeline">
+                ${miniTimeline}
+            </div>
 
             <div class="vitrine-atendimento-rodape">
-                <small>
-                    ${
-                        ultimaAtualizacao
-                            ? `Atualizado ${formatarDataHora(ultimaAtualizacao)}`
-                            : "Acompanhe as atualizações do pet shop"
-                    }
-                </small>
+                <small>Atualizações enviadas diretamente pelo pet shop</small>
 
                 <button
                     type="button"
                     class="vitrine-atendimento-abrir"
                     data-acao-atendimento="abrir"
                 >
-                    Acompanhar
-                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    Acompanhar atendimento
+                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                 </button>
             </div>
         </article>
