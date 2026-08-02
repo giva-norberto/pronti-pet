@@ -40,6 +40,11 @@ import {
 
 import * as UI from './vitrini-ui.js';
 
+import {
+    iniciarAcompanhamentoVitrine,
+    encerrarAcompanhamentoVitrine
+} from './vitrine-atendimento.js';
+
 // --- PRONTI PET ---
 import {
     garantirPetParaAgendamento,
@@ -665,6 +670,12 @@ function configurarEventosGerais() {
     );
 
     addSafeListener(
+        'btn-acompanhar-home',
+        'click',
+        handleAcompanharHome
+    );
+
+    addSafeListener(
         'lista-profissionais',
         'click',
         handleProfissionalClick
@@ -747,15 +758,27 @@ async function handleUserAuthStateChange(user) {
         try {
             await obterClienteIdResolvido();
             await atualizarAssinaturasDoCliente();
+
+            iniciarAcompanhamentoVitrine({
+                empresaId: state.empresaId,
+                clienteId: state.clienteId,
+                currentUser: user
+            });
         } catch (e) {
+            encerrarAcompanhamentoVitrine();
+
             console.warn(
                 "Erro ao identificar/vincular cliente:",
                 e
             );
         }
 
-    } else if (!user && state.empresaId) {
-        limparAssinaturasLocais();
+    } else {
+        encerrarAcompanhamentoVitrine();
+
+        if (!user && state.empresaId) {
+            limparAssinaturasLocais();
+        }
     }
 
     if (user) {
@@ -1123,6 +1146,49 @@ function handleMenuClick(e) {
             }
         }
     }
+}
+
+async function handleAcompanharHome(event) {
+    event?.preventDefault?.();
+
+    if (!state.currentUser) {
+        fazerLogin();
+        return;
+    }
+
+    const container = document.getElementById(
+        'atendimento-em-andamento-container'
+    );
+
+    const possuiAtendimentoVisivel = Boolean(
+        container &&
+        !container.hidden &&
+        container.style.display !== 'none' &&
+        container.innerHTML.trim()
+    );
+
+    if (possuiAtendimentoVisivel) {
+        container.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        return;
+    }
+
+    UI.trocarAba('menu-visualizacao');
+
+    requestAnimationFrame(() => {
+        const btnAtivos = document.getElementById('btn-ver-ativos');
+
+        if (btnAtivos) {
+            btnAtivos.classList.add('ativo');
+
+            handleFiltroAgendamentos({
+                target: btnAtivos
+            });
+        }
+    });
 }
 
 // =====================================================================
