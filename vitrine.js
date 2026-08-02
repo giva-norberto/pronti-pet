@@ -43,7 +43,7 @@ import * as UI from './vitrini-ui.js';
 import {
     iniciarAcompanhamentoVitrine,
     encerrarAcompanhamentoVitrine
-} from './vitrine-atendimento.js';
+} from './vitrine-atendimento.js?v=20260802-2';
 
 // --- PRONTI PET ---
 import {
