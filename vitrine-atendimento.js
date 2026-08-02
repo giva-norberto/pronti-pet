@@ -2,6 +2,9 @@
 //  VITRINE-ATENDIMENTO.JS — PRONTI PET
 // ============================================================================
 //  Módulo de leitura do atendimento na vitrine.
+//  Usa os mesmos campos e o mesmo fluxo do painel do dono:
+//  statusAtendimento, timelineAtendimento, observacaoEquipe,
+//  fotoAtendimentoUrl e fotoAtendimentoExpiraEm.
 //  Não altera status e não injeta CSS.
 //
 //  HTML necessário:
@@ -19,33 +22,51 @@ import {
 
 const CONTAINER_ID = "atendimento-em-andamento-container";
 
-const STATUS_FLUXO = [
+const STATUS_FLUXO_PADRAO = [
+    "aguardando",
+    "em_atendimento",
+    "finalizado",
+    "liberado",
+    "retirado"
+];
+
+const STATUS_ATIVOS_NA_VITRINE = new Set([
     "aguardando",
     "em_atendimento",
     "finalizado",
     "liberado"
-];
+]);
 
 const STATUS_CONFIG = {
     aguardando: {
-        texto: "Aguardando atendimento",
+        texto: "Aguardando Atendimento",
+        textoCurto: "Aguardando",
         icone: "fa-clock",
         classe: "aguardando"
     },
     em_atendimento: {
-        texto: "Em atendimento",
+        texto: "Em Atendimento",
+        textoCurto: "Em atendimento",
         icone: "fa-paw",
         classe: "em-atendimento"
     },
     finalizado: {
-        texto: "Atendimento finalizado",
+        texto: "Finalizado",
+        textoCurto: "Finalizado",
         icone: "fa-circle-check",
         classe: "finalizado"
     },
     liberado: {
-        texto: "Liberado para retirada",
+        texto: "Liberado para Retirada",
+        textoCurto: "Liberado",
         icone: "fa-house-circle-check",
         classe: "liberado"
+    },
+    retirado: {
+        texto: "Pet Retirado",
+        textoCurto: "Retirado",
+        icone: "fa-flag-checkered",
+        classe: "retirado"
     }
 };
 
@@ -209,7 +230,7 @@ function atualizarAtendimentoExibido(container) {
 function ehAtendimentoVisivel(atendimento) {
     const status = normalizarStatus(atendimento?.statusAtendimento);
 
-    if (!STATUS_FLUXO.includes(status)) {
+    if (!STATUS_ATIVOS_NA_VITRINE.has(status)) {
         return false;
     }
 
@@ -266,9 +287,10 @@ function renderizarCardCompacto(container, atendimento) {
     const servico = obterNomeServico(atendimento);
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
-    const indiceAtual = STATUS_FLUXO.indexOf(status);
+    const fluxo = obterFluxoAtendimento(atendimento);
+    const indiceAtual = fluxo.indexOf(status);
 
-    const miniTimeline = STATUS_FLUXO.map((statusEtapa, indice) => {
+    const miniTimeline = fluxo.map((statusEtapa, indice) => {
         const etapaConfig = STATUS_CONFIG[statusEtapa];
         const classe = indice < indiceAtual
             ? "concluida"
@@ -276,16 +298,9 @@ function renderizarCardCompacto(container, atendimento) {
                 ? "atual"
                 : "";
 
-        const textoCurto = {
-            aguardando: "Aguardando",
-            em_atendimento: "Em atendimento",
-            finalizado: "Finalizado",
-            liberado: "Liberado"
-        }[statusEtapa] || etapaConfig.texto;
-
         return `
             <span class="vitrine-atendimento-mini-etapa ${classe}">
-                ${escaparHtml(textoCurto)}
+                ${escaparHtml(etapaConfig.textoCurto || etapaConfig.texto)}
             </span>
         `;
     }).join("");
@@ -380,7 +395,10 @@ function abrirModalDetalhes(atendimento) {
     const nomePet = obterNomePet(atendimento);
     const fotoPet = obterFotoPet(atendimento);
     const servico = obterNomeServico(atendimento);
-    const observacao = limparTexto(atendimento.observacaoEquipe);
+    const observacao = limparTexto(
+        atendimento.observacaoEquipe ||
+        atendimento.observacaoAtendimento
+    );
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
 
@@ -500,12 +518,13 @@ function removerModalDetalhes() {
 
 function montarTimeline(atendimento) {
     const statusAtual = normalizarStatus(atendimento.statusAtendimento);
-    const indiceAtual = STATUS_FLUXO.indexOf(statusAtual);
+    const fluxo = obterFluxoAtendimento(atendimento);
+    const indiceAtual = fluxo.indexOf(statusAtual);
     const timeline = Array.isArray(atendimento.timelineAtendimento)
         ? atendimento.timelineAtendimento
         : [];
 
-    const itens = STATUS_FLUXO.map((status, indice) => {
+    const itens = fluxo.map((status, indice) => {
         const config = STATUS_CONFIG[status];
         const concluido = indice <= indiceAtual;
         const dataStatus = buscarDataStatus(timeline, status);
@@ -579,6 +598,8 @@ function montarFotoDetalhe(foto, nomePet) {
 function obterFotoAtendimentoValida(atendimento) {
     const url = String(
         atendimento?.fotoAtendimentoUrl ||
+        atendimento?.fotoUrl ||
+        atendimento?.fotoFinalizacaoUrl ||
         atendimento?.ultimaFotoAtendimentoUrl ||
         ""
     ).trim();
@@ -602,9 +623,9 @@ function obterFotoAtendimentoValida(atendimento) {
 function obterNomePet(atendimento) {
     return limparTexto(
         atendimento?.petNome ||
-        atendimento?.pet?.nome ||
         atendimento?.nomePet ||
         atendimento?.nomeAnimal ||
+        atendimento?.pet?.nome ||
         "Seu pet"
     );
 }
@@ -612,19 +633,46 @@ function obterNomePet(atendimento) {
 function obterFotoPet(atendimento) {
     return limparTexto(
         atendimento?.petFotoUrl ||
-        atendimento?.pet?.fotoUrl ||
         atendimento?.fotoPetUrl ||
+        atendimento?.pet?.fotoUrl ||
+        atendimento?.fotoAnimal ||
         ""
     );
 }
 
 function obterNomeServico(atendimento) {
+    const servicoDireto =
+        typeof atendimento?.servico === "string"
+            ? atendimento.servico
+            : atendimento?.servico?.nome;
+
     return limparTexto(
         atendimento?.servicoNome ||
-        atendimento?.servico?.nome ||
+        atendimento?.nomeServico ||
+        servicoDireto ||
+        atendimento?.tipoServico ||
         atendimento?.servicosNome ||
         ""
     );
+}
+
+function obterFluxoAtendimento(atendimento) {
+    const fluxoConfigurado =
+        atendimento?.fluxoAtendimento ||
+        atendimento?.etapasAtendimento ||
+        atendimento?.statusPermitidos;
+
+    if (Array.isArray(fluxoConfigurado) && fluxoConfigurado.length > 0) {
+        const fluxoNormalizado = fluxoConfigurado
+            .map((status) => normalizarStatus(status))
+            .filter((status) => STATUS_CONFIG[status]);
+
+        if (fluxoNormalizado.length > 0) {
+            return [...new Set(fluxoNormalizado)];
+        }
+    }
+
+    return STATUS_FLUXO_PADRAO;
 }
 
 function obterUltimaAtualizacao(atendimento) {
