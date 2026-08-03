@@ -2,32 +2,49 @@
    ESTILOS GERAIS E LAYOUT MODERNO
    =============================================== */
 
+
+:root {
+    --pet-roxo: #5522b6;
+    --pet-roxo-2: #7140dc;
+    --pet-roxo-escuro: #201042;
+    --pet-amarelo: #ffc928;
+    --pet-fundo: #f8f5ff;
+    --pet-card: #ffffff;
+    --pet-borda: #e7def8;
+    --pet-texto: #17113d;
+    --pet-muted: #726b86;
+    --pet-verde: #16a34a;
+    --pet-azul: #2563eb;
+    --pet-laranja: #ea7b12;
+}
+
 /* Garante que todo elemento use border-box para facilitar o layout */
 * {
     box-sizing: border-box;
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #374151;
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Poppins', sans-serif;
     line-height: 1.6;
+    background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
+    color: #ffffff;
 }
 
 /* ===============================================
    LAYOUT GRID PRINCIPAL DA VITRINE
    =============================================== */
 .vitrine-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px 15px;
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 30px;
-    align-items: start;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
     min-height: 100vh;
+    margin: 0 auto;
+    padding: 18px 14px 96px;
 }
 
 /* Sidebar lateral da vitrine */
@@ -44,10 +61,11 @@ body {
 
 /* Conteúdo principal da vitrine */
 .main-content-vitrine {
+    position: relative;
     width: 100%;
-    padding-bottom: 20px;
+    max-width: 560px;
     margin: 0 auto;
-    position: relative; /* Para facilitar posicionamento do header mobile */
+    padding-bottom: 20px;
 }
 
 /* Áreas de conteúdo das abas */
@@ -923,155 +941,43 @@ input[type="date"]:focus {
 .card-assinatura[data-status="VENCIDA"] {
     opacity: 0.5;
 }
-/* TRAVA MOBILE - EVITA TELA DANÇANDO */
-html,
-body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
 
-body {
-    position: relative !important;
-}
-
-#vitrine-content.vitrine-container {
-    width: 100% !important;
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-    margin: 0 auto !important;
-    box-sizing: border-box !important;
-}
-
-.main-content-vitrine {
-    width: 100% !important;
-    max-width: 540px !important;
-    overflow-x: hidden !important;
-    margin: 0 auto !important;
-    box-sizing: border-box !important;
-}
-
-@media (max-width: 560px) {
-    #vitrine-content.vitrine-container {
-        padding: 10px 8px 90px 8px !important;
-    }
-
-    .main-content-vitrine,
-    #menu-visualizacao,
-    #lista-agendamentos-visualizacao,
-    .cliente-reserva-card {
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        box-sizing: border-box !important;
-    }
-}
-/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO / BOUNCE */
-html,
-body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: none !important;
-}
-
-#vitrine-content.vitrine-container,
-.main-content-vitrine,
-#main-navigation-container,
-.menu-content,
-.dashboard-grid-cards {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
-    box-sizing: border-box !important;
-}
-
-@media (max-width: 560px) {
-    #vitrine-content.vitrine-container,
-    .main-content-vitrine,
-    #main-navigation-container,
-    .menu-content,
-    .dashboard-grid-cards,
-    .card {
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        box-sizing: border-box !important;
-    }
-}
-/* ===========================
-   CSS INTERNO MIGRADO DA VITRINE.HTML
-=========================== */
-
-body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    background: linear-gradient(135deg, #4f46e5 0%, #222664 100%);
-    color: #fff;
-    min-height: 100vh;
-}
-
-.modal-overlay {
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(4px);
-    align-items: center;
-    justify-content: center;
-    animation: modalFadeIn 0.3s ease-out;
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+/* ===============================================
+   COMPLEMENTOS DAS TELAS INTERNAS
+   =============================================== */
 
 .modal-auth-container {
-    background: white;
+    position: relative;
+    width: min(90%, 400px);
     padding: 2rem 1.5rem;
     border-radius: 12px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    position: relative;
+    background: #fff;
     color: #333;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 #modal-auth-close-btn {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #f1f5f9;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    color: #64748b;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-}
-
-#modal-auth-close-btn:hover {
-    background: #e2e8f0;
-    transform: rotate(90deg);
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.2rem;
+    cursor: pointer;
 }
 
 .modal-auth-step h2 {
-    font-size: 1.5rem;
+    margin: 0 0 24px;
     color: #1e293b;
+    font-size: 1.5rem;
     text-align: center;
-    margin-top: 0;
-    margin-bottom: 24px;
 }
 
 .modal-auth-btn {
@@ -1081,166 +987,84 @@ body {
     gap: 12px;
     width: 100%;
     padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
-    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid #d1d5db;
 }
 
 #modal-auth-btn-google {
-    background-color: #ffffff;
+    background: #fff;
     color: #374151;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-#modal-auth-btn-google:hover {
-    background-color: #f9fafb;
-    border-color: #adb5bd;
 }
 
 .modal-auth-btn-submit {
-    background-color: #4f46e5;
-    color: white;
-    border: none;
-}
-
-.modal-auth-btn-submit:hover {
-    opacity: 0.9;
+    border: 0;
+    background: #4f46e5;
+    color: #fff;
 }
 
 .modal-auth-step input {
     width: 100%;
+    margin-bottom: 10px;
     padding: 12px;
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    box-sizing: border-box;
     font-size: 1rem;
-    margin-bottom: 10px;
 }
 
 .modal-auth-step a {
     color: #4f46e5;
-    text-decoration: none;
     font-weight: 600;
-}
-
-.modal-auth-step a:hover {
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 .preco-original {
-    text-decoration: line-through;
-    color: #888;
     margin-right: 6px;
+    color: #888;
     font-size: 1em;
+    text-decoration: line-through;
 }
 
 .preco-promocional {
     color: #10b981;
-    font-weight: 700;
     font-size: 1.18em;
+    font-weight: 700;
+}
+
+.badge-promocao,
+.badge-incluso {
+    display: inline-flex;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 700;
 }
 
 .badge-promocao {
     background: #facc15;
     color: #b45309;
-    border-radius: 4px;
-    font-size: 0.85em;
-    font-weight: 700;
-    padding: 2px 7px;
-    margin-left: 8px;
 }
 
-.dashboard-grid-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 20px;
-    width: 100%;
+.badge-incluso {
+    background: #10b981;
+    color: #fff;
 }
 
 .btn-voltar {
-    background: #eef2ff;
-    color: #4f46e5;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 20px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-}
-
-.header-vitrine-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-    border-radius: 22px;
-    padding: 32px 28px 20px 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto 32px auto;
-}
-
-.header-vitrine-card #logo-publico {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 16px;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-    background: #fff;
-}
-
-.header-vitrine-card #nome-negocio-publico {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 6px 0;
-    color: #fff;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    text-align: center;
-}
-
-.header-vitrine-card .boas-vindas-usuario {
-    font-size: 1.05rem;
-    color: #e0e7ff;
-    font-weight: 400;
-    text-align: center;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.header-vitrine-card .usuario-logado-nome {
-    font-size: 1.02rem;
-    color: #fff;
-    background: rgba(0,0,0,0.2);
-    padding: 4px 14px;
-    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4f46e5;
     font-weight: 600;
-    margin-top: 8px;
-    display: none;
-}
-
-.card {
-    background-color: #fff;
-    color: #374151;
-}
-
-.vitrine-card[data-menu-card="assinatura"] {
-    background: linear-gradient(135deg, #10b981 0%, #4f46e5 100%);
-    color: #fff;
-}
-
-.vitrine-card[data-menu-card="assinatura"] i {
-    color: #fff;
+    cursor: pointer;
 }
 
 #menu-assinatura {
@@ -1249,660 +1073,684 @@ body {
 }
 
 #menu-assinatura h2 {
+    margin-bottom: 30px;
     color: #fff;
     font-size: 1.8rem;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 30px;
 }
 
 #cards-planos-vitrine {
     display: grid;
     gap: 25px;
-    padding: 0 15px;
+    width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    padding: 0 15px;
 }
 
 .card-plano-vitrine {
-    background-color: #fff;
-    border-radius: 18px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     padding: 25px;
-    text-align: center;
+    border-radius: 18px;
+    background: #fff;
     color: #333;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.card-plano-vitrine:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .card-plano-vitrine h3 {
+    margin: 0 0 15px;
     color: #4f46e5;
     font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-weight: 600;
 }
 
 .card-plano-vitrine .preco {
-    color: #10b981;
-    font-weight: 700;
-    font-size: 1.4em;
     margin-bottom: 15px;
-}
-
-.card-plano-vitrine p {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 20px;
+    color: #10b981;
+    font-size: 1.4em;
+    font-weight: 700;
 }
 
 .card-plano-vitrine ul {
-    list-style: none;
-    padding-left: 0;
-    text-align: left;
     margin-bottom: 25px;
-}
-
-.card-plano-vitrine ul li {
-    list-style: '✅ ';
-    padding-left: 10px;
-    margin-bottom: 8px;
-    color: #444;
-    font-size: 0.95rem;
+    padding-left: 0;
+    list-style: none;
+    text-align: left;
 }
 
 .card-plano-vitrine .btn-assinar-plano {
+    width: 100%;
+    max-width: 250px;
+    margin-top: 15px;
+    padding: 12px 25px;
+    border: 0;
+    border-radius: 10px;
     background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
     color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 25px;
-    margin-top: 15px;
     font-size: 1.1em;
     font-weight: 600;
     cursor: pointer;
-    width: 100%;
-    max-width: 250px;
-    transition: opacity 0.2s ease-in-out;
-}
-
-.card-plano-vitrine .btn-assinar-plano:hover {
-    opacity: 0.9;
-}
-
-.badge-incluso {
-    background: #10b981;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 0.85em;
-    font-weight: 700;
-    padding: 2px 7px;
-    margin-left: 8px;
 }
 
 .servico-card {
-    background: #fff;
-    color: #374151;
+    margin-bottom: 12px;
     padding: 14px;
     border-radius: 10px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-#vitrine-content.vitrine-container {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 20px 12px 90px 12px !important;
-    box-sizing: border-box !important;
-}
+/* ===============================================
+   HOME DA VITRINE — DESIGN SYSTEM PRONTI PET
+   =============================================== */
 
-.main-content-vitrine {
-    width: 100% !important;
-    max-width: 540px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-}
-
-#main-navigation-container,
-.menu-content,
-.dashboard-grid-cards {
-    width: 100% !important;
-    max-width: 540px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-}
-
-/* TRAVA GLOBAL MOBILE - EVITA TELA DANÇANDO / BOUNCE */
-html,
-body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: none !important;
-}
-
-#vitrine-content.vitrine-container,
-.main-content-vitrine,
-#main-navigation-container,
-.menu-content,
-.dashboard-grid-cards {
-    overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
-    box-sizing: border-box !important;
-}
-
-@media (max-width: 560px) {
-    #vitrine-content.vitrine-container,
-    .main-content-vitrine,
-    #main-navigation-container,
-    .menu-content,
-    .dashboard-grid-cards,
-    .card {
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        box-sizing: border-box !important;
-    }
-}
-
-/* ============================================================================
-   NOVA HOME DA VITRINE — PRONTI PET
-   ============================================================================ */
-
-:root {
-    --pp-home-roxo: #6d28d9;
-    --pp-home-roxo-escuro: #4c1d95;
-    --pp-home-lilas: #f3e8ff;
-    --pp-home-fundo: #f7f5fb;
-    --pp-home-texto: #241b35;
-    --pp-home-texto-suave: #756d82;
-    --pp-home-borda: #ebe6f1;
-    --pp-home-branco: #ffffff;
-}
-
-body {
-    background: var(--pp-home-fundo) !important;
-    color: var(--pp-home-texto) !important;
-}
-
-#vitrine-content.vitrine-container {
-    padding-top: 14px !important;
-}
-
-.vitrine-home {
+.pp-vitrine-home-shell {
+    position: relative;
+    isolation: isolate;
     display: grid;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
     width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    color: var(--pet-texto);
 }
 
-.vitrine-home .header-vitrine-card.vitrine-home-header {
-    max-width: none;
-    margin: 0;
-    padding: 14px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.68);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 10px 30px rgba(48, 31, 72, 0.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    align-items: stretch;
+.pp-vitrine-home-shell::before {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    background:
+        radial-gradient(circle at 86% 2%, rgba(255, 201, 40, 0.16), transparent 20rem),
+        radial-gradient(circle at 48% 0%, rgba(113, 64, 220, 0.13), transparent 24rem),
+        linear-gradient(180deg, #fbfaff 0%, var(--pet-fundo) 100%);
+    pointer-events: none;
 }
 
-.vitrine-home-marca {
+.pp-vitrine-home-shell,
+.pp-vitrine-home-shell * {
+    box-sizing: border-box;
+}
+
+.pp-vitrine-home-header {
     display: flex;
     align-items: center;
-    gap: 13px;
+    justify-content: space-between;
+    gap: 12px;
     min-width: 0;
+    padding: 3px 2px;
 }
 
-.vitrine-home .header-vitrine-card #logo-publico {
-    width: 58px;
-    height: 58px;
-    margin: 0;
-    border: 3px solid var(--pp-home-lilas);
-    box-shadow: none;
-    flex: 0 0 58px;
-}
-
-.vitrine-home-marca-texto {
+.pp-vitrine-home-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
     min-width: 0;
     flex: 1;
 }
 
-.vitrine-home-tag {
+.pp-vitrine-home-brand #logo-publico {
     display: block;
-    margin-bottom: 2px;
-    color: var(--pp-home-roxo);
-    font-size: 0.69rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    margin: 0;
+    border: 2px solid var(--pet-card);
+    border-radius: 16px;
+    background: var(--pet-card);
+    object-fit: cover;
+    box-shadow: 0 6px 18px rgba(32, 16, 66, 0.12);
 }
 
-.vitrine-home .header-vitrine-card #nome-negocio-publico {
+.pp-vitrine-home-brand #logo-publico:not([src]),
+.pp-vitrine-home-brand #logo-publico[src=""] {
+    display: none;
+}
+
+.pp-vitrine-home-brand-copy {
+    min-width: 0;
+}
+
+.pp-vitrine-home-brand #nome-negocio-publico {
+    max-width: 100%;
     margin: 0;
-    color: var(--pp-home-texto);
-    font-size: 1.18rem;
+    overflow: hidden;
+    color: var(--pet-texto);
+    background: none;
+    font-size: 1.03rem;
+    font-weight: 700;
     line-height: 1.2;
     text-align: left;
+    text-overflow: ellipsis;
     text-shadow: none;
-    -webkit-text-fill-color: initial;
-    background: none;
+    white-space: nowrap;
+    -webkit-text-fill-color: currentColor;
 }
 
-.vitrine-home .header-vitrine-card .boas-vindas-usuario {
+.pp-vitrine-home-brand .boas-vindas-usuario {
     margin: 3px 0 0;
-    color: var(--pp-home-texto-suave);
-    font-size: 0.82rem;
-    line-height: 1.35;
+    color: var(--pet-muted);
+    font-size: 0.76rem;
+    line-height: 1.3;
     text-align: left;
     text-shadow: none;
 }
 
-.vitrine-home .header-vitrine-card .usuario-logado-nome {
+.pp-vitrine-home-brand .boas-vindas-usuario:empty,
+.pp-vitrine-home-brand .usuario-logado-nome {
     display: none !important;
 }
 
-.vitrine-home-hero {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: 14px;
-    min-height: 172px;
-    padding: 22px;
-    overflow: hidden;
-    border: 0;
-    border-radius: 26px;
-    background:
-        radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.26), transparent 30%),
-        linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-    color: #fff;
+.pp-vitrine-home-profile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border: 1px solid var(--pet-borda);
+    border-radius: 50%;
+    background: var(--pet-card);
+    color: var(--pet-roxo);
     text-decoration: none;
-    box-shadow: 0 16px 35px rgba(91, 33, 182, 0.22);
+    box-shadow: 0 5px 16px rgba(32, 16, 66, 0.08);
 }
 
-.vitrine-home-hero::after {
+.pp-vitrine-home-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    align-items: stretch;
+    gap: 12px;
+    min-height: 184px;
+    padding: 22px;
+    overflow: hidden;
+    border-radius: 25px;
+    background:
+        radial-gradient(circle at 88% 15%, rgba(255, 255, 255, 0.22), transparent 29%),
+        linear-gradient(135deg, var(--pet-roxo-2) 0%, var(--pet-roxo) 58%, var(--pet-roxo-escuro) 100%);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 16px 34px rgba(85, 34, 182, 0.24);
+}
+
+.pp-vitrine-home-hero::after {
     content: "";
     position: absolute;
-    right: -42px;
-    bottom: -72px;
+    right: -54px;
+    bottom: -78px;
     width: 190px;
     height: 190px;
     border: 28px solid rgba(255, 255, 255, 0.08);
     border-radius: 50%;
 }
 
-.vitrine-home-hero-conteudo {
+.pp-vitrine-home-hero-copy {
     position: relative;
     z-index: 2;
-    max-width: 350px;
+    align-self: center;
+    min-width: 0;
 }
 
-.vitrine-home-hero-tag {
+.pp-vitrine-home-hero-label {
     display: inline-flex;
     padding: 5px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.13);
-    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 0.69rem;
     font-weight: 700;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
 }
 
-.vitrine-home-hero h2 {
-    margin: 10px 0 6px;
+.pp-vitrine-home-hero h2 {
+    max-width: 330px;
+    margin: 11px 0 0;
     color: #fff;
-    font-size: clamp(1.38rem, 5vw, 1.8rem);
+    font-size: clamp(1.4rem, 5vw, 1.82rem);
     line-height: 1.12;
 }
 
-.vitrine-home-hero p {
-    max-width: 310px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.84);
-    font-size: 0.86rem;
-    line-height: 1.45;
-}
-
-.vitrine-home-hero-botao {
+.pp-vitrine-home-hero-action {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    margin-top: 16px;
+    gap: 8px;
+    margin-top: 18px;
     padding: 10px 14px;
     border-radius: 13px;
-    background: #fff;
-    color: var(--pp-home-roxo-escuro);
-    font-size: 0.86rem;
+    background: var(--pet-amarelo);
+    color: var(--pet-roxo-escuro);
+    font-size: 0.82rem;
     font-weight: 800;
 }
 
-.vitrine-home-hero-icone {
+.pp-vitrine-home-hero-icon {
     position: relative;
     z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 92px;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 5.5rem;
+    color: rgba(255, 255, 255, 0.19);
+    font-size: 5.7rem;
     transform: rotate(-12deg);
 }
 
-.vitrine-home-secao {
-    padding: 18px;
-    border: 1px solid var(--pp-home-borda);
-    border-radius: 24px;
-    background: var(--pp-home-branco);
-    box-shadow: 0 9px 28px rgba(48, 31, 72, 0.06);
-}
-
-.vitrine-home-secao-cabecalho {
-    margin-bottom: 13px;
-}
-
-.vitrine-home-secao-cabecalho span {
-    display: block;
-    color: var(--pp-home-roxo);
-    font-size: 0.69rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.vitrine-home-secao-cabecalho h2 {
-    margin: 2px 0 0;
-    color: var(--pp-home-texto);
-    font-size: 1.1rem;
-}
-
-.vitrine-home .dashboard-grid-cards.vitrine-home-atalhos {
+.pp-vitrine-home-grid {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-auto-rows: 118px;
+    gap: 12px;
+    width: 100%;
 }
 
-.vitrine-home-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+.pp-vitrine-home-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) 18px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 118px;
     min-width: 0;
-    min-height: 130px;
-    padding: 14px;
-    border: 1px solid var(--pp-home-borda);
-    border-radius: 18px;
-    background: #fbfafe;
-    color: var(--pp-home-texto);
+    padding: 16px;
+    border: 1px solid var(--pet-borda);
+    border-radius: 20px;
+    background: var(--pet-card);
+    color: var(--pet-texto);
     text-decoration: none;
-    box-shadow: none;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(32, 16, 66, 0.07);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.vitrine-home-card:hover {
+.pp-vitrine-home-card:hover {
     transform: translateY(-2px);
-    border-color: #d8c8ed;
-    box-shadow: 0 9px 18px rgba(76, 29, 149, 0.08);
+    border-color: #d8c8f2;
+    box-shadow: 0 12px 28px rgba(32, 16, 66, 0.11);
 }
 
-.vitrine-home-card-icone {
+.pp-vitrine-home-card-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    margin-bottom: 13px;
-    border-radius: 14px;
-    font-size: 1.05rem;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    font-size: 1.08rem;
 }
 
-.icone-pets {
-    background: #fce7f3;
-    color: #be185d;
+.pp-vitrine-home-card strong {
+    min-width: 0;
+    color: var(--pet-texto);
+    font-size: 0.92rem;
+    line-height: 1.25;
 }
 
-.icone-agendamentos {
-    background: #e0f2fe;
-    color: #0369a1;
-}
-
-.icone-acompanhar {
-    background: #ede9fe;
-    color: #6d28d9;
-}
-
-.icone-plano {
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.vitrine-home-card strong {
-    color: var(--pp-home-texto);
-    font-size: 0.95rem;
-    line-height: 1.2;
-}
-
-.vitrine-home-card small {
-    margin-top: 5px;
-    color: var(--pp-home-texto-suave);
+.pp-vitrine-home-card-arrow {
+    justify-self: end;
+    color: #a69caf;
     font-size: 0.72rem;
-    line-height: 1.35;
 }
 
-.vitrine-home-links {
+.pp-vitrine-home-card--pets .pp-vitrine-home-card-icon {
+    background: #f2eaff;
+    color: var(--pet-roxo);
+}
+
+.pp-vitrine-home-card--appointments .pp-vitrine-home-card-icon {
+    background: #e8f0ff;
+    color: var(--pet-azul);
+}
+
+.pp-vitrine-home-card--tracking .pp-vitrine-home-card-icon {
+    background: #eaf8ee;
+    color: var(--pet-verde);
+}
+
+.pp-vitrine-home-card--plan .pp-vitrine-home-card-icon {
+    background: #fff5d5;
+    color: var(--pet-laranja);
+}
+
+.pp-vitrine-home-tracking {
+    width: 100%;
+}
+
+.pp-vitrine-home-links {
     display: grid;
     gap: 9px;
+    width: 100%;
 }
 
-.vitrine-home-link {
+.pp-vitrine-home-link {
     display: grid;
-    grid-template-columns: 38px 1fr 20px;
+    grid-template-columns: 38px minmax(0, 1fr) 18px;
     align-items: center;
     gap: 11px;
-    padding: 13px 15px;
-    border: 1px solid var(--pp-home-borda);
+    min-height: 58px;
+    padding: 10px 14px;
+    border: 1px solid var(--pet-borda);
     border-radius: 17px;
-    background: #fff;
-    color: var(--pp-home-texto);
+    background: var(--pet-card);
+    color: var(--pet-texto);
     text-decoration: none;
-    box-shadow: 0 5px 18px rgba(48, 31, 72, 0.04);
+    box-shadow: 0 5px 18px rgba(32, 16, 66, 0.04);
 }
 
-.vitrine-home-link > i:first-child {
-    display: flex;
+.pp-vitrine-home-link-icon {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 38px;
     height: 38px;
     border-radius: 12px;
-    background: var(--pp-home-lilas);
-    color: var(--pp-home-roxo);
+    background: #f2eaff;
+    color: var(--pet-roxo);
 }
 
-.vitrine-home-link > i:last-child {
+.pp-vitrine-home-link strong {
+    color: var(--pet-texto);
+    font-size: 0.86rem;
+}
+
+.pp-vitrine-home-link > i:last-child {
+    justify-self: end;
     color: #a69caf;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
 }
 
-.vitrine-home-link span {
+.pp-vitrine-home-bottom-nav {
+    position: fixed;
+    z-index: 1200;
+    left: 50%;
+    right: auto;
+    bottom: 0;
     display: flex;
-    flex-direction: column;
+    width: min(100%, 560px);
+    height: calc(68px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--pet-borda);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 -7px 24px rgba(32, 16, 66, 0.1);
+    backdrop-filter: blur(18px);
+    transform: translateX(-50%);
+}
+
+.pp-vitrine-home-bottom-nav button {
     min-width: 0;
+    height: 68px;
+    color: var(--pet-muted);
+    font-size: 0.72rem;
+    gap: 4px;
 }
 
-.vitrine-home-link strong {
-    color: var(--pp-home-texto);
-    font-size: 0.87rem;
+.pp-vitrine-home-bottom-nav button i {
+    font-size: 1.03rem;
 }
 
-.vitrine-home-link small {
-    color: var(--pp-home-texto-suave);
-    font-size: 0.7rem;
+.pp-vitrine-home-bottom-nav button.ativo {
+    background: #f4efff;
+    color: var(--pet-roxo);
 }
 
-/* Atendimento compacto */
+@media (max-width: 430px) {
+    .pp-vitrine-home-hero {
+        grid-template-columns: minmax(0, 1fr) 76px;
+        min-height: 170px;
+        padding: 19px;
+    }
 
-.vitrine-home-atendimento-container {
-    width: 100%;
+    .pp-vitrine-home-hero-icon {
+        font-size: 4.45rem;
+    }
+
+    .pp-vitrine-home-grid {
+        grid-auto-rows: 110px;
+        gap: 10px;
+    }
+
+    .pp-vitrine-home-card {
+        grid-template-columns: 42px minmax(0, 1fr) 14px;
+        height: 110px;
+        gap: 9px;
+        padding: 13px;
+    }
+
+    .pp-vitrine-home-card-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .pp-vitrine-home-card strong {
+        font-size: 0.84rem;
+    }
 }
+
+/* ===============================================
+   ACOMPANHAMENTO DO ATENDIMENTO
+   =============================================== */
 
 .vitrine-atendimento-card {
-    padding: 17px;
-    border: 1px solid #ded2f1;
-    border-radius: 24px;
-    background: linear-gradient(145deg, #ffffff, #faf7ff);
-    color: var(--pp-home-texto);
-    box-shadow: 0 12px 30px rgba(76, 29, 149, 0.1);
+    padding: 18px;
+    border: 1px solid var(--pet-borda);
+    border-radius: 23px;
+    background: linear-gradient(145deg, #ffffff 0%, #fbf9ff 100%);
+    color: var(--pet-texto);
+    box-shadow: 0 12px 30px rgba(85, 34, 182, 0.11);
 }
 
-.vitrine-atendimento-topo,
-.vitrine-atendimento-identidade,
-.vitrine-atendimento-rodape,
-.vitrine-atendimento-modal-header,
-.vitrine-atendimento-modal-pet {
-    display: flex;
+.vitrine-atendimento-etiqueta {
+    display: block;
+    margin-bottom: 11px;
+    color: var(--pet-roxo);
+    font-size: 0.67rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.vitrine-atendimento-resumo {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
     align-items: center;
-}
-
-.vitrine-atendimento-topo,
-.vitrine-atendimento-rodape,
-.vitrine-atendimento-modal-header {
-    justify-content: space-between;
     gap: 12px;
 }
 
-.vitrine-atendimento-identidade,
-.vitrine-atendimento-modal-pet {
-    gap: 11px;
-    min-width: 0;
-}
-
 .vitrine-atendimento-avatar {
-    width: 54px;
-    height: 54px;
-    flex: 0 0 54px;
+    display: block;
+    width: 56px;
+    height: 56px;
     border: 3px solid #fff;
     border-radius: 17px;
     object-fit: cover;
-    box-shadow: 0 5px 15px rgba(76, 29, 149, 0.12);
+    box-shadow: 0 5px 15px rgba(32, 16, 66, 0.13);
 }
 
 .vitrine-atendimento-avatar-vazio {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--pp-home-lilas);
-    color: var(--pp-home-roxo);
-    font-size: 1.25rem;
+    background: #f2eaff;
+    color: var(--pet-roxo);
+    font-size: 1.18rem;
     font-weight: 800;
 }
 
-.vitrine-atendimento-etiqueta {
+.vitrine-atendimento-info {
+    min-width: 0;
+}
+
+.vitrine-atendimento-info h2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: var(--pet-texto);
+    font-size: 1.02rem;
+    line-height: 1.25;
+}
+
+.vitrine-atendimento-info p,
+.vitrine-atendimento-info small {
     display: block;
-    color: var(--pp-home-roxo);
-    font-size: 0.66rem;
-    font-weight: 800;
-    text-transform: uppercase;
+    margin: 4px 0 0;
+    color: var(--pet-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
 }
 
-.vitrine-atendimento-card h2,
-.vitrine-atendimento-modal-header h2 {
-    margin: 2px 0 0;
-    color: var(--pp-home-texto);
-    font-size: 1.05rem;
-    line-height: 1.2;
-}
-
-.vitrine-atendimento-card p,
-.vitrine-atendimento-modal-header p {
-    margin: 3px 0 0;
-    color: var(--pp-home-texto-suave);
-    font-size: 0.75rem;
-}
-
-.vitrine-atendimento-status {
+.vitrine-atendimento-status-texto {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 7px 10px;
+    gap: 5px;
+    padding: 5px 8px;
     border-radius: 999px;
-    background: #ede9fe;
-    color: #6d28d9;
-    font-size: 0.68rem;
+    background: #f2eaff;
+    color: var(--pet-roxo);
+    font-size: 0.64rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
-.vitrine-atendimento-foto {
+.vitrine-atendimento-card.em-atendimento .vitrine-atendimento-status-texto {
+    background: #e8f0ff;
+    color: var(--pet-azul);
+}
+
+.vitrine-atendimento-card.finalizado .vitrine-atendimento-status-texto {
+    background: #eaf8ee;
+    color: var(--pet-verde);
+}
+
+.vitrine-atendimento-card.liberado .vitrine-atendimento-status-texto {
+    background: #fff5d5;
+    color: var(--pet-laranja);
+}
+
+.vitrine-atendimento-mini-timeline {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 17px;
+}
+
+.vitrine-atendimento-mini-etapa {
     position: relative;
-    width: 100%;
-    margin-top: 14px;
+    display: block;
+    min-width: 0;
+    padding-top: 22px;
+    color: #9a93a7;
+    font-size: 0.55rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.vitrine-atendimento-mini-etapa::before {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 50%;
+    width: 13px;
+    height: 13px;
+    border: 3px solid #eee9f5;
+    border-radius: 50%;
+    background: #fff;
+    transform: translateX(-50%);
+}
+
+.vitrine-atendimento-mini-etapa::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 7px;
+    left: calc(50% + 8px);
+    width: calc(100% - 12px);
+    height: 2px;
+    background: #eee9f5;
+}
+
+.vitrine-atendimento-mini-etapa:last-child::after {
+    display: none;
+}
+
+.vitrine-atendimento-mini-etapa.concluida {
+    color: var(--pet-verde);
+}
+
+.vitrine-atendimento-mini-etapa.concluida::before {
+    border-color: var(--pet-verde);
+    background: var(--pet-verde);
+}
+
+.vitrine-atendimento-mini-etapa.concluida::after {
+    background: var(--pet-verde);
+}
+
+.vitrine-atendimento-mini-etapa.atual {
+    color: var(--pet-roxo);
+}
+
+.vitrine-atendimento-mini-etapa.atual::before {
+    border-color: var(--pet-roxo);
+    background: var(--pet-amarelo);
+    box-shadow: 0 0 0 4px rgba(85, 34, 182, 0.12);
+}
+
+.vitrine-atendimento-mini-foto {
+    display: block;
+    width: 58px;
+    height: 58px;
     padding: 0;
     overflow: hidden;
-    border: 0;
-    border-radius: 18px;
-    background: #ede9fe;
+    border: 2px solid #ffffff;
+    border-radius: 17px;
+    background: #f2eaff;
+    box-shadow: 0 5px 15px rgba(32, 16, 66, 0.13);
     cursor: pointer;
 }
 
-.vitrine-atendimento-foto img {
+.vitrine-atendimento-mini-foto img {
     display: block;
     width: 100%;
-    height: 170px;
+    height: 100%;
     object-fit: cover;
 }
 
-.vitrine-atendimento-foto span {
-    position: absolute;
-    left: 10px;
-    bottom: 10px;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 11px;
-    border-radius: 999px;
-    background: rgba(31, 20, 47, 0.78);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    backdrop-filter: blur(8px);
-}
-
 .vitrine-atendimento-rodape {
-    margin-top: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .vitrine-atendimento-rodape small {
-    color: var(--pp-home-texto-suave);
-    font-size: 0.68rem;
+    color: var(--pet-muted);
+    font-size: 0.67rem;
 }
 
 .vitrine-atendimento-abrir {
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    flex: 0 0 auto;
     padding: 9px 12px;
     border: 0;
     border-radius: 12px;
-    background: var(--pp-home-roxo);
+    background: var(--pet-roxo);
     color: #fff;
     font: inherit;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 800;
     cursor: pointer;
 }
 
-/* Modal do acompanhamento */
-
-body.vitrine-modal-aberto {
+.vitrine-modal-aberto {
     overflow: hidden !important;
 }
 
@@ -1914,31 +1762,47 @@ body.vitrine-modal-aberto {
     align-items: flex-end;
     justify-content: center;
     padding: 16px 12px 0;
-    background: rgba(28, 18, 42, 0.58);
+    background: rgba(32, 16, 66, 0.6);
     backdrop-filter: blur(8px);
 }
 
 .vitrine-atendimento-modal-conteudo {
     width: 100%;
-    max-width: 540px;
+    max-width: 560px;
     max-height: calc(100vh - 22px);
     overflow: hidden;
     border-radius: 28px 28px 0 0;
-    background: #fff;
-    color: var(--pp-home-texto);
+    background: var(--pet-card);
+    color: var(--pet-texto);
     box-shadow: 0 -15px 45px rgba(20, 10, 35, 0.24);
 }
 
 .vitrine-atendimento-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 16px;
-    border-bottom: 1px solid var(--pp-home-borda);
+    border-bottom: 1px solid var(--pet-borda);
 }
 
-.vitrine-atendimento-modal-header span {
-    color: var(--pp-home-roxo);
-    font-size: 0.69rem;
-    font-weight: 800;
-    text-transform: uppercase;
+.vitrine-atendimento-modal-pet {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.vitrine-atendimento-modal-header h2 {
+    margin: 0;
+    color: var(--pet-texto);
+    font-size: 1.04rem;
+}
+
+.vitrine-atendimento-modal-header p {
+    margin: 3px 0 0;
+    color: var(--pet-muted);
+    font-size: 0.74rem;
 }
 
 .vitrine-atendimento-fechar {
@@ -1950,8 +1814,8 @@ body.vitrine-modal-aberto {
     flex: 0 0 40px;
     border: 0;
     border-radius: 50%;
-    background: #f4f1f7;
-    color: var(--pp-home-texto);
+    background: #f4f1f8;
+    color: var(--pet-texto);
     cursor: pointer;
 }
 
@@ -1968,7 +1832,7 @@ body.vitrine-modal-aberto {
 .vitrine-atendimento-foto-detalhe,
 .vitrine-atendimento-observacao {
     padding: 15px;
-    border: 1px solid var(--pp-home-borda);
+    border: 1px solid var(--pet-borda);
     border-radius: 19px;
     background: #fbfafe;
 }
@@ -1977,13 +1841,13 @@ body.vitrine-modal-aberto {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    background: linear-gradient(135deg, #6d28d9, #4c1d95);
+    background: linear-gradient(135deg, var(--pet-roxo-2), var(--pet-roxo-escuro));
     color: #fff;
 }
 
 .vitrine-atendimento-status-detalhe span,
 .vitrine-atendimento-status-detalhe small {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.82);
     font-size: 0.72rem;
 }
 
@@ -1992,58 +1856,71 @@ body.vitrine-modal-aberto {
     align-items: center;
     gap: 8px;
     color: #fff;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
 }
 
 .vitrine-atendimento-timeline h3,
 .vitrine-atendimento-foto-detalhe h3,
 .vitrine-atendimento-observacao h3 {
     margin: 0 0 12px;
-    color: var(--pp-home-texto);
+    color: var(--pet-texto);
     font-size: 0.94rem;
 }
 
-.vitrine-atendimento-timeline > div {
+.vitrine-atendimento-timeline-lista {
     display: grid;
     gap: 9px;
 }
 
 .vitrine-atendimento-timeline-item {
     display: grid;
-    grid-template-columns: 26px 1fr;
+    grid-template-columns: 28px minmax(0, 1fr);
     align-items: center;
-    gap: 9px;
+    gap: 10px;
 }
 
 .vitrine-atendimento-timeline-marcador {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #e5dfec;
     border-radius: 50%;
-    background: #eee9f4;
+    background: #fff;
     color: #fff;
     font-size: 0.67rem;
 }
 
-.vitrine-atendimento-timeline-item.concluido .vitrine-atendimento-timeline-marcador {
-    background: var(--pp-home-roxo);
+.vitrine-atendimento-timeline-item.concluida .vitrine-atendimento-timeline-marcador {
+    border-color: var(--pet-verde);
+    background: var(--pet-verde);
 }
 
-.vitrine-atendimento-timeline-item div {
+.vitrine-atendimento-timeline-item.atual .vitrine-atendimento-timeline-marcador {
+    border-color: var(--pet-roxo);
+    background: var(--pet-amarelo);
+    color: var(--pet-roxo-escuro);
+    box-shadow: 0 0 0 4px rgba(85, 34, 182, 0.12);
+}
+
+.vitrine-atendimento-timeline-item > div:last-child {
     display: flex;
     flex-direction: column;
 }
 
 .vitrine-atendimento-timeline-item strong {
-    color: var(--pp-home-texto);
+    color: var(--pet-texto);
     font-size: 0.8rem;
+}
+
+.vitrine-atendimento-timeline-item.futura strong {
+    color: #9a93a7;
 }
 
 .vitrine-atendimento-timeline-item small,
 .vitrine-atendimento-foto-detalhe small {
-    color: var(--pp-home-texto-suave);
+    color: var(--pet-muted);
     font-size: 0.68rem;
 }
 
@@ -2074,33 +1951,32 @@ body.vitrine-modal-aberto {
     }
 }
 
-@media (max-width: 420px) {
-    #vitrine-content.vitrine-container {
-        padding-left: 8px !important;
-        padding-right: 8px !important;
+@media (max-width: 430px) {
+    .vitrine-atendimento-resumo {
+        grid-template-columns: 50px minmax(0, 1fr) auto;
     }
 
-    .vitrine-home-hero {
-        min-height: 160px;
-        padding: 18px;
+    .vitrine-atendimento-avatar {
+        width: 50px;
+        height: 50px;
     }
 
-    .vitrine-home-hero-icone {
-        min-width: 62px;
-        font-size: 4rem;
+    .vitrine-atendimento-mini-foto {
+        width: 50px;
+        height: 50px;
     }
 
-    .vitrine-home-secao {
-        padding: 14px;
+    .vitrine-atendimento-mini-etapa {
+        font-size: 0.49rem;
     }
 
-    .vitrine-home-card {
-        min-height: 122px;
-        padding: 12px;
-    }
-
-    .vitrine-atendimento-topo {
+    .vitrine-atendimento-rodape {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .vitrine-atendimento-abrir {
+        justify-content: center;
+        width: 100%;
     }
 }
