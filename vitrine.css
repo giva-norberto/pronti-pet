@@ -1163,10 +1163,10 @@ input[type="date"]:focus {
     z-index: -1;
     inset: 0;
     background:
-        radial-gradient(circle at 8% 2%, rgba(113, 64, 220, 0.22), transparent 21rem),
-        radial-gradient(circle at 92% 7%, rgba(255, 201, 40, 0.20), transparent 19rem),
-        radial-gradient(circle at 50% 58%, rgba(37, 99, 235, 0.07), transparent 30rem),
-        linear-gradient(180deg, #ffffff 0%, #f7f2ff 46%, #efe8fb 100%);
+        radial-gradient(circle at 8% 2%, rgba(113, 64, 220, 0.38), transparent 22rem),
+        radial-gradient(circle at 92% 7%, rgba(255, 201, 40, 0.14), transparent 19rem),
+        radial-gradient(circle at 50% 58%, rgba(37, 99, 235, 0.16), transparent 31rem),
+        linear-gradient(180deg, #ddd2f7 0%, #cab8ee 48%, #b69de3 100%);
     pointer-events: none;
 }
 
