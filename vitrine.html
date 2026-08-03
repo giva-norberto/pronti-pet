@@ -7,7 +7,6 @@
     
     <link rel="stylesheet" href="vitrine.css">
     <link rel="stylesheet" href="menu-principal.css">
-    <link rel="stylesheet" href="vitrine-home.css?v=20260803-0725">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,16 +19,12 @@
 
     <div id="vitrine-content" class="vitrine-container" style="display: none;">
         <main class="main-content-vitrine">
-            <div id="main-navigation-container" class="vitrine-home">
-                <header class="vitrine-home-topbar">
-                    <div class="vitrine-home-brand">
-                        <img
-                            id="logo-publico"
-                            src="https://placehold.co/100x100/e0e7ff/6366f1?text=..."
-                            alt="Logo do negócio"
-                        >
+            <div id="main-navigation-container" class="pp-vitrine-home-shell">
+                <header class="pp-vitrine-home-header">
+                    <div class="pp-vitrine-home-brand">
+                        <img id="logo-publico" alt="Logo do negócio">
 
-                        <div class="vitrine-home-brand-texto">
+                        <div class="pp-vitrine-home-brand-copy">
                             <h1 id="nome-negocio-publico">Carregando...</h1>
                             <p id="boas-vindas-usuario" class="boas-vindas-usuario"></p>
                             <div id="usuario-logado-nome" class="usuario-logado-nome"></div>
@@ -38,7 +33,7 @@
 
                     <a
                         href="#"
-                        class="vitrine-card vitrine-home-perfil"
+                        class="pp-vitrine-home-profile"
                         data-menu-card="perfil"
                         aria-label="Abrir perfil"
                     >
@@ -46,123 +41,123 @@
                     </a>
                 </header>
 
-                <a href="#" class="vitrine-card vitrine-home-hero" data-menu-card="agendamento">
-                    <div class="vitrine-home-hero-conteudo">
-                        <span class="vitrine-home-hero-label">Agendamento online</span>
+                <a
+                    href="#"
+                    class="pp-vitrine-home-hero"
+                    data-menu-card="agendamento"
+                >
+                    <div class="pp-vitrine-home-hero-copy">
+                        <span class="pp-vitrine-home-hero-label">Agendamento online</span>
                         <h2>Agende o atendimento do seu pet</h2>
-
-                        <span class="vitrine-home-hero-botao">
-                            <i class="fa-solid fa-paw" aria-hidden="true"></i>
+                        <span class="pp-vitrine-home-hero-action">
+                            <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
                             Agendar agora
                         </span>
                     </div>
 
-                    <div class="vitrine-home-hero-visual" aria-hidden="true">
-                        <img id="vitrine-hero-imagem" alt="" hidden>
-                        <div id="vitrine-hero-fallback" class="vitrine-home-hero-fallback">
-                            <i class="fa-solid fa-paw"></i>
-                        </div>
+                    <div class="pp-vitrine-home-hero-icon" aria-hidden="true">
+                        <i class="fa-solid fa-paw"></i>
                     </div>
                 </a>
 
                 <section
-                    class="dashboard-grid-cards vitrine-home-atalhos"
                     id="vitrine-cards-grid"
-                    aria-label="Acessos rápidos"
+                    class="pp-vitrine-home-grid"
+                    aria-label="Acessos principais"
                 >
                     <a
                         href="#"
                         id="btn-meus-pets"
-                        class="vitrine-card vitrine-home-card"
+                        class="pp-vitrine-home-card pp-vitrine-home-card--pets"
                         data-menu-card="pets"
                     >
-                        <span class="vitrine-home-card-icone icone-pets">
+                        <span class="pp-vitrine-home-card-icon">
                             <i class="fa-solid fa-paw" aria-hidden="true"></i>
                         </span>
-                        <strong>Meus pets</strong>
-                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                        <span class="pp-vitrine-home-card-copy">
+                            <strong>Meus pets</strong>
+                            <small>Gerencie seus pets cadastrados</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right pp-vitrine-home-card-arrow" aria-hidden="true"></i>
                     </a>
 
                     <a
                         href="#"
-                        class="vitrine-card vitrine-home-card"
+                        class="pp-vitrine-home-card pp-vitrine-home-card--appointments"
                         data-menu-card="visualizacao"
                     >
-                        <span class="vitrine-home-card-icone icone-agendamentos">
+                        <span class="pp-vitrine-home-card-icon">
                             <i class="fa-regular fa-calendar" aria-hidden="true"></i>
                         </span>
-                        <strong>Agendamentos</strong>
-                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                        <span class="pp-vitrine-home-card-copy">
+                            <strong>Agendamentos</strong>
+                            <small>Veja e gerencie seus agendamentos</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right pp-vitrine-home-card-arrow" aria-hidden="true"></i>
                     </a>
 
                     <a
                         href="#atendimento-em-andamento-container"
                         id="btn-acompanhar-home"
-                        class="vitrine-home-card"
+                        class="pp-vitrine-home-card pp-vitrine-home-card--tracking"
                     >
-                        <span class="vitrine-home-card-icone icone-acompanhar">
+                        <span class="pp-vitrine-home-card-icon">
                             <i class="fa-regular fa-clipboard" aria-hidden="true"></i>
                         </span>
-                        <strong>Acompanhar</strong>
-                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                        <span class="pp-vitrine-home-card-copy">
+                            <strong>Acompanhar</strong>
+                            <small>Acompanhe o atendimento em tempo real</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right pp-vitrine-home-card-arrow" aria-hidden="true"></i>
                     </a>
 
                     <a
                         href="#"
-                        class="vitrine-card vitrine-home-card"
+                        class="pp-vitrine-home-card pp-vitrine-home-card--plan"
                         data-menu-card="minhas-assinaturas"
                     >
-                        <span class="vitrine-home-card-icone icone-plano">
+                        <span class="pp-vitrine-home-card-icon">
                             <i class="fa-solid fa-crown" aria-hidden="true"></i>
                         </span>
-                        <strong>Meu plano</strong>
-                        <i class="fa-solid fa-chevron-right vitrine-home-card-seta" aria-hidden="true"></i>
+                        <span class="pp-vitrine-home-card-copy">
+                            <strong>Meu plano</strong>
+                            <small>Veja seu plano e benefícios</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right pp-vitrine-home-card-arrow" aria-hidden="true"></i>
                     </a>
                 </section>
 
                 <section
                     id="atendimento-em-andamento-container"
-                    class="vitrine-home-atendimento-container"
+                    class="pp-vitrine-home-tracking"
                     hidden
                 ></section>
 
-                <section
-                    id="proximo-atendimento-home"
-                    class="vitrine-proximo-atendimento"
-                    hidden
-                ></section>
-
-                <section
-                    id="promocoes-home-container"
-                    class="vitrine-home-conteudo-dinamico"
-                    hidden
-                ></section>
-
-                <section
-                    id="fila-home-container"
-                    class="vitrine-home-conteudo-dinamico"
-                    hidden
-                ></section>
-
-                <section class="vitrine-home-links" aria-label="Outras opções">
-                    <a href="#" class="vitrine-card vitrine-home-link" data-menu-card="informacoes">
-                        <i class="fa-solid fa-store" aria-hidden="true"></i>
+                <nav class="pp-vitrine-home-links" aria-label="Outras opções">
+                    <a href="#" class="pp-vitrine-home-link" data-menu-card="informacoes">
+                        <span class="pp-vitrine-home-link-icon">
+                            <i class="fa-solid fa-store" aria-hidden="true"></i>
+                        </span>
                         <strong>Sobre o local</strong>
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </a>
 
-                    <a href="#" class="vitrine-card vitrine-home-link" data-menu-card="assinatura">
-                        <i class="fa-solid fa-star" aria-hidden="true"></i>
+                    <a href="#" class="pp-vitrine-home-link" data-menu-card="assinatura">
+                        <span class="pp-vitrine-home-link-icon">
+                            <i class="fa-solid fa-star" aria-hidden="true"></i>
+                        </span>
                         <strong>Planos</strong>
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </a>
 
-                    <a href="#" class="vitrine-card vitrine-home-link" data-menu-card="perfil">
-                        <i class="fa-regular fa-user" aria-hidden="true"></i>
-                        <strong id="card-perfil-texto">Perfil</strong>
+                    <a href="#" class="pp-vitrine-home-link" data-menu-card="perfil">
+                        <span class="pp-vitrine-home-link-icon">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i>
+                        </span>
+                        <strong id="card-perfil-texto">Meu perfil</strong>
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </a>
-                </section>
+                </nav>
             </div>
             <div id="menu-assinatura" class="menu-content" style="display: none;">
                 <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
@@ -313,7 +308,7 @@
     </div>
 
 
-    <nav class="bottom-nav-vitrine" aria-label="Navegação principal">
+    <nav class="bottom-nav-vitrine pp-vitrine-home-bottom-nav" aria-label="Navegação principal">
         <button type="button" class="ativo" data-home-nav="inicio">
             <i class="fa-solid fa-house" aria-hidden="true"></i>
             <span>Início</span>
@@ -378,7 +373,7 @@
         </div>
     </div>
     
-    <script type="module" src="./vitrine.js?v=20260802-2"></script>
+    <script type="module" src="./vitrine.js?v=20260803-0912"></script>
 
     <!-- AÇÃO DO CARD MEUS PETS -->
     <script type="module">
@@ -479,8 +474,8 @@
             const empresaId = localStorage.getItem("empresaAtivaId");
 
             if (cardsGrid && menuAssinatura) {
-                cardsGrid.addEventListener('click', (e) => {
-                    const card = e.target.closest('.vitrine-card');
+                mainNavigationContainer.addEventListener('click', (e) => {
+                    const card = e.target.closest('[data-menu-card]');
                     if (!card) return;
                     if (card.dataset.menuCard === 'assinatura') {
                         e.preventDefault();
@@ -499,7 +494,7 @@
                  const btnVoltarAssinatura = menuAssinatura.querySelector('.btn-voltar');
                 btnVoltarAssinatura.addEventListener('click', () => {
                     menuAssinatura.style.display = 'none';
-                    mainNavigationContainer.style.display = 'block';
+                    mainNavigationContainer.style.display = 'grid';
                 });
             }
         });
@@ -611,7 +606,7 @@
             
             function showMainMenu() { 
                 contentSections.forEach(section => section.style.display = 'none'); 
-                mainNavigationContainer.style.display = 'block'; 
+                mainNavigationContainer.style.display = 'grid'; 
             }
             function showContentSection(menuId) {
                 mainNavigationContainer.style.display = 'none';
@@ -621,7 +616,7 @@
             }
 
             mainNavigationContainer.addEventListener('click', (e) => {
-    const card = e.target.closest('.vitrine-card');
+    const card = e.target.closest('[data-menu-card]');
 
     if (!card) return;
 
@@ -662,62 +657,60 @@ if (menuKey === 'visualizacao') {
     </script>
 
     <script type="module">
-        import { db, auth } from './vitrini-firebase.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+        import { auth } from './vitrini-firebase.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        function atualizarHeaderCard(dadosEmpresa, usuario) {
+
+        document.addEventListener('DOMContentLoaded', () => {
             const logoEl = document.getElementById('logo-publico');
             const nomeNegocioEl = document.getElementById('nome-negocio-publico');
             const boasVindasEl = document.getElementById('boas-vindas-usuario');
             const nomeUsuarioEl = document.getElementById('usuario-logado-nome');
-            const nomeDaEmpresa = dadosEmpresa ? dadosEmpresa.nomeFantasia : "Negócio";
-            const logoDaEmpresa = dadosEmpresa ? dadosEmpresa.logoUrl : null;
-            nomeNegocioEl.textContent = nomeDaEmpresa;
-            document.title = nomeDaEmpresa; 
-            if (logoDaEmpresa) {
-                logoEl.src = logoDaEmpresa;
-                logoEl.alt = `Logo de ${nomeDaEmpresa}`;
+
+            const atualizarAltDaLogo = () => {
+                if (!logoEl || !nomeNegocioEl || !logoEl.getAttribute('src')) return;
+                const nomeEmpresa = nomeNegocioEl.textContent.trim();
+                logoEl.alt = nomeEmpresa && nomeEmpresa !== 'Carregando...'
+                    ? `Logo de ${nomeEmpresa}`
+                    : 'Logo do negócio';
+            };
+
+            if (logoEl && nomeNegocioEl) {
+                new MutationObserver(atualizarAltDaLogo).observe(logoEl, {
+                    attributes: true,
+                    attributeFilter: ['src']
+                });
+
+                new MutationObserver(atualizarAltDaLogo).observe(nomeNegocioEl, {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
             }
-            if (usuario) {
-                boasVindasEl.textContent = `Olá, seja bem-vindo(a)!`; 
-                const primeiroNome = usuario.displayName ? usuario.displayName.split(' ')[0] : 'Cliente';
-                nomeUsuarioEl.textContent = primeiroNome;
-                nomeUsuarioEl.style.display = 'inline-block'; 
-            } else {
-                boasVindasEl.textContent = "Faça seu agendamento!";
-                nomeUsuarioEl.style.display = 'none'; 
-                nomeUsuarioEl.textContent = '';
-            }
-        }
-        async function inicializarPagina() {
-            const loader = document.getElementById('vitrine-loader');
-            const content = document.getElementById('vitrine-content');
-            const empresaId = localStorage.getItem("empresaAtivaId");
-            let dadosEmpresa = null;
-            if (empresaId) {
-                try {
-                    const docRef = doc(db, "empresarios", empresaId);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        dadosEmpresa = docSnap.data();
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar dados da empresa:", error);
-                }
-            }
+
             onAuthStateChanged(auth, (usuario) => {
-                atualizarHeaderCard(dadosEmpresa, usuario);
+                if (!boasVindasEl || !nomeUsuarioEl) return;
+
+                if (usuario) {
+                    const primeiroNome = String(usuario.displayName || 'Cliente')
+                        .trim()
+                        .split(/\s+/)[0];
+
+                    boasVindasEl.textContent = `Olá, ${primeiroNome}!`;
+                    nomeUsuarioEl.textContent = primeiroNome;
+                } else {
+                    boasVindasEl.textContent = 'Olá, seja bem-vindo(a)!';
+                    nomeUsuarioEl.textContent = '';
+                }
+
+                atualizarAltDaLogo();
             });
-            loader.style.display = 'none';
-            content.style.display = 'block';
-        }
-        document.addEventListener('DOMContentLoaded', inicializarPagina);
+        });
     </script>
 
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('agendamento:salvo', (e) => {
-                const visualCard = document.querySelector('.vitrine-card[data-menu-card="visualizacao"]');
+                const visualCard = document.querySelector('[data-menu-card="visualizacao"]');
                 if (visualCard) {
                     visualCard.click();
                     setTimeout(() => {
@@ -898,9 +891,8 @@ if (menuKey === 'visualizacao') {
         });
     </script>
     <!-- FIM: script da fila -->
-        <!-- FIM: script da fila -->
 
-    <!-- <--- SEU NOVO SCRIPT AQUI ---> -->
+    <!-- Minhas assinaturas -->
     <script type="module">
     import { montarPainelMinhasAssinaturas } from './minhas-assinaturas.js';
 
@@ -910,8 +902,8 @@ if (menuKey === 'visualizacao') {
         const cardsGrid = document.getElementById('vitrine-cards-grid');
         const mainNavigationContainer = document.getElementById('main-navigation-container');
 
-        cardsGrid.addEventListener('click', (e) => {
-            const card = e.target.closest('.vitrine-card');
+        mainNavigationContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('[data-menu-card]');
             if (!card) return;
             if (card.dataset.menuCard === 'minhas-assinaturas') {
                 e.preventDefault();
@@ -923,7 +915,7 @@ if (menuKey === 'visualizacao') {
 
         menuAssinaturas.querySelector('.btn-voltar').addEventListener('click', () => {
             menuAssinaturas.style.display = 'none';
-            mainNavigationContainer.style.display = 'block';
+            mainNavigationContainer.style.display = 'grid';
         });
     });
     </script>
