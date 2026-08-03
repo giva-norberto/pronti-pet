@@ -1,8 +1,19 @@
 // ============================================================================
 //  VITRINE-ATENDIMENTO.JS — PRONTI PET
 // ============================================================================
-//  Leitura em tempo real do atendimento na vitrine do cliente.
-//  A vitrine não altera dados no Firestore.
+//  Leitura em tempo real dos atendimentos na vitrine do cliente.
+//
+//  Regras:
+//  - A vitrine não altera dados no Firestore.
+//  - O painel do dono permanece intacto.
+//  - Cada atendimento é identificado pelo próprio agendamentoId.
+//  - Um cliente pode acompanhar dois ou mais pets simultaneamente.
+//  - Cada documento ativo possui seu próprio onSnapshot().
+//  - O card e o modal usam exatamente o mesmo snapshot do mesmo documento.
+//  - statusAtendimento ausente é interpretado como "aguardando",
+//    seguindo a mesma regra visual utilizada pelo painel do dono.
+//  - Atendimentos retirados, cancelados, faltas e documentos antigos
+//    não aparecem na área de acompanhamento.
 // ============================================================================
 
 import { db } from "./vitrini-firebase.js";
@@ -18,7 +29,7 @@ import {
 const CONTAINER_ID = "atendimento-em-andamento-container";
 const MODAL_ID = "vitrine-atendimento-modal";
 
-const STATUS_FLUXO = [
+const STATUS_FLUXO_PADRAO = [
     "aguardando",
     "em_atendimento",
     "finalizado",
@@ -46,30 +57,35 @@ const STATUS_CONFIG = {
     aguardando: {
         texto: "Aguardando Atendimento",
         textoCurto: "Aguardando",
+        etiqueta: "Aguardando início",
         icone: "fa-clock",
         classe: "aguardando"
     },
     em_atendimento: {
         texto: "Em Atendimento",
         textoCurto: "Em atendimento",
+        etiqueta: "Atendimento em andamento",
         icone: "fa-paw",
         classe: "em-atendimento"
     },
     finalizado: {
         texto: "Finalizado",
         textoCurto: "Finalizado",
+        etiqueta: "Atendimento finalizado",
         icone: "fa-circle-check",
         classe: "finalizado"
     },
     liberado: {
         texto: "Liberado para Retirada",
         textoCurto: "Liberado",
+        etiqueta: "Pet liberado para retirada",
         icone: "fa-house-circle-check",
         classe: "liberado"
     },
     retirado: {
         texto: "Pet Retirado",
         textoCurto: "Retirado",
+        etiqueta: "Atendimento encerrado",
         icone: "fa-flag-checkered",
         classe: "retirado"
     }
@@ -78,10 +94,19 @@ const STATUS_CONFIG = {
 let cicloAtual = 0;
 let contextoAtual = null;
 let canceladoresDescoberta = [];
-let canceladorDocumento = null;
 let resultadosDescoberta = new Map();
 let chavesDescobertaPendentes = new Set();
-let atendimentoIdAcompanhado = null;
+
+// Um listener e um snapshot independente para cada agendamentoId.
+const canceladoresPorAtendimento = new Map();
+const atendimentosAtivos = new Map();
+
+// Guarda qual atendimento está aberto no modal.
+let modalAgendamentoId = null;
+
+// ============================================================================
+//  API PÚBLICA
+// ============================================================================
 
 export function iniciarAcompanhamentoVitrine({
     empresaId,
@@ -100,7 +125,8 @@ export function iniciarAcompanhamentoVitrine({
         return null;
     }
 
-    esconderAtendimento(container);
+    configurarEventoContainer(container);
+    esconderAtendimentos(container);
 
     if (!empresaResolvida || (!clienteResolvido && !authUid)) {
         return null;
@@ -116,7 +142,7 @@ export function iniciarAcompanhamentoVitrine({
         ciclo
     };
 
-    iniciarDescobertaAtendimento(contextoAtual);
+    iniciarDescobertaAtendimentos(contextoAtual);
 
     return () => encerrarAcompanhamentoVitrine();
 }
@@ -124,24 +150,26 @@ export function iniciarAcompanhamentoVitrine({
 export function encerrarAcompanhamentoVitrine() {
     cicloAtual += 1;
     contextoAtual = null;
-    atendimentoIdAcompanhado = null;
     resultadosDescoberta = new Map();
     chavesDescobertaPendentes = new Set();
 
     cancelarDescoberta();
-    cancelarDocumento();
+    cancelarTodosAtendimentos();
+    atendimentosAtivos.clear();
     removerModalDetalhes();
 
     const container = document.getElementById(CONTAINER_ID);
-    if (container) esconderAtendimento(container);
+    if (container) esconderAtendimentos(container);
 }
 
-function iniciarDescobertaAtendimento(contexto) {
+// ============================================================================
+//  DESCOBERTA DOS AGENDAMENTOS DO CLIENTE
+// ============================================================================
+
+function iniciarDescobertaAtendimentos(contexto) {
     if (!contexto || contexto.ciclo !== cicloAtual) return;
 
     cancelarDescoberta();
-    cancelarDocumento();
-    atendimentoIdAcompanhado = null;
     resultadosDescoberta = new Map();
 
     const agendamentosRef = collection(
@@ -153,7 +181,10 @@ function iniciarDescobertaAtendimento(contexto) {
 
     const consultas = montarConsultasDescoberta(agendamentosRef, contexto);
 
-    if (consultas.length === 0) return;
+    if (consultas.length === 0) {
+        sincronizarDocumentosAcompanhados(contexto, []);
+        return;
+    }
 
     chavesDescobertaPendentes = new Set(
         consultas.map(({ chave }) => chave)
@@ -163,7 +194,7 @@ function iniciarDescobertaAtendimento(contexto) {
         const cancelar = onSnapshot(
             consulta,
             (snapshot) => {
-                if (contexto.ciclo !== cicloAtual || canceladorDocumento) return;
+                if (contexto.ciclo !== cicloAtual) return;
 
                 resultadosDescoberta.set(
                     chave,
@@ -172,21 +203,21 @@ function iniciarDescobertaAtendimento(contexto) {
                         ...documento.data()
                     }))
                 );
-                chavesDescobertaPendentes.delete(chave);
 
-                tentarFixarDocumentoAtendimento(contexto);
+                chavesDescobertaPendentes.delete(chave);
+                processarResultadosDescoberta(contexto);
             },
             (error) => {
                 if (contexto.ciclo !== cicloAtual) return;
 
                 console.error(
-                    `[Pronti Pet] Falha ao identificar atendimento (${chave}):`,
+                    `[Pronti Pet] Falha ao identificar atendimentos (${chave}):`,
                     error
                 );
 
                 resultadosDescoberta.set(chave, []);
                 chavesDescobertaPendentes.delete(chave);
-                tentarFixarDocumentoAtendimento(contexto);
+                processarResultadosDescoberta(contexto);
             }
         );
 
@@ -221,43 +252,74 @@ function montarConsultasDescoberta(agendamentosRef, contexto) {
     return consultas;
 }
 
-function tentarFixarDocumentoAtendimento(contexto) {
+function processarResultadosDescoberta(contexto) {
     if (
         contexto.ciclo !== cicloAtual ||
-        canceladorDocumento ||
-        atendimentoIdAcompanhado ||
         chavesDescobertaPendentes.size > 0
     ) {
         return;
     }
 
-    const unicos = new Map();
+    const documentosUnicos = new Map();
 
     resultadosDescoberta.forEach((lista) => {
         lista.forEach((atendimento) => {
-            if (atendimento?.id) unicos.set(atendimento.id, atendimento);
+            if (atendimento?.id) {
+                documentosUnicos.set(atendimento.id, atendimento);
+            }
         });
     });
 
-    const selecionado = [...unicos.values()]
+    const candidatos = [...documentosUnicos.values()]
         .filter(ehAtendimentoVisivel)
-        .sort(compararMaisRecentes)[0];
+        .sort(compararPorDataEHorario);
 
-    if (!selecionado?.id) {
-        const container = document.getElementById(CONTAINER_ID);
-        if (container) esconderAtendimento(container);
-        return;
-    }
+    sincronizarDocumentosAcompanhados(contexto, candidatos);
+}
 
-    atendimentoIdAcompanhado = selecionado.id;
-    cancelarDescoberta();
-    acompanharDocumentoAtendimento(contexto, selecionado.id);
+// ============================================================================
+//  UM onSnapshot DIRETO PARA CADA agendamentoId
+// ============================================================================
+
+function sincronizarDocumentosAcompanhados(contexto, candidatos) {
+    if (contexto.ciclo !== cicloAtual) return;
+
+    const idsDesejados = new Set(
+        candidatos
+            .map((atendimento) => limparTexto(atendimento?.id))
+            .filter(Boolean)
+    );
+
+    // Remove somente os documentos que deixaram de ser válidos.
+    [...canceladoresPorAtendimento.keys()].forEach((agendamentoId) => {
+        if (!idsDesejados.has(agendamentoId)) {
+            removerAtendimentoAcompanhado(agendamentoId, true);
+        }
+    });
+
+    // Cria um listener direto para cada documento ainda não acompanhado.
+    candidatos.forEach((atendimento) => {
+        const agendamentoId = limparTexto(atendimento?.id);
+
+        if (
+            agendamentoId &&
+            !canceladoresPorAtendimento.has(agendamentoId)
+        ) {
+            acompanharDocumentoAtendimento(contexto, agendamentoId);
+        }
+    });
+
+    renderizarTodosAtendimentos();
 }
 
 function acompanharDocumentoAtendimento(contexto, agendamentoId) {
-    if (contexto.ciclo !== cicloAtual) return;
-
-    cancelarDocumento();
+    if (
+        contexto.ciclo !== cicloAtual ||
+        !agendamentoId ||
+        canceladoresPorAtendimento.has(agendamentoId)
+    ) {
+        return;
+    }
 
     const atendimentoRef = doc(
         db,
@@ -267,13 +329,13 @@ function acompanharDocumentoAtendimento(contexto, agendamentoId) {
         agendamentoId
     );
 
-    canceladorDocumento = onSnapshot(
+    const cancelar = onSnapshot(
         atendimentoRef,
         (snapshot) => {
             if (contexto.ciclo !== cicloAtual) return;
 
             if (!snapshot.exists()) {
-                ocultarERetomarDescoberta(contexto, agendamentoId);
+                removerAtendimentoAcompanhado(agendamentoId, true);
                 return;
             }
 
@@ -283,18 +345,14 @@ function acompanharDocumentoAtendimento(contexto, agendamentoId) {
             };
 
             if (!ehAtendimentoVisivel(atendimento)) {
-                ocultarERetomarDescoberta(contexto, agendamentoId);
+                removerAtendimentoAcompanhado(agendamentoId, true);
                 return;
             }
 
-            const container = document.getElementById(CONTAINER_ID);
-            if (!container) return;
+            atendimentosAtivos.set(agendamentoId, atendimento);
+            renderizarTodosAtendimentos();
 
-            const modalEstavaAberto = Boolean(document.getElementById(MODAL_ID));
-
-            renderizarCardCompacto(container, atendimento);
-
-            if (modalEstavaAberto) {
+            if (modalAgendamentoId === agendamentoId) {
                 abrirModalDetalhes(atendimento);
             }
         },
@@ -306,29 +364,54 @@ function acompanharDocumentoAtendimento(contexto, agendamentoId) {
                 error
             );
 
-            const container = document.getElementById(CONTAINER_ID);
-            if (container) esconderAtendimento(container);
-            removerModalDetalhes();
+            removerAtendimentoAcompanhado(agendamentoId, true);
         }
     );
+
+    canceladoresPorAtendimento.set(agendamentoId, cancelar);
 }
 
-function ocultarERetomarDescoberta(contexto, agendamentoId) {
-    const container = document.getElementById(CONTAINER_ID);
-    if (container) esconderAtendimento(container);
+function removerAtendimentoAcompanhado(
+    agendamentoId,
+    cancelarListener = false
+) {
+    const cancelar = canceladoresPorAtendimento.get(agendamentoId);
 
-    removerModalDetalhes();
-    cancelarDocumento();
+    if (cancelarListener && cancelar) {
+        try {
+            cancelar();
+        } catch (error) {
+            console.warn(
+                `[Pronti Pet] Listener do atendimento ${agendamentoId} não encerrado:`,
+                error
+            );
+        }
 
-    if (atendimentoIdAcompanhado === agendamentoId) {
-        atendimentoIdAcompanhado = null;
+        canceladoresPorAtendimento.delete(agendamentoId);
     }
 
-    queueMicrotask(() => {
-        if (contexto.ciclo === cicloAtual) {
-            iniciarDescobertaAtendimento(contexto);
+    atendimentosAtivos.delete(agendamentoId);
+
+    if (modalAgendamentoId === agendamentoId) {
+        removerModalDetalhes();
+    }
+
+    renderizarTodosAtendimentos();
+}
+
+function cancelarTodosAtendimentos() {
+    canceladoresPorAtendimento.forEach((cancelar, agendamentoId) => {
+        try {
+            cancelar();
+        } catch (error) {
+            console.warn(
+                `[Pronti Pet] Listener do atendimento ${agendamentoId} não encerrado:`,
+                error
+            );
         }
     });
+
+    canceladoresPorAtendimento.clear();
 }
 
 function cancelarDescoberta() {
@@ -336,7 +419,10 @@ function cancelarDescoberta() {
         try {
             cancelar();
         } catch (error) {
-            console.warn("[Pronti Pet] Listener de identificação não encerrado:", error);
+            console.warn(
+                "[Pronti Pet] Listener de identificação não encerrado:",
+                error
+            );
         }
     });
 
@@ -345,75 +431,183 @@ function cancelarDescoberta() {
     chavesDescobertaPendentes = new Set();
 }
 
-function cancelarDocumento() {
-    if (!canceladorDocumento) return;
-
-    try {
-        canceladorDocumento();
-    } catch (error) {
-        console.warn("[Pronti Pet] Listener do atendimento não encerrado:", error);
-    }
-
-    canceladorDocumento = null;
-}
+// ============================================================================
+//  REGRAS DE VISIBILIDADE
+// ============================================================================
 
 function ehAtendimentoVisivel(atendimento) {
-    const statusAtendimento = normalizarStatus(atendimento?.statusAtendimento);
+    const statusAtendimento = obterStatusAtendimento(atendimento);
 
-    if (!STATUS_VISIVEIS.has(statusAtendimento)) return false;
+    if (!STATUS_VISIVEIS.has(statusAtendimento)) {
+        return false;
+    }
 
     const statusAgendamento = normalizarStatus(
         atendimento?.status || atendimento?.statusAgendamento
     );
 
-    return !STATUS_AGENDAMENTO_OCULTOS.has(statusAgendamento);
-}
-
-function compararMaisRecentes(a, b) {
-    return obterMomentoOrdenacao(b) - obterMomentoOrdenacao(a);
-}
-
-function obterMomentoOrdenacao(atendimento) {
-    const timeline = Array.isArray(atendimento?.timelineAtendimento)
-        ? atendimento.timelineAtendimento
-        : [];
-
-    const momentosTimeline = timeline
-        .map((etapa) => converterParaDate(etapa?.dataHora)?.getTime() || 0)
-        .filter(Boolean);
-
-    if (momentosTimeline.length > 0) {
-        return Math.max(...momentosTimeline);
+    if (STATUS_AGENDAMENTO_OCULTOS.has(statusAgendamento)) {
+        return false;
     }
 
-    const data = limparTexto(atendimento?.data);
-    const horario = limparTexto(atendimento?.horario) || "00:00";
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
-        const momento = new Date(`${data}T${horario}:00`);
-        if (!Number.isNaN(momento.getTime())) return momento.getTime();
-    }
-
-    return 0;
+    // Impede que um atendimento antigo, deixado indevidamente como ativo,
+    // substitua o atendimento real do dia atual.
+    return ehAtendimentoDoDiaAtual(atendimento);
 }
 
-function renderizarCardCompacto(container, atendimento) {
-    const status = normalizarStatus(atendimento.statusAtendimento);
-    const config = STATUS_CONFIG[status];
+function obterStatusAtendimento(atendimento) {
+    return normalizarStatus(
+        atendimento?.statusAtendimento || "aguardando"
+    );
+}
 
-    if (!config) {
-        esconderAtendimento(container);
+function ehAtendimentoDoDiaAtual(atendimento) {
+    const dataAgendamento = obterDataAgendamento(atendimento);
+
+    if (dataAgendamento) {
+        return datasNoMesmoDia(dataAgendamento, new Date());
+    }
+
+    // Compatibilidade defensiva para documentos antigos sem campo de data:
+    // só aceita se houver atualização operacional feita hoje.
+    const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
+
+    return Boolean(
+        ultimaAtualizacao &&
+        datasNoMesmoDia(ultimaAtualizacao, new Date())
+    );
+}
+
+function obterDataAgendamento(atendimento) {
+    const candidatos = [
+        atendimento?.data,
+        atendimento?.dataAgendamento,
+        atendimento?.dataSelecionada,
+        atendimento?.dia,
+        atendimento?.dataHoraAgendamento,
+        atendimento?.dataHora,
+        atendimento?.inicio,
+        atendimento?.dataHoraInicio
+    ];
+
+    for (const candidato of candidatos) {
+        const data = converterDataCalendario(candidato);
+        if (data) return data;
+    }
+
+    return null;
+}
+
+function compararPorDataEHorario(a, b) {
+    const momentoA = obterMomentoAgendamento(a);
+    const momentoB = obterMomentoAgendamento(b);
+
+    if (momentoA !== momentoB) {
+        return momentoA - momentoB;
+    }
+
+    return obterNomePet(a).localeCompare(
+        obterNomePet(b),
+        "pt-BR",
+        { sensitivity: "base" }
+    );
+}
+
+function obterMomentoAgendamento(atendimento) {
+    const data = obterDataAgendamento(atendimento);
+
+    if (!data) {
+        return obterUltimaAtualizacao(atendimento)?.getTime() || 0;
+    }
+
+    const resultado = new Date(data);
+    const horario = limparTexto(
+        atendimento?.hora ||
+        atendimento?.horario ||
+        atendimento?.horaAgendamento
+    );
+
+    const correspondencia = horario.match(/^(\d{1,2}):(\d{2})/);
+
+    if (correspondencia) {
+        resultado.setHours(
+            Number(correspondencia[1]),
+            Number(correspondencia[2]),
+            0,
+            0
+        );
+    }
+
+    return resultado.getTime();
+}
+
+// ============================================================================
+//  RENDERIZAÇÃO DA LISTA DE ATENDIMENTOS
+// ============================================================================
+
+function configurarEventoContainer(container) {
+    if (container.dataset.ppAtendimentoEventos === "1") return;
+
+    container.dataset.ppAtendimentoEventos = "1";
+
+    container.addEventListener("click", (event) => {
+        const botao = event.target.closest(
+            '[data-acao-atendimento="abrir"][data-agendamento-id]'
+        );
+
+        if (!botao || !container.contains(botao)) return;
+
+        const agendamentoId = limparTexto(
+            botao.dataset.agendamentoId
+        );
+
+        const atendimento = atendimentosAtivos.get(agendamentoId);
+
+        if (atendimento) {
+            abrirModalDetalhes(atendimento);
+        }
+    });
+}
+
+function renderizarTodosAtendimentos() {
+    const container = document.getElementById(CONTAINER_ID);
+    if (!container) return;
+
+    const atendimentos = [...atendimentosAtivos.values()]
+        .filter(ehAtendimentoVisivel)
+        .sort(compararPorDataEHorario);
+
+    if (atendimentos.length === 0) {
+        esconderAtendimentos(container);
         return;
     }
 
+    container.hidden = false;
+    container.style.display = "block";
+
+    container.innerHTML = atendimentos
+        .map((atendimento) => montarHtmlCardAtendimento(atendimento))
+        .join("");
+}
+
+function montarHtmlCardAtendimento(atendimento) {
+    const agendamentoId = limparTexto(atendimento?.id);
+    const status = obterStatusAtendimento(atendimento);
+    const config = STATUS_CONFIG[status];
+
+    if (!agendamentoId || !config || !STATUS_VISIVEIS.has(status)) {
+        return "";
+    }
+
+    const fluxo = obterFluxoAtendimento(atendimento);
+    const indiceAtual = fluxo.indexOf(status);
     const nomePet = obterNomePet(atendimento);
     const fotoPet = obterFotoPet(atendimento);
     const servico = obterNomeServico(atendimento);
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
-    const indiceAtual = STATUS_FLUXO.indexOf(status);
 
-    const miniTimeline = STATUS_FLUXO.map((statusEtapa, indice) => {
+    const miniTimeline = fluxo.map((statusEtapa, indice) => {
         const etapa = STATUS_CONFIG[statusEtapa];
         const classe = obterClasseEtapa(indice, indiceAtual);
 
@@ -424,13 +618,13 @@ function renderizarCardCompacto(container, atendimento) {
         `;
     }).join("");
 
-    container.hidden = false;
-    container.style.display = "block";
-
-    container.innerHTML = `
-        <article class="vitrine-atendimento-card ${config.classe}">
+    return `
+        <article
+            class="vitrine-atendimento-card ${config.classe}"
+            data-agendamento-id="${escaparAtributo(agendamentoId)}"
+        >
             <span class="vitrine-atendimento-etiqueta">
-                Atendimento em andamento
+                ${escaparHtml(config.etiqueta)}
             </span>
 
             <div class="vitrine-atendimento-resumo">
@@ -471,10 +665,14 @@ function renderizarCardCompacto(container, atendimento) {
                                 type="button"
                                 class="vitrine-atendimento-mini-foto"
                                 data-acao-atendimento="abrir"
-                                aria-label="Ver foto do atendimento"
+                                data-agendamento-id="${escaparAtributo(agendamentoId)}"
+                                aria-label="Ver foto do atendimento de ${escaparAtributo(nomePet || "pet")}"
                             >
-                                <i class="fa-solid fa-camera" aria-hidden="true"></i>
-                                Ver foto
+                                <img
+                                    src="${escaparAtributo(fotoAtendimento.url)}"
+                                    alt="Foto do atendimento${nomePet ? ` de ${escaparAtributo(nomePet)}` : ""}"
+                                    loading="lazy"
+                                >
                             </button>
                         `
                         : ""
@@ -492,6 +690,7 @@ function renderizarCardCompacto(container, atendimento) {
                     type="button"
                     class="vitrine-atendimento-abrir"
                     data-acao-atendimento="abrir"
+                    data-agendamento-id="${escaparAtributo(agendamentoId)}"
                 >
                     Acompanhar atendimento
                     <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
@@ -499,20 +698,34 @@ function renderizarCardCompacto(container, atendimento) {
             </div>
         </article>
     `;
-
-    container
-        .querySelectorAll('[data-acao-atendimento="abrir"]')
-        .forEach((botao) => {
-            botao.addEventListener("click", () => abrirModalDetalhes(atendimento));
-        });
 }
+
+function esconderAtendimentos(container) {
+    container.hidden = true;
+    container.style.display = "none";
+    container.innerHTML = "";
+}
+
+// ============================================================================
+//  MODAL DO ATENDIMENTO SELECIONADO
+// ============================================================================
 
 function abrirModalDetalhes(atendimento) {
     removerModalDetalhes();
 
-    const status = normalizarStatus(atendimento.statusAtendimento);
+    const agendamentoId = limparTexto(atendimento?.id);
+    const status = obterStatusAtendimento(atendimento);
     const config = STATUS_CONFIG[status];
-    if (!config || !STATUS_VISIVEIS.has(status)) return;
+
+    if (
+        !agendamentoId ||
+        !config ||
+        !STATUS_VISIVEIS.has(status)
+    ) {
+        return;
+    }
+
+    modalAgendamentoId = agendamentoId;
 
     const nomePet = obterNomePet(atendimento);
     const fotoPet = obterFotoPet(atendimento);
@@ -526,7 +739,10 @@ function abrirModalDetalhes(atendimento) {
     modal.className = "vitrine-atendimento-modal";
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("aria-label", "Acompanhamento do atendimento");
+    modal.setAttribute(
+        "aria-label",
+        `Acompanhamento do atendimento${nomePet ? ` de ${nomePet}` : ""}`
+    );
 
     modal.innerHTML = `
         <div class="vitrine-atendimento-modal-conteudo">
@@ -612,17 +828,42 @@ function removerModalDetalhes() {
     }
 
     modal?.remove();
+    modalAgendamentoId = null;
     document.body.classList.remove("vitrine-modal-aberto");
 }
 
+// ============================================================================
+//  TIMELINE
+// ============================================================================
+
+function obterFluxoAtendimento(atendimento) {
+    const fluxo =
+        atendimento?.fluxoAtendimento ||
+        atendimento?.etapasAtendimento ||
+        atendimento?.statusPermitidos;
+
+    if (Array.isArray(fluxo) && fluxo.length > 0) {
+        const fluxoNormalizado = fluxo
+            .map((status) => normalizarStatus(status))
+            .filter((status) => STATUS_CONFIG[status]);
+
+        if (fluxoNormalizado.length > 0) {
+            return fluxoNormalizado;
+        }
+    }
+
+    return STATUS_FLUXO_PADRAO;
+}
+
 function montarTimeline(atendimento) {
-    const statusAtual = normalizarStatus(atendimento.statusAtendimento);
-    const indiceAtual = STATUS_FLUXO.indexOf(statusAtual);
+    const fluxo = obterFluxoAtendimento(atendimento);
+    const statusAtual = obterStatusAtendimento(atendimento);
+    const indiceAtual = fluxo.indexOf(statusAtual);
     const timeline = Array.isArray(atendimento.timelineAtendimento)
         ? atendimento.timelineAtendimento
         : [];
 
-    const itens = STATUS_FLUXO.map((status, indice) => {
+    const itens = fluxo.map((status, indice) => {
         const config = STATUS_CONFIG[status];
         const classe = obterClasseEtapa(indice, indiceAtual);
         const dataStatus = buscarDataStatus(timeline, status);
@@ -658,6 +899,7 @@ function montarTimeline(atendimento) {
 }
 
 function obterClasseEtapa(indice, indiceAtual) {
+    if (indiceAtual < 0) return "futura";
     if (indice < indiceAtual) return "concluida";
     if (indice === indiceAtual) return "atual";
     return "futura";
@@ -668,21 +910,42 @@ function buscarDataStatus(timeline, statusProcurado) {
         (etapa) => normalizarStatus(etapa?.status) === statusProcurado
     );
 
-    return item?.dataHora || null;
+    return (
+        item?.dataHora ||
+        item?.criadoEm ||
+        item?.createdAt ||
+        null
+    );
 }
 
 function obterUltimaAtualizacao(atendimento) {
-    const timeline = Array.isArray(atendimento.timelineAtendimento)
+    const atualizacaoDireta = converterParaDate(
+        atendimento?.ultimaAtualizacaoStatus
+    );
+
+    if (atualizacaoDireta) {
+        return atualizacaoDireta;
+    }
+
+    const timeline = Array.isArray(atendimento?.timelineAtendimento)
         ? atendimento.timelineAtendimento
         : [];
 
     const datas = timeline
-        .map((etapa) => converterParaDate(etapa?.dataHora))
+        .map((etapa) => converterParaDate(
+            etapa?.dataHora ||
+            etapa?.criadoEm ||
+            etapa?.createdAt
+        ))
         .filter(Boolean)
         .sort((a, b) => b.getTime() - a.getTime());
 
     return datas[0] || null;
 }
+
+// ============================================================================
+//  FOTO, PET E SERVIÇO
+// ============================================================================
 
 function obterFotoAtendimentoValida(atendimento) {
     const url = limparTexto(atendimento?.fotoAtendimentoUrl);
@@ -691,7 +954,9 @@ function obterFotoAtendimentoValida(atendimento) {
     const expiraEm = atendimento?.fotoAtendimentoExpiraEm || null;
     const expiracao = converterParaDate(expiraEm);
 
-    if (expiracao && expiracao.getTime() <= Date.now()) return null;
+    if (expiracao && expiracao.getTime() <= Date.now()) {
+        return null;
+    }
 
     return { url, expiraEm };
 }
@@ -724,6 +989,7 @@ function obterNomePet(atendimento) {
     return limparTexto(
         atendimento?.petNome ||
         atendimento?.nomePet ||
+        atendimento?.nomeAnimal ||
         atendimento?.pet?.nome
     );
 }
@@ -732,6 +998,7 @@ function obterFotoPet(atendimento) {
     return limparTexto(
         atendimento?.petFotoUrl ||
         atendimento?.fotoPetUrl ||
+        atendimento?.fotoAnimal ||
         atendimento?.pet?.fotoUrl
     );
 }
@@ -744,7 +1011,11 @@ function obterNomeServico(atendimento) {
 
     const nomes = Array.isArray(atendimento?.servicos)
         ? atendimento.servicos
-            .map((servico) => limparTexto(servico?.nome || servico?.nomeServico || servico))
+            .map((servico) => limparTexto(
+                servico?.nome ||
+                servico?.nomeServico ||
+                servico
+            ))
             .filter(Boolean)
             .join(", ")
         : "";
@@ -752,6 +1023,7 @@ function obterNomeServico(atendimento) {
     return limparTexto(
         atendimento?.servicoNome ||
         atendimento?.nomeServico ||
+        atendimento?.tipoServico ||
         servicoObjeto ||
         nomes
     );
@@ -776,11 +1048,9 @@ function montarAvatarPet(fotoUrl, nomePet) {
     `;
 }
 
-function esconderAtendimento(container) {
-    container.hidden = true;
-    container.style.display = "none";
-    container.innerHTML = "";
-}
+// ============================================================================
+//  DATAS E UTILITÁRIOS
+// ============================================================================
 
 function normalizarStatus(status) {
     return limparTexto(status)
@@ -792,6 +1062,64 @@ function normalizarStatus(status) {
 
 function limparTexto(valor) {
     return String(valor || "").trim();
+}
+
+function converterDataCalendario(valor) {
+    if (!valor) return null;
+
+    if (valor instanceof Date) {
+        return Number.isNaN(valor.getTime())
+            ? null
+            : new Date(valor);
+    }
+
+    if (typeof valor?.toDate === "function") {
+        const data = valor.toDate();
+        return Number.isNaN(data.getTime()) ? null : data;
+    }
+
+    if (
+        typeof valor === "object" &&
+        Number.isFinite(valor.seconds)
+    ) {
+        const data = new Date(valor.seconds * 1000);
+        return Number.isNaN(data.getTime()) ? null : data;
+    }
+
+    if (typeof valor === "string") {
+        const texto = valor.trim();
+
+        const isoSimples = texto.match(
+            /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/
+        );
+
+        if (isoSimples) {
+            const data = new Date(
+                Number(isoSimples[1]),
+                Number(isoSimples[2]) - 1,
+                Number(isoSimples[3])
+            );
+
+            return Number.isNaN(data.getTime()) ? null : data;
+        }
+
+        const brasileira = texto.match(
+            /^(\d{2})\/(\d{2})\/(\d{4})(?:[T\s,].*)?$/
+        );
+
+        if (brasileira) {
+            const data = new Date(
+                Number(brasileira[3]),
+                Number(brasileira[2]) - 1,
+                Number(brasileira[1])
+            );
+
+            return Number.isNaN(data.getTime()) ? null : data;
+        }
+    }
+
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? null : data;
 }
 
 function converterParaDate(valor) {
@@ -806,12 +1134,24 @@ function converterParaDate(valor) {
         return Number.isNaN(data.getTime()) ? null : data;
     }
 
-    if (typeof valor === "object" && Number.isFinite(valor.seconds)) {
-        return new Date(valor.seconds * 1000);
+    if (
+        typeof valor === "object" &&
+        Number.isFinite(valor.seconds)
+    ) {
+        const data = new Date(valor.seconds * 1000);
+        return Number.isNaN(data.getTime()) ? null : data;
     }
 
     const data = new Date(valor);
     return Number.isNaN(data.getTime()) ? null : data;
+}
+
+function datasNoMesmoDia(a, b) {
+    return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+    );
 }
 
 function formatarDataHora(valor) {
