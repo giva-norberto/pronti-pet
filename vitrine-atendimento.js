@@ -1,28 +1,24 @@
 // ============================================================================
 //  VITRINE-ATENDIMENTO.JS — PRONTI PET
 // ============================================================================
-//  Módulo de leitura do atendimento na vitrine.
-//  Usa os mesmos campos e o mesmo fluxo do painel do dono:
-//  statusAtendimento, timelineAtendimento, observacaoEquipe,
-//  fotoAtendimentoUrl e fotoAtendimentoExpiraEm.
-//  Não altera status e não injeta CSS.
-//
-//  HTML necessário:
-//  <section id="atendimento-em-andamento-container" hidden></section>
+//  Leitura em tempo real do atendimento na vitrine do cliente.
+//  A vitrine não altera dados no Firestore.
 // ============================================================================
 
 import { db } from "./vitrini-firebase.js";
 
 import {
     collection,
+    doc,
     onSnapshot,
     query,
     where
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const CONTAINER_ID = "atendimento-em-andamento-container";
+const MODAL_ID = "vitrine-atendimento-modal";
 
-const STATUS_FLUXO_PADRAO = [
+const STATUS_FLUXO = [
     "aguardando",
     "em_atendimento",
     "finalizado",
@@ -30,11 +26,20 @@ const STATUS_FLUXO_PADRAO = [
     "retirado"
 ];
 
-const STATUS_ATIVOS_NA_VITRINE = new Set([
+const STATUS_VISIVEIS = new Set([
     "aguardando",
     "em_atendimento",
     "finalizado",
     "liberado"
+]);
+
+const STATUS_AGENDAMENTO_OCULTOS = new Set([
+    "cancelado",
+    "cancelado_pelo_cliente",
+    "cancelado_pelo_profissional",
+    "cancelado_pelo_gestor",
+    "nao_compareceu",
+    "falta"
 ]);
 
 const STATUS_CONFIG = {
@@ -70,9 +75,13 @@ const STATUS_CONFIG = {
     }
 };
 
-let canceladoresSnapshot = [];
-let atendimentosPorOrigem = new Map();
-let assinaturaAtual = 0;
+let cicloAtual = 0;
+let contextoAtual = null;
+let canceladoresDescoberta = [];
+let canceladorDocumento = null;
+let resultadosDescoberta = new Map();
+let chavesDescobertaPendentes = new Set();
+let atendimentoIdAcompanhado = null;
 
 export function iniciarAcompanhamentoVitrine({
     empresaId,
@@ -82,197 +91,307 @@ export function iniciarAcompanhamentoVitrine({
     encerrarAcompanhamentoVitrine();
 
     const container = document.getElementById(CONTAINER_ID);
+    const authUid = limparTexto(currentUser?.uid);
+    const clienteResolvido = limparTexto(clienteId);
+    const empresaResolvida = limparTexto(empresaId);
 
     if (!container) {
-        console.warn(
-            `[Pronti Pet] Container #${CONTAINER_ID} não encontrado.`
-        );
+        console.warn(`[Pronti Pet] Container #${CONTAINER_ID} não encontrado.`);
         return null;
     }
 
-    assinaturaAtual += 1;
-    const assinaturaId = assinaturaAtual;
+    esconderAtendimento(container);
 
-    esconderContainer(container);
-    atendimentosPorOrigem = new Map();
-
-    const authUid = String(currentUser?.uid || "").trim();
-    const clienteResolvido = String(clienteId || "").trim();
-
-    if (!empresaId || (!clienteResolvido && !authUid)) {
+    if (!empresaResolvida || (!clienteResolvido && !authUid)) {
         return null;
     }
 
-    const agendamentosRef = collection(
-        db,
-        "empresarios",
-        empresaId,
-        "agendamentos"
-    );
+    cicloAtual += 1;
+    const ciclo = cicloAtual;
 
-    const consultas = [];
+    contextoAtual = {
+        empresaId: empresaResolvida,
+        clienteId: clienteResolvido,
+        authUid,
+        ciclo
+    };
 
-    if (clienteResolvido) {
-        consultas.push({
-            chave: `clienteId:${clienteResolvido}`,
-            consulta: query(
-                agendamentosRef,
-                where("clienteId", "==", clienteResolvido)
-            )
-        });
-    }
-
-    if (authUid) {
-        consultas.push({
-            chave: `clienteAuthUid:${authUid}`,
-            consulta: query(
-                agendamentosRef,
-                where("clienteAuthUid", "==", authUid)
-            )
-        });
-
-        if (authUid !== clienteResolvido) {
-            consultas.push({
-                chave: `clienteId:${authUid}`,
-                consulta: query(
-                    agendamentosRef,
-                    where("clienteId", "==", authUid)
-                )
-            });
-        }
-    }
-
-    consultas.forEach(({ chave, consulta }) => {
-        const unsubscribe = onSnapshot(
-            consulta,
-            (snapshot) => {
-                if (assinaturaId !== assinaturaAtual) return;
-
-                atendimentosPorOrigem.set(
-                    chave,
-                    snapshot.docs.map((docSnap) => ({
-                        id: docSnap.id,
-                        ...docSnap.data()
-                    }))
-                );
-
-                atualizarAtendimentoExibido(container);
-            },
-            (error) => {
-                console.error(
-                    `[Pronti Pet] Erro ao acompanhar atendimento (${chave}):`,
-                    error
-                );
-
-                atendimentosPorOrigem.set(chave, []);
-                atualizarAtendimentoExibido(container);
-            }
-        );
-
-        canceladoresSnapshot.push(unsubscribe);
-    });
+    iniciarDescobertaAtendimento(contextoAtual);
 
     return () => encerrarAcompanhamentoVitrine();
 }
 
 export function encerrarAcompanhamentoVitrine() {
-    assinaturaAtual += 1;
+    cicloAtual += 1;
+    contextoAtual = null;
+    atendimentoIdAcompanhado = null;
+    resultadosDescoberta = new Map();
+    chavesDescobertaPendentes = new Set();
 
-    canceladoresSnapshot.forEach((unsubscribe) => {
-        try {
-            unsubscribe();
-        } catch (error) {
-            console.warn(
-                "[Pronti Pet] Não foi possível encerrar um listener:",
-                error
-            );
-        }
-    });
-
-    canceladoresSnapshot = [];
-    atendimentosPorOrigem = new Map();
+    cancelarDescoberta();
+    cancelarDocumento();
+    removerModalDetalhes();
 
     const container = document.getElementById(CONTAINER_ID);
-
-    if (container) {
-        esconderContainer(container);
-        container.innerHTML = "";
-    }
-
-    removerModalDetalhes();
+    if (container) esconderAtendimento(container);
 }
 
-function atualizarAtendimentoExibido(container) {
-    const atendimentosUnicos = new Map();
+function iniciarDescobertaAtendimento(contexto) {
+    if (!contexto || contexto.ciclo !== cicloAtual) return;
 
-    atendimentosPorOrigem.forEach((lista) => {
-        lista.forEach((atendimento) => {
-            if (atendimento?.id) {
-                atendimentosUnicos.set(atendimento.id, atendimento);
+    cancelarDescoberta();
+    cancelarDocumento();
+    atendimentoIdAcompanhado = null;
+    resultadosDescoberta = new Map();
+
+    const agendamentosRef = collection(
+        db,
+        "empresarios",
+        contexto.empresaId,
+        "agendamentos"
+    );
+
+    const consultas = montarConsultasDescoberta(agendamentosRef, contexto);
+
+    if (consultas.length === 0) return;
+
+    chavesDescobertaPendentes = new Set(
+        consultas.map(({ chave }) => chave)
+    );
+
+    consultas.forEach(({ chave, consulta }) => {
+        const cancelar = onSnapshot(
+            consulta,
+            (snapshot) => {
+                if (contexto.ciclo !== cicloAtual || canceladorDocumento) return;
+
+                resultadosDescoberta.set(
+                    chave,
+                    snapshot.docs.map((documento) => ({
+                        id: documento.id,
+                        ...documento.data()
+                    }))
+                );
+                chavesDescobertaPendentes.delete(chave);
+
+                tentarFixarDocumentoAtendimento(contexto);
+            },
+            (error) => {
+                if (contexto.ciclo !== cicloAtual) return;
+
+                console.error(
+                    `[Pronti Pet] Falha ao identificar atendimento (${chave}):`,
+                    error
+                );
+
+                resultadosDescoberta.set(chave, []);
+                chavesDescobertaPendentes.delete(chave);
+                tentarFixarDocumentoAtendimento(contexto);
             }
-        });
+        );
+
+        canceladoresDescoberta.push(cancelar);
     });
+}
 
-    const atendimentoAtivo = [...atendimentosUnicos.values()]
-        .filter(ehAtendimentoVisivel)
-        .sort(compararAtendimentosMaisRecentes)[0];
+function montarConsultasDescoberta(agendamentosRef, contexto) {
+    const consultas = [];
+    const chavesCriadas = new Set();
 
-    if (!atendimentoAtivo) {
-        esconderContainer(container);
-        container.innerHTML = "";
-        removerModalDetalhes();
+    const adicionar = (campo, valor) => {
+        const valorLimpo = limparTexto(valor);
+        const chave = `${campo}:${valorLimpo}`;
+
+        if (!valorLimpo || chavesCriadas.has(chave)) return;
+
+        chavesCriadas.add(chave);
+        consultas.push({
+            chave,
+            consulta: query(
+                agendamentosRef,
+                where(campo, "==", valorLimpo)
+            )
+        });
+    };
+
+    adicionar("clienteId", contexto.clienteId);
+    adicionar("clienteAuthUid", contexto.authUid);
+    adicionar("clienteId", contexto.authUid);
+
+    return consultas;
+}
+
+function tentarFixarDocumentoAtendimento(contexto) {
+    if (
+        contexto.ciclo !== cicloAtual ||
+        canceladorDocumento ||
+        atendimentoIdAcompanhado ||
+        chavesDescobertaPendentes.size > 0
+    ) {
         return;
     }
 
-    renderizarCardCompacto(container, atendimentoAtivo);
+    const unicos = new Map();
+
+    resultadosDescoberta.forEach((lista) => {
+        lista.forEach((atendimento) => {
+            if (atendimento?.id) unicos.set(atendimento.id, atendimento);
+        });
+    });
+
+    const selecionado = [...unicos.values()]
+        .filter(ehAtendimentoVisivel)
+        .sort(compararMaisRecentes)[0];
+
+    if (!selecionado?.id) {
+        const container = document.getElementById(CONTAINER_ID);
+        if (container) esconderAtendimento(container);
+        return;
+    }
+
+    atendimentoIdAcompanhado = selecionado.id;
+    cancelarDescoberta();
+    acompanharDocumentoAtendimento(contexto, selecionado.id);
+}
+
+function acompanharDocumentoAtendimento(contexto, agendamentoId) {
+    if (contexto.ciclo !== cicloAtual) return;
+
+    cancelarDocumento();
+
+    const atendimentoRef = doc(
+        db,
+        "empresarios",
+        contexto.empresaId,
+        "agendamentos",
+        agendamentoId
+    );
+
+    canceladorDocumento = onSnapshot(
+        atendimentoRef,
+        (snapshot) => {
+            if (contexto.ciclo !== cicloAtual) return;
+
+            if (!snapshot.exists()) {
+                ocultarERetomarDescoberta(contexto, agendamentoId);
+                return;
+            }
+
+            const atendimento = {
+                id: snapshot.id,
+                ...snapshot.data()
+            };
+
+            if (!ehAtendimentoVisivel(atendimento)) {
+                ocultarERetomarDescoberta(contexto, agendamentoId);
+                return;
+            }
+
+            const container = document.getElementById(CONTAINER_ID);
+            if (!container) return;
+
+            const modalEstavaAberto = Boolean(document.getElementById(MODAL_ID));
+
+            renderizarCardCompacto(container, atendimento);
+
+            if (modalEstavaAberto) {
+                abrirModalDetalhes(atendimento);
+            }
+        },
+        (error) => {
+            if (contexto.ciclo !== cicloAtual) return;
+
+            console.error(
+                `[Pronti Pet] Falha ao acompanhar o atendimento ${agendamentoId}:`,
+                error
+            );
+
+            const container = document.getElementById(CONTAINER_ID);
+            if (container) esconderAtendimento(container);
+            removerModalDetalhes();
+        }
+    );
+}
+
+function ocultarERetomarDescoberta(contexto, agendamentoId) {
+    const container = document.getElementById(CONTAINER_ID);
+    if (container) esconderAtendimento(container);
+
+    removerModalDetalhes();
+    cancelarDocumento();
+
+    if (atendimentoIdAcompanhado === agendamentoId) {
+        atendimentoIdAcompanhado = null;
+    }
+
+    queueMicrotask(() => {
+        if (contexto.ciclo === cicloAtual) {
+            iniciarDescobertaAtendimento(contexto);
+        }
+    });
+}
+
+function cancelarDescoberta() {
+    canceladoresDescoberta.forEach((cancelar) => {
+        try {
+            cancelar();
+        } catch (error) {
+            console.warn("[Pronti Pet] Listener de identificação não encerrado:", error);
+        }
+    });
+
+    canceladoresDescoberta = [];
+    resultadosDescoberta = new Map();
+    chavesDescobertaPendentes = new Set();
+}
+
+function cancelarDocumento() {
+    if (!canceladorDocumento) return;
+
+    try {
+        canceladorDocumento();
+    } catch (error) {
+        console.warn("[Pronti Pet] Listener do atendimento não encerrado:", error);
+    }
+
+    canceladorDocumento = null;
 }
 
 function ehAtendimentoVisivel(atendimento) {
-    const status = normalizarStatus(atendimento?.statusAtendimento);
+    const statusAtendimento = normalizarStatus(atendimento?.statusAtendimento);
 
-    if (!STATUS_ATIVOS_NA_VITRINE.has(status)) {
-        return false;
-    }
+    if (!STATUS_VISIVEIS.has(statusAtendimento)) return false;
 
-    const statusAgenda = normalizarStatus(
-        atendimento?.status ||
-        atendimento?.statusAgendamento ||
-        ""
+    const statusAgendamento = normalizarStatus(
+        atendimento?.status || atendimento?.statusAgendamento
     );
 
-    return ![
-        "cancelado",
-        "cancelado_pelo_cliente",
-        "cancelado_pelo_profissional",
-        "falta"
-    ].includes(statusAgenda);
+    return !STATUS_AGENDAMENTO_OCULTOS.has(statusAgendamento);
 }
 
-function compararAtendimentosMaisRecentes(a, b) {
-    return obterDataOrdenacao(b) - obterDataOrdenacao(a);
+function compararMaisRecentes(a, b) {
+    return obterMomentoOrdenacao(b) - obterMomentoOrdenacao(a);
 }
 
-function obterDataOrdenacao(atendimento) {
-    const candidatos = [
-        atendimento?.ultimaAtualizacaoStatus,
-        atendimento?.atualizadoEm,
-        atendimento?.dataHoraInicioAtendimento,
-        atendimento?.createdAt,
-        atendimento?.criadoEm
-    ];
+function obterMomentoOrdenacao(atendimento) {
+    const timeline = Array.isArray(atendimento?.timelineAtendimento)
+        ? atendimento.timelineAtendimento
+        : [];
 
-    for (const candidato of candidatos) {
-        const data = converterParaDate(candidato);
+    const momentosTimeline = timeline
+        .map((etapa) => converterParaDate(etapa?.dataHora)?.getTime() || 0)
+        .filter(Boolean);
 
-        if (data) return data.getTime();
+    if (momentosTimeline.length > 0) {
+        return Math.max(...momentosTimeline);
     }
 
-    const dataTexto = String(atendimento?.data || "").trim();
-    const horarioTexto = String(atendimento?.horario || "00:00").trim();
+    const data = limparTexto(atendimento?.data);
+    const horario = limparTexto(atendimento?.horario) || "00:00";
 
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dataTexto)) {
-        const data = new Date(`${dataTexto}T${horarioTexto || "00:00"}:00`);
-        if (!Number.isNaN(data.getTime())) return data.getTime();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+        const momento = new Date(`${data}T${horario}:00`);
+        if (!Number.isNaN(momento.getTime())) return momento.getTime();
     }
 
     return 0;
@@ -280,27 +399,27 @@ function obterDataOrdenacao(atendimento) {
 
 function renderizarCardCompacto(container, atendimento) {
     const status = normalizarStatus(atendimento.statusAtendimento);
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.aguardando;
+    const config = STATUS_CONFIG[status];
+
+    if (!config) {
+        esconderAtendimento(container);
+        return;
+    }
 
     const nomePet = obterNomePet(atendimento);
     const fotoPet = obterFotoPet(atendimento);
     const servico = obterNomeServico(atendimento);
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
-    const fluxo = obterFluxoAtendimento(atendimento);
-    const indiceAtual = fluxo.indexOf(status);
+    const indiceAtual = STATUS_FLUXO.indexOf(status);
 
-    const miniTimeline = fluxo.map((statusEtapa, indice) => {
-        const etapaConfig = STATUS_CONFIG[statusEtapa];
-        const classe = indice < indiceAtual
-            ? "concluida"
-            : indice === indiceAtual
-                ? "atual"
-                : "";
+    const miniTimeline = STATUS_FLUXO.map((statusEtapa, indice) => {
+        const etapa = STATUS_CONFIG[statusEtapa];
+        const classe = obterClasseEtapa(indice, indiceAtual);
 
         return `
             <span class="vitrine-atendimento-mini-etapa ${classe}">
-                ${escaparHtml(etapaConfig.textoCurto || etapaConfig.texto)}
+                ${escaparHtml(etapa.textoCurto)}
             </span>
         `;
     }).join("");
@@ -318,47 +437,51 @@ function renderizarCardCompacto(container, atendimento) {
                 ${montarAvatarPet(fotoPet, nomePet)}
 
                 <div class="vitrine-atendimento-info">
-                    <h2>
-                        ${escaparHtml(nomePet)}
-                        <span class="vitrine-atendimento-status-texto">
-                            <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
-                            ${escaparHtml(config.texto)}
-                        </span>
-                    </h2>
+                    ${
+                        nomePet
+                            ? `
+                                <h2>
+                                    ${escaparHtml(nomePet)}
+                                    <span class="vitrine-atendimento-status-texto">
+                                        <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
+                                        ${escaparHtml(config.texto)}
+                                    </span>
+                                </h2>
+                            `
+                            : `
+                                <span class="vitrine-atendimento-status-texto">
+                                    <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
+                                    ${escaparHtml(config.texto)}
+                                </span>
+                            `
+                    }
 
                     ${servico ? `<p>${escaparHtml(servico)}</p>` : ""}
-
-                    <p>
-                        ${
-                            ultimaAtualizacao
-                                ? `Atualizado ${formatarDataHora(ultimaAtualizacao)}`
-                                : "Acompanhe as atualizações do pet shop"
-                        }
-                    </p>
+                    ${
+                        ultimaAtualizacao
+                            ? `<small>Atualizado em ${formatarDataHora(ultimaAtualizacao)}</small>`
+                            : ""
+                    }
                 </div>
 
-                <button
-                    type="button"
-                    class="vitrine-atendimento-mini-foto ${fotoAtendimento ? "" : "vitrine-atendimento-mini-foto-vazia"}"
-                    data-acao-atendimento="abrir"
-                    aria-label="Abrir acompanhamento do atendimento"
-                >
-                    ${
-                        fotoAtendimento
-                            ? `
-                                <img
-                                    src="${escaparAtributo(fotoAtendimento.url)}"
-                                    alt="Foto recente do atendimento de ${escaparAtributo(nomePet)}"
-                                    loading="lazy"
-                                >
-                                <span>Nova foto</span>
-                            `
-                            : '<i class="fa-solid fa-camera" aria-hidden="true"></i>'
-                    }
-                </button>
+                ${
+                    fotoAtendimento
+                        ? `
+                            <button
+                                type="button"
+                                class="vitrine-atendimento-mini-foto"
+                                data-acao-atendimento="abrir"
+                                aria-label="Ver foto do atendimento"
+                            >
+                                <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                                Ver foto
+                            </button>
+                        `
+                        : ""
+                }
             </div>
 
-            <div class="vitrine-atendimento-mini-timeline">
+            <div class="vitrine-atendimento-mini-timeline" aria-label="Etapas do atendimento">
                 ${miniTimeline}
             </div>
 
@@ -380,9 +503,7 @@ function renderizarCardCompacto(container, atendimento) {
     container
         .querySelectorAll('[data-acao-atendimento="abrir"]')
         .forEach((botao) => {
-            botao.addEventListener("click", () => {
-                abrirModalDetalhes(atendimento);
-            });
+            botao.addEventListener("click", () => abrirModalDetalhes(atendimento));
         });
 }
 
@@ -390,27 +511,22 @@ function abrirModalDetalhes(atendimento) {
     removerModalDetalhes();
 
     const status = normalizarStatus(atendimento.statusAtendimento);
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.aguardando;
+    const config = STATUS_CONFIG[status];
+    if (!config || !STATUS_VISIVEIS.has(status)) return;
 
     const nomePet = obterNomePet(atendimento);
     const fotoPet = obterFotoPet(atendimento);
     const servico = obterNomeServico(atendimento);
-    const observacao = limparTexto(
-        atendimento.observacaoEquipe ||
-        atendimento.observacaoAtendimento
-    );
+    const observacao = limparTexto(atendimento.observacaoEquipe);
     const fotoAtendimento = obterFotoAtendimentoValida(atendimento);
     const ultimaAtualizacao = obterUltimaAtualizacao(atendimento);
 
     const modal = document.createElement("div");
-    modal.id = "vitrine-atendimento-modal";
+    modal.id = MODAL_ID;
     modal.className = "vitrine-atendimento-modal";
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
-    modal.setAttribute(
-        "aria-label",
-        `Acompanhamento do atendimento de ${nomePet}`
-    );
+    modal.setAttribute("aria-label", "Acompanhamento do atendimento");
 
     modal.innerHTML = `
         <div class="vitrine-atendimento-modal-conteudo">
@@ -420,7 +536,7 @@ function abrirModalDetalhes(atendimento) {
 
                     <div>
                         <span>Acompanhamento</span>
-                        <h2>${escaparHtml(nomePet)}</h2>
+                        ${nomePet ? `<h2>${escaparHtml(nomePet)}</h2>` : ""}
                         ${servico ? `<p>${escaparHtml(servico)}</p>` : ""}
                     </div>
                 </div>
@@ -438,28 +554,19 @@ function abrirModalDetalhes(atendimento) {
             <main class="vitrine-atendimento-modal-body">
                 <section class="vitrine-atendimento-status-detalhe ${config.classe}">
                     <span>Status atual</span>
-
                     <strong>
                         <i class="fa-solid ${config.icone}" aria-hidden="true"></i>
                         ${escaparHtml(config.texto)}
                     </strong>
-
-                    <small>
-                        ${
-                            ultimaAtualizacao
-                                ? `Última atualização: ${formatarDataHora(ultimaAtualizacao)}`
-                                : "Aguardando atualização do pet shop"
-                        }
-                    </small>
+                    ${
+                        ultimaAtualizacao
+                            ? `<small>Última atualização: ${formatarDataHora(ultimaAtualizacao)}</small>`
+                            : ""
+                    }
                 </section>
 
                 ${montarTimeline(atendimento)}
-
-                ${
-                    fotoAtendimento
-                        ? montarFotoDetalhe(fotoAtendimento, nomePet)
-                        : ""
-                }
+                ${fotoAtendimento ? montarFotoDetalhe(fotoAtendimento, nomePet) : ""}
 
                 ${
                     observacao
@@ -469,7 +576,6 @@ function abrirModalDetalhes(atendimento) {
                                     <i class="fa-solid fa-message" aria-hidden="true"></i>
                                     Recado da equipe
                                 </h3>
-
                                 <p>${escaparHtml(observacao)}</p>
                             </section>
                         `
@@ -482,18 +588,16 @@ function abrirModalDetalhes(atendimento) {
     document.body.appendChild(modal);
     document.body.classList.add("vitrine-modal-aberto");
 
-    const fechar = () => removerModalDetalhes();
-
     modal
         .querySelector("[data-fechar-atendimento]")
-        ?.addEventListener("click", fechar);
+        ?.addEventListener("click", removerModalDetalhes);
 
     modal.addEventListener("click", (event) => {
-        if (event.target === modal) fechar();
+        if (event.target === modal) removerModalDetalhes();
     });
 
     const tratarEscape = (event) => {
-        if (event.key === "Escape") fechar();
+        if (event.key === "Escape") removerModalDetalhes();
     };
 
     modal._tratarEscape = tratarEscape;
@@ -501,53 +605,43 @@ function abrirModalDetalhes(atendimento) {
 }
 
 function removerModalDetalhes() {
-    const modal = document.getElementById("vitrine-atendimento-modal");
+    const modal = document.getElementById(MODAL_ID);
 
-    if (!modal) {
-        document.body.classList.remove("vitrine-modal-aberto");
-        return;
-    }
-
-    if (modal._tratarEscape) {
+    if (modal?._tratarEscape) {
         window.removeEventListener("keydown", modal._tratarEscape);
     }
 
-    modal.remove();
+    modal?.remove();
     document.body.classList.remove("vitrine-modal-aberto");
 }
 
 function montarTimeline(atendimento) {
     const statusAtual = normalizarStatus(atendimento.statusAtendimento);
-    const fluxo = obterFluxoAtendimento(atendimento);
-    const indiceAtual = fluxo.indexOf(statusAtual);
+    const indiceAtual = STATUS_FLUXO.indexOf(statusAtual);
     const timeline = Array.isArray(atendimento.timelineAtendimento)
         ? atendimento.timelineAtendimento
         : [];
 
-    const itens = fluxo.map((status, indice) => {
+    const itens = STATUS_FLUXO.map((status, indice) => {
         const config = STATUS_CONFIG[status];
-        const concluido = indice <= indiceAtual;
+        const classe = obterClasseEtapa(indice, indiceAtual);
         const dataStatus = buscarDataStatus(timeline, status);
 
         return `
-            <div class="vitrine-atendimento-timeline-item ${
-                concluido ? "concluido" : "pendente"
-            }">
+            <div class="vitrine-atendimento-timeline-item ${classe}">
                 <span class="vitrine-atendimento-timeline-marcador">
                     ${
-                        concluido
+                        classe === "concluida"
                             ? '<i class="fa-solid fa-check" aria-hidden="true"></i>'
-                            : ""
+                            : classe === "atual"
+                                ? '<i class="fa-solid fa-circle" aria-hidden="true"></i>'
+                                : ""
                     }
                 </span>
 
                 <div>
                     <strong>${escaparHtml(config.texto)}</strong>
-                    ${
-                        dataStatus
-                            ? `<small>${formatarHorario(dataStatus)}</small>`
-                            : ""
-                    }
+                    ${dataStatus ? `<small>${formatarDataHora(dataStatus)}</small>` : ""}
                 </div>
             </div>
         `;
@@ -556,18 +650,50 @@ function montarTimeline(atendimento) {
     return `
         <section class="vitrine-atendimento-timeline">
             <h3>Etapas do atendimento</h3>
-            <div>${itens}</div>
+            <div class="vitrine-atendimento-timeline-lista">
+                ${itens}
+            </div>
         </section>
     `;
 }
 
+function obterClasseEtapa(indice, indiceAtual) {
+    if (indice < indiceAtual) return "concluida";
+    if (indice === indiceAtual) return "atual";
+    return "futura";
+}
+
 function buscarDataStatus(timeline, statusProcurado) {
     const item = timeline.find(
-        (etapa) =>
-            normalizarStatus(etapa?.status) === statusProcurado
+        (etapa) => normalizarStatus(etapa?.status) === statusProcurado
     );
 
-    return item?.dataHora || item?.criadoEm || item?.createdAt || null;
+    return item?.dataHora || null;
+}
+
+function obterUltimaAtualizacao(atendimento) {
+    const timeline = Array.isArray(atendimento.timelineAtendimento)
+        ? atendimento.timelineAtendimento
+        : [];
+
+    const datas = timeline
+        .map((etapa) => converterParaDate(etapa?.dataHora))
+        .filter(Boolean)
+        .sort((a, b) => b.getTime() - a.getTime());
+
+    return datas[0] || null;
+}
+
+function obterFotoAtendimentoValida(atendimento) {
+    const url = limparTexto(atendimento?.fotoAtendimentoUrl);
+    if (!url) return null;
+
+    const expiraEm = atendimento?.fotoAtendimentoExpiraEm || null;
+    const expiracao = converterParaDate(expiraEm);
+
+    if (expiracao && expiracao.getTime() <= Date.now()) return null;
+
+    return { url, expiraEm };
 }
 
 function montarFotoDetalhe(foto, nomePet) {
@@ -578,7 +704,6 @@ function montarFotoDetalhe(foto, nomePet) {
                     <i class="fa-solid fa-camera" aria-hidden="true"></i>
                     Foto enviada pelo pet shop
                 </h3>
-
                 ${
                     foto.expiraEm
                         ? `<small>Disponível até ${formatarDataHora(foto.expiraEm)}</small>`
@@ -588,45 +713,18 @@ function montarFotoDetalhe(foto, nomePet) {
 
             <img
                 src="${escaparAtributo(foto.url)}"
-                alt="Foto do atendimento de ${escaparAtributo(nomePet)}"
+                alt="Foto do atendimento${nomePet ? ` de ${escaparAtributo(nomePet)}` : ""}"
                 loading="lazy"
             >
         </section>
     `;
 }
 
-function obterFotoAtendimentoValida(atendimento) {
-    const url = String(
-        atendimento?.fotoAtendimentoUrl ||
-        atendimento?.fotoUrl ||
-        atendimento?.fotoFinalizacaoUrl ||
-        atendimento?.ultimaFotoAtendimentoUrl ||
-        ""
-    ).trim();
-
-    if (!url) return null;
-
-    const expiraEm =
-        atendimento?.fotoAtendimentoExpiraEm ||
-        atendimento?.ultimaFotoAtendimentoExpiraEm ||
-        null;
-
-    const expiracao = converterParaDate(expiraEm);
-
-    if (expiracao && expiracao.getTime() <= Date.now()) {
-        return null;
-    }
-
-    return { url, expiraEm };
-}
-
 function obterNomePet(atendimento) {
     return limparTexto(
         atendimento?.petNome ||
         atendimento?.nomePet ||
-        atendimento?.nomeAnimal ||
-        atendimento?.pet?.nome ||
-        "Seu pet"
+        atendimento?.pet?.nome
     );
 }
 
@@ -634,53 +732,28 @@ function obterFotoPet(atendimento) {
     return limparTexto(
         atendimento?.petFotoUrl ||
         atendimento?.fotoPetUrl ||
-        atendimento?.pet?.fotoUrl ||
-        atendimento?.fotoAnimal ||
-        ""
+        atendimento?.pet?.fotoUrl
     );
 }
 
 function obterNomeServico(atendimento) {
-    const servicoDireto =
-        typeof atendimento?.servico === "string"
-            ? atendimento.servico
-            : atendimento?.servico?.nome;
+    const servicoObjeto =
+        typeof atendimento?.servico === "object"
+            ? atendimento.servico?.nome
+            : atendimento?.servico;
+
+    const nomes = Array.isArray(atendimento?.servicos)
+        ? atendimento.servicos
+            .map((servico) => limparTexto(servico?.nome || servico?.nomeServico || servico))
+            .filter(Boolean)
+            .join(", ")
+        : "";
 
     return limparTexto(
         atendimento?.servicoNome ||
         atendimento?.nomeServico ||
-        servicoDireto ||
-        atendimento?.tipoServico ||
-        atendimento?.servicosNome ||
-        ""
-    );
-}
-
-function obterFluxoAtendimento(atendimento) {
-    const fluxoConfigurado =
-        atendimento?.fluxoAtendimento ||
-        atendimento?.etapasAtendimento ||
-        atendimento?.statusPermitidos;
-
-    if (Array.isArray(fluxoConfigurado) && fluxoConfigurado.length > 0) {
-        const fluxoNormalizado = fluxoConfigurado
-            .map((status) => normalizarStatus(status))
-            .filter((status) => STATUS_CONFIG[status]);
-
-        if (fluxoNormalizado.length > 0) {
-            return [...new Set(fluxoNormalizado)];
-        }
-    }
-
-    return STATUS_FLUXO_PADRAO;
-}
-
-function obterUltimaAtualizacao(atendimento) {
-    return (
-        atendimento?.ultimaAtualizacaoStatus ||
-        atendimento?.atualizadoEm ||
-        atendimento?.updatedAt ||
-        null
+        servicoObjeto ||
+        nomes
     );
 }
 
@@ -690,43 +763,35 @@ function montarAvatarPet(fotoUrl, nomePet) {
             <img
                 class="vitrine-atendimento-avatar"
                 src="${escaparAtributo(fotoUrl)}"
-                alt="Foto de ${escaparAtributo(nomePet)}"
+                alt="${nomePet ? `Foto de ${escaparAtributo(nomePet)}` : "Foto do pet"}"
                 loading="lazy"
             >
         `;
     }
 
-    const inicial = nomePet
-        ? nomePet.charAt(0).toUpperCase()
-        : "P";
-
     return `
-        <div
-            class="vitrine-atendimento-avatar vitrine-atendimento-avatar-vazio"
-            aria-hidden="true"
-        >
-            ${escaparHtml(inicial)}
+        <div class="vitrine-atendimento-avatar vitrine-atendimento-avatar-vazio" aria-hidden="true">
+            <i class="fa-solid fa-paw"></i>
         </div>
     `;
 }
 
-function esconderContainer(container) {
+function esconderAtendimento(container) {
     container.hidden = true;
     container.style.display = "none";
+    container.innerHTML = "";
 }
 
 function normalizarStatus(status) {
-    return String(status || "")
-        .trim()
+    return limparTexto(status)
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, "_")
-        .replace(/-/g, "_");
+        .replace(/[\s-]+/g, "_");
 }
 
-function limparTexto(texto) {
-    return String(texto || "").trim();
+function limparTexto(valor) {
+    return String(valor || "").trim();
 }
 
 function converterParaDate(valor) {
@@ -741,57 +806,35 @@ function converterParaDate(valor) {
         return Number.isNaN(data.getTime()) ? null : data;
     }
 
-    if (
-        typeof valor === "object" &&
-        Number.isFinite(valor.seconds)
-    ) {
+    if (typeof valor === "object" && Number.isFinite(valor.seconds)) {
         return new Date(valor.seconds * 1000);
     }
 
-    if (
-        typeof valor === "string" ||
-        typeof valor === "number"
-    ) {
-        const data = new Date(valor);
-        return Number.isNaN(data.getTime()) ? null : data;
-    }
-
-    return null;
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? null : data;
 }
 
 function formatarDataHora(valor) {
     const data = converterParaDate(valor);
-
     if (!data) return "";
 
-    return data.toLocaleString("pt-BR", {
+    return new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
         minute: "2-digit"
-    });
-}
-
-function formatarHorario(valor) {
-    const data = converterParaDate(valor);
-
-    if (!data) return "";
-
-    return data.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+    }).format(data);
 }
 
 function escaparHtml(valor) {
-    return String(valor || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return limparTexto(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 function escaparAtributo(valor) {
-    return escaparHtml(valor);
+    return escaparHtml(valor).replace(/`/g, "&#096;");
 }
