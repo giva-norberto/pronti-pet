@@ -43,7 +43,7 @@ import * as UI from './vitrini-ui.js';
 import {
     iniciarAcompanhamentoVitrine,
     encerrarAcompanhamentoVitrine
-} from './vitrine-atendimento.js?v=20260802-2';
+} from './vitrine-atendimento.js?v=20260803-6';
 
 // --- PRONTI PET ---
 import {
@@ -669,6 +669,8 @@ function configurarEventosGerais() {
         true
     );
 
+    configurarSincronizacaoRodape();
+
     addSafeListener(
         'btn-acompanhar-home',
         'click',
@@ -1148,6 +1150,112 @@ function handleMenuClick(e) {
     }
 }
 
+function definirItemAtivoRodape(destino) {
+    document
+        .querySelectorAll('.bottom-nav-vitrine [data-home-nav]')
+        .forEach((item) => {
+            item.classList.toggle(
+                'ativo',
+                Boolean(destino) && item.dataset.homeNav === destino
+            );
+        });
+}
+
+function mostrarInicioVitrine({ rolar = true } = {}) {
+    document
+        .querySelectorAll('.main-content-vitrine > .menu-content')
+        .forEach((secao) => {
+            secao.style.display = 'none';
+            secao.classList.remove('ativo');
+        });
+
+    const home = document.getElementById('main-navigation-container');
+
+    if (home) {
+        home.style.display = 'grid';
+    }
+
+    definirItemAtivoRodape('inicio');
+
+    if (rolar) {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function abrirMenuVitrine(menuId, destinoRodape) {
+    const menuAlvo = document.getElementById(menuId);
+    const home = document.getElementById('main-navigation-container');
+
+    if (!menuAlvo) {
+        console.warn(`[Pronti Pet] Menu #${menuId} não encontrado.`);
+        return false;
+    }
+
+    if (home) {
+        home.style.display = 'none';
+    }
+
+    document
+        .querySelectorAll('.main-content-vitrine > .menu-content')
+        .forEach((secao) => {
+            const ativo = secao === menuAlvo;
+
+            secao.style.display = ativo ? 'block' : 'none';
+            secao.classList.toggle('ativo', ativo);
+        });
+
+    definirItemAtivoRodape(destinoRodape || null);
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+
+    return true;
+}
+
+function configurarSincronizacaoRodape() {
+    const raiz = document.documentElement;
+
+    if (raiz.dataset.ppRodapeSincronizado === '1') {
+        return;
+    }
+
+    raiz.dataset.ppRodapeSincronizado = '1';
+
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.btn-voltar')) {
+            definirItemAtivoRodape('inicio');
+            return;
+        }
+
+        if (event.target.closest('#btn-acompanhar-home')) {
+            definirItemAtivoRodape('acompanhar');
+            return;
+        }
+
+        const card = event.target.closest('[data-menu-card]');
+
+        if (!card) {
+            return;
+        }
+
+        const destinoPorCard = {
+            agendamento: 'agendamento',
+            pets: 'pets',
+            visualizacao: 'acompanhar',
+            perfil: 'perfil'
+        };
+
+        definirItemAtivoRodape(
+            destinoPorCard[card.dataset.menuCard] || null
+        );
+    });
+}
+
 function handleBottomNavClick(event) {
     const botao = event.target.closest('[data-home-nav]');
 
@@ -1158,60 +1266,37 @@ function handleBottomNavClick(event) {
     event.preventDefault();
 
     const destino = botao.dataset.homeNav;
-    const navegacao = botao.closest('.bottom-nav-vitrine');
-
-    navegacao
-        ?.querySelectorAll('[data-home-nav]')
-        .forEach((item) => {
-            item.classList.toggle('ativo', item === botao);
-        });
 
     if (destino === 'inicio') {
-        document
-            .querySelectorAll('.main-content-vitrine > .menu-content')
-            .forEach((secao) => {
-                secao.style.display = 'none';
-                secao.classList.remove('ativo');
-            });
-
-        const home = document.getElementById('main-navigation-container');
-
-        if (home) {
-            home.style.display = 'grid';
-        }
-
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-
+        mostrarInicioVitrine();
         return;
     }
 
+    if (destino === 'agendamento') {
+        if (abrirMenuVitrine('menu-agendamento', 'agendamento')) {
+            return;
+        }
+    }
+
     if (destino === 'pets') {
+        definirItemAtivoRodape('pets');
         document.getElementById('btn-meus-pets')?.click();
         return;
     }
 
     if (destino === 'acompanhar') {
+        definirItemAtivoRodape('acompanhar');
         handleAcompanharHome(event);
         return;
     }
 
-    if (destino === 'perfil' && !state.currentUser) {
-        fazerLogin();
-        return;
-    }
+    if (destino === 'perfil') {
+        if (!state.currentUser) {
+            fazerLogin();
+            return;
+        }
 
-    const menuPorDestino = {
-        agendamento: 'menu-agendamento',
-        perfil: 'menu-perfil'
-    };
-
-    const menuId = menuPorDestino[destino];
-
-    if (menuId) {
-        UI.trocarAba(menuId);
+        abrirMenuVitrine('menu-perfil', 'perfil');
     }
 }
 
@@ -1235,15 +1320,22 @@ async function handleAcompanharHome(event) {
     );
 
     if (possuiAtendimentoVisivel) {
-        container.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
+        mostrarInicioVitrine({ rolar: false });
+        definirItemAtivoRodape('acompanhar');
+
+        requestAnimationFrame(() => {
+            container.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         });
 
         return;
     }
 
-    UI.trocarAba('menu-visualizacao');
+    if (!abrirMenuVitrine('menu-visualizacao', 'acompanhar')) {
+        return;
+    }
 
     requestAnimationFrame(() => {
         const btnAtivos = document.getElementById('btn-ver-ativos');
