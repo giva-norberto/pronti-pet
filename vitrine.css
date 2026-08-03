@@ -1347,8 +1347,17 @@ input[type="date"]:focus {
     width: 100%;
 }
 
+/* ===============================================
+   CARDS DE ACESSO RÁPIDO — VERSÃO COM MAIS VIDA
+   =============================================== */
+
 .pp-vitrine-home-card {
+    --card-accent: var(--pet-roxo);
+    --card-accent-dark: var(--pet-roxo-escuro);
+    --card-soft: #f2eaff;
+
     position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: 46px minmax(0, 1fr) 18px;
     align-items: center;
@@ -1357,19 +1366,57 @@ input[type="date"]:focus {
     height: 118px;
     min-width: 0;
     padding: 16px;
-    border: 1px solid var(--pet-borda);
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 16%, var(--pet-borda));
     border-radius: 20px;
-    background: var(--pet-card);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--card-accent) 10%, transparent), transparent 55%),
+        var(--pet-card);
     color: var(--pet-texto);
     text-decoration: none;
-    box-shadow: 0 8px 24px rgba(32, 16, 66, 0.07);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--card-accent) 10%, transparent);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+/* Barra de cor lateral, tipo "etiqueta" */
+.pp-vitrine-home-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--card-accent), var(--card-accent-dark));
+}
+
+/* Bolha decorativa no canto, sutil */
+.pp-vitrine-home-card::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    top: -26px;
+    right: -22px;
+    width: 78px;
+    height: 78px;
+    border: 14px solid color-mix(in srgb, var(--card-accent) 9%, transparent);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.pp-vitrine-home-card > * {
+    position: relative;
+    z-index: 1;
+}
+
 .pp-vitrine-home-card:hover {
-    transform: translateY(-2px);
-    border-color: #d8c8f2;
-    box-shadow: 0 12px 28px rgba(32, 16, 66, 0.11);
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--card-accent) 35%, var(--pet-borda));
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--card-accent) 20%, transparent);
+}
+
+/* Feedback de toque no celular: "afunda" um pouco */
+.pp-vitrine-home-card:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--card-accent) 18%, transparent);
 }
 
 .pp-vitrine-home-card-icon {
@@ -1379,40 +1426,71 @@ input[type="date"]:focus {
     width: 46px;
     height: 46px;
     border-radius: 15px;
+    background: linear-gradient(145deg, var(--card-accent), var(--card-accent-dark));
+    color: #ffffff;
     font-size: 1.08rem;
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--card-accent) 35%, transparent);
+    transition: transform 0.25s ease;
+}
+
+.pp-vitrine-home-card:hover .pp-vitrine-home-card-icon {
+    transform: rotate(-6deg) scale(1.06);
 }
 
 .pp-vitrine-home-card strong {
     min-width: 0;
     color: var(--pet-texto);
     font-size: 0.92rem;
+    font-weight: 800;
     line-height: 1.25;
+}
+
+.pp-vitrine-home-card-copy small {
+    display: block;
+    margin-top: 3px;
+    color: var(--pet-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
 }
 
 .pp-vitrine-home-card-arrow {
     justify-self: end;
-    color: #a69caf;
+    color: color-mix(in srgb, var(--card-accent) 55%, #a69caf);
     font-size: 0.72rem;
+    transition: transform 0.2s ease;
 }
 
-.pp-vitrine-home-card--pets .pp-vitrine-home-card-icon {
-    background: #f2eaff;
-    color: var(--pet-roxo);
+.pp-vitrine-home-card:hover .pp-vitrine-home-card-arrow {
+    transform: translateX(3px);
 }
 
-.pp-vitrine-home-card--appointments .pp-vitrine-home-card-icon {
-    background: #e8f0ff;
-    color: var(--pet-azul);
+/* Cor de cada card */
+.pp-vitrine-home-card--pets {
+    --card-accent: var(--pet-roxo);
+    --card-accent-dark: var(--pet-roxo-2);
 }
 
-.pp-vitrine-home-card--tracking .pp-vitrine-home-card-icon {
-    background: #eaf8ee;
-    color: var(--pet-verde);
+.pp-vitrine-home-card--appointments {
+    --card-accent: var(--pet-azul);
+    --card-accent-dark: #1d4ed8;
 }
 
-.pp-vitrine-home-card--plan .pp-vitrine-home-card-icon {
-    background: #fff5d5;
-    color: var(--pet-laranja);
+.pp-vitrine-home-card--tracking {
+    --card-accent: var(--pet-verde);
+    --card-accent-dark: #15803d;
+}
+
+.pp-vitrine-home-card--plan {
+    --card-accent: var(--pet-laranja);
+    --card-accent-dark: #c75f08;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pp-vitrine-home-card,
+    .pp-vitrine-home-card-icon,
+    .pp-vitrine-home-card-arrow {
+        transition: none !important;
+    }
 }
 
 .pp-vitrine-home-tracking {
@@ -1516,13 +1594,13 @@ input[type="date"]:focus {
     }
 
     .pp-vitrine-home-grid {
-        grid-auto-rows: 110px;
+        grid-auto-rows: 118px;
         gap: 10px;
     }
 
     .pp-vitrine-home-card {
         grid-template-columns: 42px minmax(0, 1fr) 14px;
-        height: 110px;
+        height: 118px;
         gap: 9px;
         padding: 13px;
     }
