@@ -38,6 +38,12 @@ import {
     Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+
 const STATUS_FLUXO_PADRAO = [
     "aguardando",
     "em_atendimento",
@@ -389,6 +395,14 @@ function configurarEventosPainel(empresaId, atendimento) {
         return;
     }
 
+    modal.addEventListener("change", (e) => {
+        const inputFoto = e.target?.closest?.("#pp-input-foto-atendimento");
+
+        if (!inputFoto) return;
+
+        exibirPreviaFotoSelecionada(inputFoto);
+    });
+
     modal.addEventListener("click", async (e) => {
         const btnFechar = e.target.closest("#pp-fechar-painel");
         const btnAvancar = e.target.closest("#pp-btn-avancar-status");
@@ -631,6 +645,57 @@ async function salvarObservacao(empresaId, agendamentoId) {
 /* =====================================================
    FOTO DO ATENDIMENTO
 ===================================================== */
+
+function exibirPreviaFotoSelecionada(input) {
+    const preview = document.getElementById("pp-preview-foto");
+    const arquivo = input?.files?.[0];
+
+    if (!preview) return;
+
+    if (!arquivo) {
+        preview.innerHTML = "";
+        return;
+    }
+
+    if (!arquivo.type || !arquivo.type.startsWith("image/")) {
+        input.value = "";
+        preview.innerHTML = "";
+        alert("Escolha um arquivo de imagem válido.");
+        return;
+    }
+
+    const limiteBytes = 5 * 1024 * 1024;
+
+    if (arquivo.size > limiteBytes) {
+        input.value = "";
+        preview.innerHTML = "";
+        alert("A imagem deve ter no máximo 5 MB.");
+        return;
+    }
+
+    const leitor = new FileReader();
+
+    leitor.onload = () => {
+        preview.innerHTML = `
+            <div class="pp-preview-foto-card pp-preview-foto-local">
+                <img
+                    src="${escaparAtributo(leitor.result)}"
+                    alt="Prévia da foto selecionada"
+                >
+                <small>
+                    Prévia da foto. Clique em “Enviar Foto” para publicar para o tutor.
+                </small>
+            </div>
+        `;
+    };
+
+    leitor.onerror = () => {
+        preview.innerHTML = "";
+        alert("Não foi possível gerar a prévia da imagem.");
+    };
+
+    leitor.readAsDataURL(arquivo);
+}
 
 async function enviarFotoAtendimento(empresaId, agendamentoId) {
     const input = document.getElementById("pp-input-foto-atendimento");
