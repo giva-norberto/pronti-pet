@@ -20,6 +20,11 @@
 import { db } from "./vitrini-firebase.js";
 
 import {
+    sincronizarMensagensAtendimentosCliente,
+    encerrarMensagensAtendimentosCliente
+} from "./vitrine-mensagens-atendimento.js";
+
+import {
     collection,
     doc,
     onSnapshot,
@@ -141,6 +146,12 @@ export function iniciarAcompanhamentoVitrine({
         empresaId: empresaResolvida,
         clienteId: clienteResolvido,
         authUid,
+        clienteNome: limparTexto(
+            currentUser?.displayName ||
+            currentUser?.nome ||
+            currentUser?.email ||
+            "Cliente"
+        ),
         ciclo
     };
 
@@ -157,6 +168,7 @@ export function encerrarAcompanhamentoVitrine() {
 
     cancelarDescoberta();
     cancelarTodosAtendimentos();
+    encerrarMensagensAtendimentosCliente();
     atendimentosAtivos.clear();
     removerModalDetalhes();
 
@@ -564,6 +576,8 @@ function renderizarTodosAtendimentos() {
         .filter(ehAtendimentoVisivel)
         .sort(compararPorDataEHorario);
 
+    sincronizarMensagensAtivas(atendimentos);
+
     if (atendimentos.length === 0) {
         esconderAtendimentos(container);
         return;
@@ -575,6 +589,42 @@ function renderizarTodosAtendimentos() {
     container.innerHTML = atendimentos
         .map((atendimento) => montarHtmlCardAtendimento(atendimento))
         .join("");
+}
+
+function sincronizarMensagensAtivas(atendimentos) {
+    if (!contextoAtual) {
+        encerrarMensagensAtendimentosCliente();
+        return;
+    }
+
+    const clienteId =
+        limparTexto(contextoAtual.clienteId) ||
+        limparTexto(contextoAtual.authUid);
+
+    if (!contextoAtual.empresaId || !clienteId) {
+        encerrarMensagensAtendimentosCliente();
+        return;
+    }
+
+    sincronizarMensagensAtendimentosCliente({
+        db,
+        empresaId: contextoAtual.empresaId,
+        atendimentos,
+        clienteId,
+        clienteNome: contextoAtual.clienteNome || "Cliente",
+        aoConfirmar: ({ agendamentoId, mensagemId }) => {
+            console.info(
+                "[Pronti Pet] Mensagem confirmada pelo cliente:",
+                { agendamentoId, mensagemId }
+            );
+        },
+        aoErro: (erro) => {
+            console.error(
+                "[Pronti Pet] Falha no módulo de mensagens:",
+                erro
+            );
+        }
+    });
 }
 
 function montarHtmlCardAtendimento(atendimento) {
