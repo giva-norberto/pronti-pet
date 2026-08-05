@@ -31,7 +31,9 @@ Liberado para Retirada
 import { db, storage } from "./firebase-config.js";
 
 import {
-    criarMensagemLiberacaoAtendimento
+    criarMensagemLiberacaoAtendimento,
+    observarMensagensAtendimento,
+    obterResumoStatusMensagem
 } from "./atendimento-mensagens.js";
 
 import {
@@ -83,6 +85,8 @@ const STATUS_CONFIG = {
         botao: "ATENDIMENTO ENCERRADO"
     }
 };
+
+let cancelarListenerMensagensPainel = null;
 /* =====================================================
    ABRIR PAINEL
 ===================================================== */
@@ -134,9 +138,12 @@ function criarModalPainel(empresaId, atendimento) {
     document.body.appendChild(modal);
 
     configurarEventosPainel(empresaId, atendimento);
+    iniciarAcompanhamentoMensagensPainel(empresaId, atendimento.id);
 }
 
 function removerPainelExistente() {
+    encerrarAcompanhamentoMensagensPainel();
+
     const existente = document.getElementById("pp-painel-atendimento-modal");
 
     if (existente) {
@@ -249,6 +256,14 @@ function montarHtmlPainel(atendimento) {
                         Última atualização:
                         ${formatarDataHora(atendimento.ultimaAtualizacaoStatus)}
                     </small>
+                </section>
+
+                <section
+                    id="pp-mensagem-cliente-card"
+                    class="pp-mensagem-cliente-card"
+                    hidden
+                >
+                    <div id="pp-mensagem-cliente-conteudo"></div>
                 </section>
 
                 <button
@@ -416,7 +431,7 @@ function configurarEventosPainel(empresaId, atendimento) {
         const btnEnviarFoto = e.target.closest("#pp-enviar-foto");
 
         if (btnFechar) {
-            modal.remove();
+            removerPainelExistente();
             return;
         }
 
@@ -516,6 +531,158 @@ function configurarEventosPainel(empresaId, atendimento) {
             return;
         }
     });
+}
+
+
+function iniciarAcompanhamentoMensagensPainel(empresaId, agendamentoId) {
+    encerrarAcompanhamentoMensagensPainel();
+
+    if (!empresaId || !agendamentoId) return;
+
+    cancelarListenerMensagensPainel = observarMensagensAtendimento({
+        empresaId,
+        agendamentoId,
+        aoAtualizar: renderizarStatusMensagemCliente,
+        aoErro: (error) => {
+            console.error("Erro ao acompanhar confirmação do cliente:", error);
+            renderizarErroStatusMensagemCliente();
+        }
+    });
+}
+
+function encerrarAcompanhamentoMensagensPainel() {
+    if (typeof cancelarListenerMensagensPainel === "function") {
+        try {
+            cancelarListenerMensagensPainel();
+        } catch (error) {
+            console.warn("Não foi possível encerrar o listener das mensagens:", error);
+        }
+    }
+
+    cancelarListenerMensagensPainel = null;
+}
+
+function renderizarStatusMensagemCliente(mensagens) {
+    const card = document.getElementById("pp-mensagem-cliente-card");
+    const conteudo = document.getElementById("pp-mensagem-cliente-conteudo");
+
+    if (!card || !conteudo) return;
+
+    const lista = Array.isArray(mensagens) ? mensagens : [];
+    const mensagemLiberacao =
+        lista.find((mensagem) => mensagem?.tipo === "liberacao") ||
+        lista[0] ||
+        null;
+
+    if (!mensagemLiberacao) {
+        card.hidden = true;
+        conteudo.innerHTML = "";
+        return;
+    }
+
+    const resumo = obterResumoStatusMensagem(mensagemLiberacao);
+    const status = resumo?.status || "enviada";
+    const configuracao = obterConfiguracaoVisualMensagem(status);
+
+    const nomeCliente =
+        mensagemLiberacao.confirmadaPorNome ||
+        mensagemLiberacao.visualizadaPorNome ||
+        mensagemLiberacao.clienteNome ||
+        "Cliente";
+
+    const dataStatus =
+        mensagemLiberacao.confirmadaEm ||
+        mensagemLiberacao.visualizadaEm ||
+        mensagemLiberacao.enviadaEm ||
+        mensagemLiberacao.criadaEm ||
+        null;
+
+    card.hidden = false;
+    card.className = `pp-mensagem-cliente-card ${configuracao.classe}`;
+
+    conteudo.innerHTML = `
+        <div class="pp-mensagem-cliente-topo">
+            <span class="pp-mensagem-cliente-icone">${configuracao.icone}</span>
+
+            <div>
+                <span class="pp-mensagem-cliente-label">Aviso de retirada</span>
+                <h2>${escaparHtml(configuracao.titulo)}</h2>
+            </div>
+        </div>
+
+        <p class="pp-mensagem-cliente-descricao">
+            ${escaparHtml(configuracao.descricao)}
+        </p>
+
+        <div class="pp-mensagem-cliente-detalhes">
+            <strong>${escaparHtml(nomeCliente)}</strong>
+            ${dataStatus ? `<span>${escaparHtml(formatarDataHora(dataStatus))}</span>` : ""}
+        </div>
+    `;
+}
+
+function renderizarErroStatusMensagemCliente() {
+    const card = document.getElementById("pp-mensagem-cliente-card");
+    const conteudo = document.getElementById("pp-mensagem-cliente-conteudo");
+
+    if (!card || !conteudo) return;
+
+    card.hidden = false;
+    card.className = "pp-mensagem-cliente-card erro";
+
+    conteudo.innerHTML = `
+        <div class="pp-mensagem-cliente-topo">
+            <span class="pp-mensagem-cliente-icone">⚠️</span>
+
+            <div>
+                <span class="pp-mensagem-cliente-label">Aviso de retirada</span>
+                <h2>Não foi possível consultar a confirmação</h2>
+            </div>
+        </div>
+
+        <p class="pp-mensagem-cliente-descricao">
+            Atualize o painel para tentar novamente.
+        </p>
+    `;
+}
+
+function obterConfiguracaoVisualMensagem(status) {
+    if (status === "confirmada") {
+        return {
+            classe: "confirmada",
+            icone: "✅",
+            titulo: "Cliente confirmou o aviso",
+            descricao:
+                "O cliente informou que recebeu a mensagem e está ciente de que o pet está liberado."
+        };
+    }
+
+    if (status === "visualizada") {
+        return {
+            classe: "visualizada",
+            icone: "👁️",
+            titulo: "Cliente visualizou o aviso",
+            descricao:
+                "A mensagem foi aberta, mas o cliente ainda não confirmou que está ciente."
+        };
+    }
+
+    if (status === "cancelada") {
+        return {
+            classe: "cancelada",
+            icone: "⛔",
+            titulo: "Aviso cancelado",
+            descricao: "Esta mensagem de atendimento foi cancelada."
+        };
+    }
+
+    return {
+        classe: "enviada",
+        icone: "📨",
+        titulo: "Aguardando confirmação do cliente",
+        descricao:
+            "O aviso foi enviado e continuará pendente até o cliente clicar em “OK, estou ciente”."
+    };
 }
 
 async function recarregarPainel(empresaId, agendamentoId) {
@@ -969,6 +1136,7 @@ function aplicarCssPainelAtendimento() {
 
         .pp-pet-card,
         .pp-status-card,
+        .pp-mensagem-cliente-card,
         .pp-timeline-card,
         .pp-observacao-card,
         .pp-foto-atendimento-card,
@@ -1064,6 +1232,104 @@ function aplicarCssPainelAtendimento() {
         .pp-status-card small {
             opacity: 0.95;
             font-weight: 700;
+        }
+
+
+        .pp-mensagem-cliente-card[hidden] {
+            display: none !important;
+        }
+
+        .pp-mensagem-cliente-card {
+            border: 2px solid transparent;
+        }
+
+        .pp-mensagem-cliente-card.enviada {
+            background: #fff7ed;
+            border-color: #fed7aa;
+        }
+
+        .pp-mensagem-cliente-card.visualizada {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .pp-mensagem-cliente-card.confirmada {
+            background: #ecfdf5;
+            border-color: #86efac;
+        }
+
+        .pp-mensagem-cliente-card.cancelada,
+        .pp-mensagem-cliente-card.erro {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .pp-mensagem-cliente-topo {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .pp-mensagem-cliente-icone {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: #ffffff;
+            font-size: 1.45rem;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.10);
+        }
+
+        .pp-mensagem-cliente-label {
+            display: block;
+            margin-bottom: 3px;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .pp-mensagem-cliente-card h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.08rem;
+            line-height: 1.25;
+            font-weight: 950;
+        }
+
+        .pp-mensagem-cliente-descricao {
+            margin: 13px 0 0;
+            color: #334155;
+            font-size: 0.91rem;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        .pp-mensagem-cliente-detalhes {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(100, 116, 139, 0.18);
+        }
+
+        .pp-mensagem-cliente-detalhes strong {
+            color: #0f172a;
+            font-size: 0.88rem;
+            font-weight: 950;
+        }
+
+        .pp-mensagem-cliente-detalhes span {
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
         .pp-btn-principal {
