@@ -3702,3 +3702,77 @@ input[type="date"]:focus {
     }
 }
 
+/* ==========================================================
+   AJUSTE V3 — ESPAÇAMENTO E MOVIMENTO DOS CARDS DE ATENDIMENTO
+   Apenas CSS. Nenhuma lógica, listener ou dado foi alterado.
+   ========================================================== */
+
+/*
+ * O JavaScript define o container como display:block.
+ * Por isso, o gap do grid não separa os cards.
+ * A margem entre irmãos garante o espaçamento em qualquer modo.
+ */
+#atendimento-em-andamento-container .vitrine-atendimento-card + .vitrine-atendimento-card {
+    margin-top: 14px;
+}
+
+/* Mantém um pequeno respiro inferior quando houver outros blocos abaixo. */
+#atendimento-em-andamento-container .vitrine-atendimento-card:last-child {
+    margin-bottom: 2px;
+}
+
+/* Restaura a interação visual ao passar o mouse. */
+#atendimento-em-andamento-container .vitrine-atendimento-card {
+    transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease;
+    will-change: transform;
+}
+
+#atendimento-em-andamento-container .vitrine-atendimento-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px rgba(85, 34, 182, 0.18);
+}
+
+#atendimento-em-andamento-container .vitrine-atendimento-card:active {
+    transform: translateY(-1px) scale(0.992);
+}
+
+/* A foto e os textos também recebem uma resposta visual sutil. */
+#atendimento-em-andamento-container .vitrine-atendimento-avatar {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+#atendimento-em-andamento-container .vitrine-atendimento-card:hover .vitrine-atendimento-avatar {
+    transform: scale(1.06);
+    box-shadow: 0 7px 16px rgba(85, 34, 182, 0.18);
+}
+
+/* No celular não existe hover real; mantém o espaçamento e evita saltos. */
+@media (hover: none) {
+    #atendimento-em-andamento-container .vitrine-atendimento-card:hover {
+        transform: none;
+        box-shadow: 0 8px 20px rgba(85, 34, 182, 0.10);
+    }
+
+    #atendimento-em-andamento-container .vitrine-atendimento-card:hover .vitrine-atendimento-avatar {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 430px) {
+    #atendimento-em-andamento-container .vitrine-atendimento-card + .vitrine-atendimento-card {
+        margin-top: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #atendimento-em-andamento-container .vitrine-atendimento-card,
+    #atendimento-em-andamento-container .vitrine-atendimento-avatar {
+        transition: none !important;
+    }
+}
+
+
