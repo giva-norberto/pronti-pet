@@ -55,6 +55,7 @@ import {
   doc,
   updateDoc,
   getDoc,
+  onSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 import {
@@ -100,6 +101,8 @@ let modalFinalizarDia = null;
 let perfilUsuario = "dono";
 let meuUid = null;
 let modoAgenda = "dia";
+
+const listenersConfirmacaoAgenda = new Map();
 
 const diasDaSemanaArr = [
   "domingo",
@@ -214,6 +217,187 @@ function obterSeloStatusAtendimento(ag) {
   }
 
   return "";
+}
+
+
+function deveAcompanharConfirmacaoCliente(ag) {
+  if (!ag || ag.status !== "ativo") return false;
+
+  const statusAtendimento = normalizarStatusAtendimento(
+    ag.statusAtendimento || ""
+  );
+
+  return (
+    statusAtendimento === "liberado" ||
+    statusAtendimento === "liberado_para_retirada" ||
+    statusAtendimento === "retirado" ||
+    statusAtendimento === "pet_retirado"
+  );
+}
+
+function montarSeloConfirmacaoCliente(agendamentoId) {
+  return `
+    <span
+      class="status-confirmacao-cliente status-confirmacao-cliente-oculto"
+      data-confirmacao-agendamento-id="${escaparHTML(agendamentoId)}"
+      aria-live="polite"
+    ></span>
+  `;
+}
+
+function encerrarListenersConfirmacaoAgenda() {
+  listenersConfirmacaoAgenda.forEach((cancelar) => {
+    if (typeof cancelar === "function") {
+      try {
+        cancelar();
+      } catch (error) {
+        console.warn(
+          "Não foi possível encerrar um listener de confirmação:",
+          error
+        );
+      }
+    }
+  });
+
+  listenersConfirmacaoAgenda.clear();
+}
+
+function iniciarListenerConfirmacaoAgenda(agendamentoId) {
+  if (!agendamentoId || listenersConfirmacaoAgenda.has(agendamentoId)) {
+    return;
+  }
+
+  const mensagemRef = doc(
+    db,
+    "empresarios",
+    empresaId,
+    "agendamentos",
+    agendamentoId,
+    "mensagens",
+    "liberacao"
+  );
+
+  const cancelar = onSnapshot(
+    mensagemRef,
+    (snapshot) => {
+      const elemento = document.querySelector(
+        `[data-confirmacao-agendamento-id="${CSS.escape(agendamentoId)}"]`
+      );
+
+      if (!elemento) return;
+
+      if (!snapshot.exists()) {
+        ocultarSeloConfirmacaoCliente(elemento);
+        return;
+      }
+
+      atualizarSeloConfirmacaoCliente(elemento, snapshot.data());
+    },
+    (error) => {
+      console.error(
+        `Erro ao acompanhar confirmação do cliente em ${agendamentoId}:`,
+        error
+      );
+
+      const elemento = document.querySelector(
+        `[data-confirmacao-agendamento-id="${CSS.escape(agendamentoId)}"]`
+      );
+
+      if (elemento) {
+        elemento.className =
+          "status-confirmacao-cliente status-confirmacao-cliente-erro";
+        elemento.textContent = "⚠️ Falha ao consultar";
+        elemento.title =
+          "Não foi possível consultar a confirmação do cliente.";
+      }
+    }
+  );
+
+  listenersConfirmacaoAgenda.set(agendamentoId, cancelar);
+}
+
+function atualizarSeloConfirmacaoCliente(elemento, mensagem) {
+  const status = normalizarStatusAtendimento(mensagem?.status || "enviada");
+
+  elemento.className = "status-confirmacao-cliente";
+
+  if (status === "confirmada") {
+    elemento.classList.add("status-confirmacao-cliente-confirmada");
+    elemento.textContent = "✅ Confirmou";
+    elemento.title = montarTituloConfirmacaoCliente(
+      "Cliente confirmou o aviso",
+      mensagem?.confirmadaPorNome || mensagem?.clienteNome,
+      mensagem?.confirmadaEm
+    );
+    return;
+  }
+
+  if (status === "visualizada") {
+    elemento.classList.add("status-confirmacao-cliente-visualizada");
+    elemento.textContent = "👁️ Visualizou";
+    elemento.title = montarTituloConfirmacaoCliente(
+      "Cliente visualizou o aviso",
+      mensagem?.visualizadaPorNome || mensagem?.clienteNome,
+      mensagem?.visualizadaEm
+    );
+    return;
+  }
+
+  if (status === "cancelada") {
+    elemento.classList.add("status-confirmacao-cliente-cancelada");
+    elemento.textContent = "⛔ Aviso cancelado";
+    elemento.title = "A mensagem de liberação foi cancelada.";
+    return;
+  }
+
+  elemento.classList.add("status-confirmacao-cliente-enviada");
+  elemento.textContent = "📨 Aviso enviado";
+  elemento.title =
+    "Aguardando o cliente visualizar e confirmar o aviso de retirada.";
+}
+
+function ocultarSeloConfirmacaoCliente(elemento) {
+  elemento.className =
+    "status-confirmacao-cliente status-confirmacao-cliente-oculto";
+  elemento.textContent = "";
+  elemento.title = "";
+}
+
+function montarTituloConfirmacaoCliente(titulo, nomeCliente, dataHora) {
+  const partes = [titulo];
+
+  if (nomeCliente) {
+    partes.push(String(nomeCliente));
+  }
+
+  const data = converterDataConfirmacao(dataHora);
+
+  if (data) {
+    partes.push(
+      data.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+  }
+
+  return partes.join(" • ");
+}
+
+function converterDataConfirmacao(valor) {
+  if (!valor) return null;
+
+  if (valor instanceof Date) return valor;
+
+  if (typeof valor?.toDate === "function") {
+    return valor.toDate();
+  }
+
+  const data = new Date(valor);
+
+  return Number.isNaN(data.getTime()) ? null : data;
 }
 
 function montarCaminhoFotoPet(ag) {
@@ -642,6 +826,50 @@ function aplicarEstiloAgendaPet() {
     .status-atendimento-retirado {
       background: #ede9fe;
       color: #5b21b6;
+    }
+
+    .status-confirmacao-cliente {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: .82rem;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      transition:
+        background .18s ease,
+        color .18s ease,
+        border-color .18s ease;
+    }
+
+    .status-confirmacao-cliente-oculto {
+      display: none !important;
+    }
+
+    .status-confirmacao-cliente-enviada {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+
+    .status-confirmacao-cliente-visualizada {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .status-confirmacao-cliente-confirmada {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+
+    .status-confirmacao-cliente-cancelada,
+    .status-confirmacao-cliente-erro {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
     }
 
     #filtro-profissional,
@@ -1620,6 +1848,7 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
 ============================================================ */
 
 function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
+  encerrarListenersConfirmacaoAgenda();
   listaAgendamentosDiv.innerHTML = "";
 
   docs.forEach((docSnap) => {
@@ -1646,6 +1875,11 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     }
 
     const statusAtendimentoLabel = obterSeloStatusAtendimento(ag);
+
+    const statusConfirmacaoClienteLabel =
+      deveAcompanharConfirmacaoCliente(ag)
+        ? montarSeloConfirmacaoCliente(ag.id)
+        : "";
 
     const observacaoPet = escaparHTML(
       String(ag.observacaoPet || "").trim()
@@ -1843,6 +2077,7 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;">
             ${statusLabel}
             ${statusAtendimentoLabel}
+            ${statusConfirmacaoClienteLabel}
 
             ${
               !isHistorico && ag.status === "ativo"
@@ -1875,6 +2110,10 @@ function exibirCardsAgendamento(docs, isHistorico, horarioFimExpediente) {
     `;
 
     listaAgendamentosDiv.appendChild(cardElement);
+
+    if (deveAcompanharConfirmacaoCliente(ag)) {
+      iniciarListenerConfirmacaoAgenda(ag.id);
+    }
   });
 
   if (listaAgendamentosDiv.childElementCount === 0) {
@@ -2042,3 +2281,8 @@ function exibirMensagemDeErro(mensagem) {
     `;
   }
 }
+
+
+window.addEventListener("beforeunload", () => {
+  encerrarListenersConfirmacaoAgenda();
+});
