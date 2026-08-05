@@ -1432,6 +1432,676 @@ async function renderizarPlanosDeAssinatura(empresaId) {
     }
 }
 
+
+// =====================================================================
+// CARD "PRÓXIMO AGENDAMENTO" DA HOME
+// =====================================================================
+
+let consultaProximoAgendamentoAtual = 0;
+
+function obterCardProximoAgendamento() {
+    return (
+        document.getElementById(
+            'btn-proximo-agendamento-home'
+        ) ||
+        document.getElementById(
+            'btn-acompanhar-home'
+        ) ||
+        null
+    );
+}
+
+function obterDestinoRodapeAgendamentos() {
+    return document.querySelector(
+        '.bottom-nav-vitrine [data-home-nav="agendamentos"]'
+    )
+        ? 'agendamentos'
+        : 'acompanhar';
+}
+
+function obterFotoPetDoAgendamento(
+    agendamento = {}
+) {
+    return String(
+        agendamento.petFotoUrl ||
+        agendamento.fotoPetUrl ||
+        agendamento.petFoto ||
+        agendamento.pet?.fotoUrl ||
+        ''
+    ).trim();
+}
+
+function obterNomePetDoAgendamento(
+    agendamento = {}
+) {
+    return String(
+        agendamento.petNome ||
+        agendamento.pet?.nome ||
+        'Pet'
+    ).trim();
+}
+
+function obterNomeServicoDoAgendamento(
+    agendamento = {}
+) {
+    return String(
+        agendamento.servicoNome ||
+        agendamento.servico?.nome ||
+        'Serviço'
+    ).trim();
+}
+
+function normalizarStatusCardProximo(
+    valor
+) {
+    return String(valor || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[\s-]+/g, '_');
+}
+
+function obterStatusCardProximo(
+    agendamento = {}
+) {
+    const statusAtendimento =
+        normalizarStatusCardProximo(
+            agendamento.statusAtendimento
+        );
+
+    const statusAgendamento =
+        normalizarStatusCardProximo(
+            agendamento.status
+        );
+
+    const mapa = {
+        aguardando:
+            'Aguardando atendimento',
+        aguardando_atendimento:
+            'Aguardando atendimento',
+        em_atendimento:
+            'Em atendimento',
+        finalizado:
+            'Finalizado',
+        liberado:
+            'Liberado para retirada',
+        liberado_para_retirada:
+            'Liberado para retirada',
+        retirado:
+            'Pet retirado',
+        realizado:
+            'Realizado',
+        ativo:
+            'Confirmado',
+        confirmado:
+            'Confirmado'
+    };
+
+    return (
+        mapa[statusAtendimento] ||
+        mapa[statusAgendamento] ||
+        'Confirmado'
+    );
+}
+
+function obterDataHoraDoAgendamento(
+    agendamento = {}
+) {
+    const data =
+        String(agendamento.data || '')
+            .trim();
+
+    const horario =
+        String(
+            agendamento.horario ||
+            '00:00'
+        ).trim();
+
+    if (!data) {
+        return null;
+    }
+
+    const resultado =
+        new Date(
+            `${data}T${horario || '00:00'}:00`
+        );
+
+    return Number.isNaN(
+        resultado.getTime()
+    )
+        ? null
+        : resultado;
+}
+
+function formatarDataCardProximo(
+    agendamento = {}
+) {
+    const dataHora =
+        obterDataHoraDoAgendamento(
+            agendamento
+        );
+
+    if (!dataHora) {
+        return 'Data a confirmar';
+    }
+
+    const agora = new Date();
+
+    const inicioHoje =
+        new Date(
+            agora.getFullYear(),
+            agora.getMonth(),
+            agora.getDate()
+        );
+
+    const inicioData =
+        new Date(
+            dataHora.getFullYear(),
+            dataHora.getMonth(),
+            dataHora.getDate()
+        );
+
+    const diferencaDias =
+        Math.round(
+            (
+                inicioData.getTime() -
+                inicioHoje.getTime()
+            ) /
+            86400000
+        );
+
+    let dataTexto;
+
+    if (diferencaDias === 0) {
+        dataTexto = 'Hoje';
+
+    } else if (diferencaDias === 1) {
+        dataTexto = 'Amanhã';
+
+    } else {
+        dataTexto =
+            inicioData.toLocaleDateString(
+                'pt-BR',
+                {
+                    day: '2-digit',
+                    month: '2-digit'
+                }
+            );
+    }
+
+    const horario =
+        String(
+            agendamento.horario || ''
+        ).trim();
+
+    return horario
+        ? `${dataTexto} às ${horario}`
+        : dataTexto;
+}
+
+function escolherProximoAgendamento(
+    agendamentos = []
+) {
+    if (!Array.isArray(agendamentos)) {
+        return null;
+    }
+
+    const statusOcultos = new Set([
+        'cancelado',
+        'cancelado_pelo_cliente',
+        'cancelado_pelo_profissional',
+        'cancelado_pelo_gestor',
+        'nao_compareceu',
+        'falta'
+    ]);
+
+    const statusAtendimentoAtivos =
+        new Set([
+            'aguardando',
+            'aguardando_atendimento',
+            'em_atendimento',
+            'finalizado',
+            'liberado',
+            'liberado_para_retirada'
+        ]);
+
+    const validos =
+        agendamentos.filter(
+            agendamento => {
+                const status =
+                    normalizarStatusCardProximo(
+                        agendamento.status
+                    );
+
+                return !statusOcultos.has(
+                    status
+                );
+            }
+        );
+
+    const emAtendimento =
+        validos
+            .filter(
+                agendamento =>
+                    statusAtendimentoAtivos.has(
+                        normalizarStatusCardProximo(
+                            agendamento
+                                .statusAtendimento
+                        )
+                    )
+            )
+            .sort(
+                (a, b) =>
+                    (
+                        obterDataHoraDoAgendamento(a)
+                            ?.getTime() ||
+                        Number.MAX_SAFE_INTEGER
+                    ) -
+                    (
+                        obterDataHoraDoAgendamento(b)
+                            ?.getTime() ||
+                        Number.MAX_SAFE_INTEGER
+                    )
+            );
+
+    if (emAtendimento.length > 0) {
+        return emAtendimento[0];
+    }
+
+    const inicioHoje =
+        new Date();
+
+    inicioHoje.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    return (
+        validos
+            .filter(
+                agendamento => {
+                    const dataHora =
+                        obterDataHoraDoAgendamento(
+                            agendamento
+                        );
+
+                    return (
+                        dataHora &&
+                        dataHora.getTime() >=
+                            inicioHoje.getTime()
+                    );
+                }
+            )
+            .sort(
+                (a, b) =>
+                    obterDataHoraDoAgendamento(a)
+                        .getTime() -
+                    obterDataHoraDoAgendamento(b)
+                        .getTime()
+            )[0] ||
+        null
+    );
+}
+
+function renderizarCardProximoAgendamento({
+    tipo = 'carregando',
+    agendamento = null
+} = {}) {
+    const card =
+        obterCardProximoAgendamento();
+
+    if (!card) {
+        return;
+    }
+
+    const icone =
+        card.querySelector(
+            '.pp-vitrine-home-card-icon'
+        );
+
+    const titulo =
+        card.querySelector(
+            '.pp-vitrine-home-card-copy strong'
+        );
+
+    const descricao =
+        card.querySelector(
+            '.pp-vitrine-home-card-copy small'
+        );
+
+    card.classList.add(
+        'pp-vitrine-home-card--next'
+    );
+
+    card.removeAttribute('href');
+    card.setAttribute('href', '#');
+
+    if (tipo === 'agendamento' && agendamento) {
+        const nomePet =
+            obterNomePetDoAgendamento(
+                agendamento
+            );
+
+        const servico =
+            obterNomeServicoDoAgendamento(
+                agendamento
+            );
+
+        const data =
+            formatarDataCardProximo(
+                agendamento
+            );
+
+        const status =
+            obterStatusCardProximo(
+                agendamento
+            );
+
+        const foto =
+            obterFotoPetDoAgendamento(
+                agendamento
+            );
+
+        card.dataset.proximoDestino =
+            'agendamentos';
+
+        card.setAttribute(
+            'aria-label',
+            `Abrir o próximo agendamento de ${nomePet}`
+        );
+
+        if (titulo) {
+            titulo.textContent =
+                'Próximo agendamento';
+        }
+
+        if (descricao) {
+            descricao.textContent =
+                `${nomePet} • ${servico} • ${data} • ${status}`;
+        }
+
+        if (icone) {
+            icone.innerHTML = '';
+
+            if (foto) {
+                const img =
+                    document.createElement(
+                        'img'
+                    );
+
+                img.className =
+                    'pp-vitrine-proximo-pet-foto';
+
+                img.src = foto;
+                img.alt =
+                    `Foto de ${nomePet}`;
+
+                img.loading =
+                    'lazy';
+
+                img.onerror = () => {
+                    icone.innerHTML = `
+                        <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                    `;
+                };
+
+                icone.appendChild(img);
+
+            } else {
+                icone.innerHTML = `
+                    <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+                `;
+            }
+        }
+
+        return;
+    }
+
+    if (tipo === 'vazio') {
+        card.dataset.proximoDestino =
+            'agendar';
+
+        card.setAttribute(
+            'aria-label',
+            'Nenhum agendamento próximo. Abrir novo agendamento.'
+        );
+
+        if (titulo) {
+            titulo.textContent =
+                'Nenhum agendamento próximo';
+        }
+
+        if (descricao) {
+            descricao.textContent =
+                'Toque para agendar um horário';
+        }
+
+        if (icone) {
+            icone.innerHTML = `
+                <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i>
+            `;
+        }
+
+        return;
+    }
+
+    if (tipo === 'login') {
+        card.dataset.proximoDestino =
+            'login';
+
+        card.setAttribute(
+            'aria-label',
+            'Entrar para visualizar o próximo agendamento'
+        );
+
+        if (titulo) {
+            titulo.textContent =
+                'Próximo agendamento';
+        }
+
+        if (descricao) {
+            descricao.textContent =
+                'Entre para visualizar';
+        }
+
+        if (icone) {
+            icone.innerHTML = `
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+            `;
+        }
+
+        return;
+    }
+
+    if (tipo === 'erro') {
+        card.dataset.proximoDestino =
+            'agendamentos';
+
+        if (titulo) {
+            titulo.textContent =
+                'Próximo agendamento';
+        }
+
+        if (descricao) {
+            descricao.textContent =
+                'Não foi possível atualizar agora';
+        }
+
+        if (icone) {
+            icone.innerHTML = `
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+            `;
+        }
+
+        return;
+    }
+
+    card.dataset.proximoDestino =
+        'carregando';
+
+    if (titulo) {
+        titulo.textContent =
+            'Próximo agendamento';
+    }
+
+    if (descricao) {
+        descricao.textContent =
+            'Carregando...';
+    }
+
+    if (icone) {
+        icone.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+        `;
+    }
+}
+
+async function atualizarCardProximoAgendamento() {
+    const numeroConsulta =
+        ++consultaProximoAgendamentoAtual;
+
+    if (!state.currentUser) {
+        renderizarCardProximoAgendamento({
+            tipo: 'login'
+        });
+
+        return null;
+    }
+
+    renderizarCardProximoAgendamento({
+        tipo: 'carregando'
+    });
+
+    try {
+        const clienteId =
+            await obterClienteIdResolvido();
+
+        const agendamentos =
+            await buscarAgendamentosDoCliente(
+                state.empresaId,
+                criarContextoCliente(
+                    state.currentUser,
+                    clienteId
+                ),
+                'ativos'
+            );
+
+        if (
+            numeroConsulta !==
+            consultaProximoAgendamentoAtual
+        ) {
+            return null;
+        }
+
+        const proximo =
+            escolherProximoAgendamento(
+                agendamentos
+            );
+
+        renderizarCardProximoAgendamento(
+            proximo
+                ? {
+                    tipo: 'agendamento',
+                    agendamento: proximo
+                }
+                : {
+                    tipo: 'vazio'
+                }
+        );
+
+        return proximo;
+
+    } catch (error) {
+        if (
+            numeroConsulta !==
+            consultaProximoAgendamentoAtual
+        ) {
+            return null;
+        }
+
+        console.warn(
+            'Não foi possível atualizar o card de próximo agendamento:',
+            error
+        );
+
+        renderizarCardProximoAgendamento({
+            tipo: 'erro'
+        });
+
+        return null;
+    }
+}
+
+function abrirAgendamentosAtivos() {
+    const destinoRodape =
+        obterDestinoRodapeAgendamentos();
+
+    if (
+        !abrirMenuVitrine(
+            'menu-visualizacao',
+            destinoRodape
+        )
+    ) {
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        const btnAtivos =
+            document.getElementById(
+                'btn-ver-ativos'
+            );
+
+        if (!btnAtivos) {
+            return;
+        }
+
+        btnAtivos.classList.add(
+            'ativo'
+        );
+
+        handleFiltroAgendamentos({
+            target: btnAtivos
+        });
+    });
+}
+
+function handleProximoAgendamentoHome(
+    event
+) {
+    event?.preventDefault?.();
+
+    const card =
+        obterCardProximoAgendamento();
+
+    const destino =
+        card?.dataset
+            ?.proximoDestino ||
+        'agendamentos';
+
+    if (
+        !state.currentUser ||
+        destino === 'login'
+    ) {
+        fazerLogin();
+        return;
+    }
+
+    if (destino === 'agendar') {
+        abrirMenuVitrine(
+            'menu-agendamento',
+            'agendamento'
+        );
+
+        return;
+    }
+
+    abrirAgendamentosAtivos();
+}
+
+
 // =====================================================================
 // EVENTOS GERAIS
 // =====================================================================
@@ -1468,11 +2138,33 @@ function configurarEventosGerais() {
 
     configurarSincronizacaoRodape();
 
-    addSafeListener(
-        'btn-acompanhar-home',
-        'click',
-        handleAcompanharHome
+    const cardProximoAgendamento =
+        obterCardProximoAgendamento();
+
+    if (cardProximoAgendamento) {
+        cardProximoAgendamento.addEventListener(
+            'click',
+            handleProximoAgendamentoHome
+        );
+    }
+
+    document.addEventListener(
+        'agendamento:salvo',
+        () => {
+            setTimeout(
+                () => {
+                    void atualizarCardProximoAgendamento();
+                },
+                180
+            );
+        }
     );
+
+    renderizarCardProximoAgendamento({
+        tipo: state.currentUser
+            ? 'carregando'
+            : 'login'
+    });
 
     addSafeListener(
         'menu-agendamento',
@@ -1610,8 +2302,14 @@ async function handleUserAuthStateChange(user) {
                 clienteId: state.clienteId,
                 currentUser: user
             });
+
+            await atualizarCardProximoAgendamento();
         } catch (e) {
             encerrarAcompanhamentoVitrine();
+
+            renderizarCardProximoAgendamento({
+                tipo: 'erro'
+            });
 
             console.warn(
                 "Erro ao identificar/vincular cliente:",
@@ -1621,6 +2319,10 @@ async function handleUserAuthStateChange(user) {
 
     } else {
         encerrarAcompanhamentoVitrine();
+
+        renderizarCardProximoAgendamento({
+            tipo: 'login'
+        });
 
         if (!user && state.empresaId) {
             limparAssinaturasLocais();
@@ -2088,8 +2790,14 @@ function configurarSincronizacaoRodape() {
             return;
         }
 
-        if (event.target.closest('#btn-acompanhar-home')) {
-            definirItemAtivoRodape('acompanhar');
+        if (
+            event.target.closest(
+                '#btn-proximo-agendamento-home, #btn-acompanhar-home'
+            )
+        ) {
+            definirItemAtivoRodape(
+                obterDestinoRodapeAgendamentos()
+            );
             return;
         }
 
@@ -2102,7 +2810,8 @@ function configurarSincronizacaoRodape() {
         const destinoPorCard = {
             agendamento: 'agendamento',
             pets: 'pets',
-            visualizacao: 'acompanhar',
+            visualizacao:
+                obterDestinoRodapeAgendamentos(),
             perfil: 'perfil'
         };
 
@@ -2140,9 +2849,20 @@ function handleBottomNavClick(event) {
         return;
     }
 
-    if (destino === 'acompanhar') {
-        definirItemAtivoRodape('acompanhar');
-        handleAcompanharHome(event);
+    if (
+        destino === 'acompanhar' ||
+        destino === 'agendamentos'
+    ) {
+        definirItemAtivoRodape(
+            obterDestinoRodapeAgendamentos()
+        );
+
+        if (!state.currentUser) {
+            fazerLogin();
+            return;
+        }
+
+        abrirAgendamentosAtivos();
         return;
     }
 
@@ -2154,56 +2874,6 @@ function handleBottomNavClick(event) {
 
         abrirMenuVitrine('menu-perfil', 'perfil');
     }
-}
-
-async function handleAcompanharHome(event) {
-    event?.preventDefault?.();
-
-    if (!state.currentUser) {
-        fazerLogin();
-        return;
-    }
-
-    const container = document.getElementById(
-        'atendimento-em-andamento-container'
-    );
-
-    const possuiAtendimentoVisivel = Boolean(
-        container &&
-        !container.hidden &&
-        container.style.display !== 'none' &&
-        container.innerHTML.trim()
-    );
-
-    if (possuiAtendimentoVisivel) {
-        mostrarInicioVitrine({ rolar: false });
-        definirItemAtivoRodape('acompanhar');
-
-        requestAnimationFrame(() => {
-            container.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        });
-
-        return;
-    }
-
-    if (!abrirMenuVitrine('menu-visualizacao', 'acompanhar')) {
-        return;
-    }
-
-    requestAnimationFrame(() => {
-        const btnAtivos = document.getElementById('btn-ver-ativos');
-
-        if (btnAtivos) {
-            btnAtivos.classList.add('ativo');
-
-            handleFiltroAgendamentos({
-                target: btnAtivos
-            });
-        }
-    });
 }
 
 // =====================================================================
@@ -4035,6 +4705,8 @@ async function handleCancelarClick(e) {
             "Sucesso",
             "Agendamento cancelado com sucesso!"
         );
+
+        await atualizarCardProximoAgendamento();
 
         handleFiltroAgendamentos({
             target:
