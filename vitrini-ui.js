@@ -936,6 +936,7 @@ export function renderizarServicos(servicos, permiteMultiplos = false) {
 export function renderizarHorarios(slots, mensagem = '') {
     const container = document.getElementById('grade-horarios');
     const containerFila = document.getElementById('container-fila-espera');
+    const fluxoDinamico = Boolean(document.getElementById('etapa-pet'));
 
     if (!container) return;
 
@@ -943,13 +944,32 @@ export function renderizarHorarios(slots, mensagem = '') {
 
     if (mensagem) {
         container.innerHTML = `<p class="aviso-horarios">${escapeHTML(mensagem)}</p>`;
-        if (containerFila) containerFila.style.display = 'block';
+
+        if (containerFila) {
+            if (fluxoDinamico) {
+                const mensagemNormalizada = String(mensagem).toLowerCase();
+                const deveMostrarFila =
+                    mensagemNormalizada.includes('nenhum horário disponível') ||
+                    mensagemNormalizada.includes('nenhuma data disponível') ||
+                    mensagemNormalizada.includes('dia lotado');
+
+                containerFila.style.display = deveMostrarFila ? 'grid' : 'none';
+            } else {
+                // Compatibilidade: mantém exatamente o comportamento anterior.
+                containerFila.style.display = 'block';
+            }
+        }
+
         return;
     }
 
     if (!slots || slots.length === 0) {
         container.innerHTML = '<p class="aviso-horarios">Nenhum horário disponível para esta data.</p>';
-        if (containerFila) containerFila.style.display = 'block';
+
+        if (containerFila) {
+            containerFila.style.display = fluxoDinamico ? 'grid' : 'block';
+        }
+
         return;
     }
 
@@ -1016,6 +1036,7 @@ export function trocarAba(idDaAba) {
 
 export function selecionarCard(tipo, id, isLoading = false) {
     const seletorMap = {
+        pet: '.pp-agendamento-pet-card',
         profissional: '.card-profissional',
         servico: '.card-servico',
         horario: '.btn-horario'
@@ -1025,7 +1046,12 @@ export function selecionarCard(tipo, id, isLoading = false) {
 
     if (!seletor) return;
 
-    const attr = tipo === 'horario' ? 'horario' : 'id';
+    const attr =
+        tipo === 'horario'
+            ? 'horario'
+            : tipo === 'pet'
+                ? 'pet-id'
+                : 'id';
     const element = document.querySelector(`${seletor}[data-${attr}="${id}"]`);
 
     if (!element) return;
@@ -1046,6 +1072,7 @@ export function selecionarCard(tipo, id, isLoading = false) {
 
 export function limparSelecao(tipo) {
     const seletorMap = {
+        pet: '.pp-agendamento-pet-card',
         profissional: '.card-profissional',
         servico: '.card-servico',
         horario: '.btn-horario'
@@ -1069,8 +1096,25 @@ export function mostrarContainerForm(mostrar) {
 
 export function atualizarStatusData(desabilitarInput, mensagemHorarios = '') {
     const dataInput = document.getElementById('data-agendamento');
-    if (dataInput) dataInput.disabled = desabilitarInput;
-    renderizarHorarios([], mensagemHorarios);
+    const status = document.getElementById('pp-agendamento-status-data');
+    const fluxoDinamico = Boolean(document.getElementById('etapa-pet'));
+
+    if (dataInput) {
+        dataInput.disabled = desabilitarInput;
+    }
+
+    if (status) {
+        status.textContent = mensagemHorarios || '';
+    }
+
+    if (fluxoDinamico) {
+        if (mensagemHorarios) {
+            renderizarHorarios([], mensagemHorarios);
+        }
+    } else {
+        // Compatibilidade: mantém exatamente a atualização anterior da grade.
+        renderizarHorarios([], mensagemHorarios);
+    }
 }
 
 export function selecionarFiltro(modo) {
@@ -1094,7 +1138,15 @@ export function habilitarBotaoConfirmar() {
 
 export function toggleAgendamentoLoginPrompt(mostrar) {
     const prompt = document.getElementById('agendamento-login-prompt');
-    if (prompt) prompt.style.display = mostrar ? 'block' : 'none';
+    const progresso = document.getElementById('pp-agendamento-progresso');
+
+    if (prompt) {
+        prompt.style.display = mostrar ? 'flex' : 'none';
+    }
+
+    if (progresso) {
+        progresso.style.display = mostrar ? 'none' : '';
+    }
 }
 
 export function exibirMensagemDeLoginAgendamentos() {
@@ -1415,6 +1467,429 @@ export function atualizarResumoAgendamentoFinal() {
     `;
 }
 
+
+// ======================================================================
+// FLUXO DINÂMICO DO AGENDAMENTO
+// ======================================================================
+
+const ETAPAS_AGENDAMENTO_COM_PROFISSIONAL = [
+    'pet',
+    'profissional',
+    'servicos',
+    'data',
+    'horario',
+    'revisao'
+];
+
+const ETAPAS_AGENDAMENTO_SEM_PROFISSIONAL = [
+    'pet',
+    'servicos',
+    'data',
+    'horario',
+    'revisao'
+];
+
+function obterEtapasAgendamento(clienteEscolheFuncionario = true) {
+    return clienteEscolheFuncionario
+        ? ETAPAS_AGENDAMENTO_COM_PROFISSIONAL
+        : ETAPAS_AGENDAMENTO_SEM_PROFISSIONAL;
+}
+
+function formatarPortePet(porte) {
+    const valor = String(porte || '').trim();
+
+    if (!valor) {
+        return '';
+    }
+
+    return valor.charAt(0).toUpperCase() + valor.slice(1).toLowerCase();
+}
+
+function montarFotoPetAgendamento(pet, classe = 'pp-agendamento-pet-foto') {
+    const foto = String(pet?.fotoUrl || '').trim();
+    const nome = escapeHTML(pet?.nome || 'Pet');
+
+    if (!foto) {
+        return `
+            <span class="${classe} ${classe}--placeholder" aria-hidden="true">
+                <i class="fa-solid fa-paw"></i>
+            </span>
+        `;
+    }
+
+    return `
+        <span class="${classe}">
+            <img
+                src="${escapeHTML(foto)}"
+                alt="Foto de ${nome}"
+                onerror="this.parentElement.classList.add('${classe}--placeholder'); this.parentElement.innerHTML='<i class=&quot;fa-solid fa-paw&quot;></i>';"
+            >
+        </span>
+    `;
+}
+
+export function renderizarPetsParaAgendamento(
+    pets = [],
+    petSelecionadoId = null
+) {
+    const container = document.getElementById('lista-pets-agendamento');
+    const vazio = document.getElementById('pp-agendamento-sem-pets');
+
+    if (!container) {
+        return;
+    }
+
+    const lista = Array.isArray(pets) ? pets : [];
+
+    container.innerHTML = '';
+
+    if (vazio) {
+        vazio.hidden = lista.length > 0;
+    }
+
+    if (lista.length === 0) {
+        return;
+    }
+
+    container.innerHTML = lista.map((pet) => {
+        const selecionado = String(pet?.id || '') === String(petSelecionadoId || '');
+        const raca = String(pet?.raca || '').trim();
+        const porte = formatarPortePet(pet?.porte);
+        const detalhes = [raca, porte].filter(Boolean).join(' • ') || 'Dados do pet';
+
+        return `
+            <button
+                type="button"
+                class="pp-agendamento-pet-card${selecionado ? ' selecionado' : ''}"
+                data-pet-id="${escapeHTML(pet?.id || '')}"
+                aria-pressed="${selecionado ? 'true' : 'false'}"
+            >
+                ${montarFotoPetAgendamento(pet)}
+
+                <span class="pp-agendamento-pet-dados">
+                    <strong>${escapeHTML(pet?.nome || 'Pet')}</strong>
+                    <small>${escapeHTML(detalhes)}</small>
+                </span>
+
+                <span class="pp-agendamento-pet-acao" aria-hidden="true">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </span>
+            </button>
+        `;
+    }).join('');
+}
+
+export function mostrarEstadoSemPets(mostrar = true) {
+    const vazio = document.getElementById('pp-agendamento-sem-pets');
+    const lista = document.getElementById('lista-pets-agendamento');
+
+    if (vazio) {
+        vazio.hidden = !mostrar;
+    }
+
+    if (lista && mostrar) {
+        lista.innerHTML = '';
+    }
+}
+
+export function atualizarProgressoAgendamento(
+    etapaAtual,
+    clienteEscolheFuncionario = true
+) {
+    const progresso = document.getElementById('pp-agendamento-progresso');
+    const preenchimento = document.getElementById('pp-agendamento-progresso-preenchimento');
+    const etapas = obterEtapasAgendamento(clienteEscolheFuncionario);
+    const indiceAtual = Math.max(0, etapas.indexOf(etapaAtual));
+    const quantidade = etapas.length;
+    const percentual = quantidade > 1
+        ? (indiceAtual / (quantidade - 1)) * 100
+        : 100;
+
+    document
+        .querySelectorAll('#pp-agendamento-progresso [data-progress-step]')
+        .forEach((item) => {
+            const nomeEtapa = item.dataset.progressStep;
+            const indice = etapas.indexOf(nomeEtapa);
+            const visivel = indice >= 0;
+
+            item.hidden = !visivel;
+            item.classList.toggle('ativo', visivel && indice === indiceAtual);
+            item.classList.toggle('concluido', visivel && indice < indiceAtual);
+
+            if (visivel) {
+                const numero = item.querySelector('span');
+
+                if (numero) {
+                    numero.textContent = String(indice + 1);
+                }
+            }
+        });
+
+    if (preenchimento) {
+        preenchimento.style.width = `${Math.min(100, Math.max(0, percentual))}%`;
+    }
+
+    if (progresso) {
+        progresso.hidden = etapaAtual === 'sucesso';
+        progresso.setAttribute('aria-valuemax', String(quantidade));
+        progresso.setAttribute('aria-valuenow', String(indiceAtual + 1));
+    }
+}
+
+export function mostrarEtapaAgendamento(
+    etapa,
+    {
+        clienteEscolheFuncionario = true,
+        rolar = true
+    } = {}
+) {
+    const alvo = document.getElementById(`etapa-${etapa}`);
+
+    document
+        .querySelectorAll('#agendamento-form-container .pp-agendamento-etapa')
+        .forEach((secao) => {
+            const ativa = secao === alvo;
+
+            secao.hidden = !ativa;
+            secao.classList.toggle('pp-agendamento-etapa--ativa', ativa);
+        });
+
+    atualizarProgressoAgendamento(
+        etapa,
+        clienteEscolheFuncionario
+    );
+
+    if (rolar && alvo) {
+        requestAnimationFrame(() => {
+            alvo.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    }
+}
+
+export function mostrarMensagemAgendamento(
+    mensagem = '',
+    tipo = 'info'
+) {
+    const container = document.getElementById('pp-agendamento-mensagem');
+
+    if (!container) {
+        return;
+    }
+
+    const texto = String(mensagem || '').trim();
+
+    container.hidden = !texto;
+    container.className = `pp-agendamento-aviso pp-agendamento-aviso--${tipo}`;
+    container.textContent = texto;
+}
+
+export function definirAgendamentoCarregando(
+    carregando,
+    mensagem = 'Carregando...'
+) {
+    const conteudo = document.getElementById('agendamento-form-container');
+
+    if (conteudo) {
+        conteudo.classList.toggle('pp-agendamento-conteudo--carregando', Boolean(carregando));
+        conteudo.setAttribute('aria-busy', carregando ? 'true' : 'false');
+    }
+
+    mostrarMensagemAgendamento(
+        carregando ? mensagem : '',
+        'carregando'
+    );
+}
+
+export function configurarAjudaServicos(permiteMultiplos = false) {
+    const ajuda = document.getElementById('pp-agendamento-servicos-ajuda');
+
+    if (!ajuda) {
+        return;
+    }
+
+    ajuda.textContent = permiteMultiplos
+        ? 'Você pode selecionar mais de um serviço. Toque em Continuar quando terminar.'
+        : 'Selecione um serviço para avançar automaticamente.';
+}
+
+export function renderizarRevisaoAgendamento(
+    agendamento = {},
+    {
+        exibirProfissional = true
+    } = {}
+) {
+    const container = document.getElementById('resumo-agendamento-final');
+
+    if (!container) {
+        return;
+    }
+
+    const pet = agendamento?.pet || {};
+    const profissional = agendamento?.profissional || {};
+    const servicos = Array.isArray(agendamento?.servicos)
+        ? agendamento.servicos
+        : [];
+
+    const total = servicos.reduce(
+        (soma, servico) => soma + calcularPrecoServico(servico),
+        0
+    );
+
+    const duracao = servicos.reduce(
+        (soma, servico) => soma + calcularDuracaoServico(servico),
+        0
+    );
+
+    const dataFormatada = agendamento?.data
+        ? new Date(`${agendamento.data}T12:00:00Z`).toLocaleDateString(
+            'pt-BR',
+            {
+                timeZone: 'UTC',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }
+        )
+        : 'Data não informada';
+
+    const raca = String(pet?.raca || '').trim();
+    const porte = formatarPortePet(pet?.porte);
+    const detalhesPet = [raca, porte].filter(Boolean).join(' • ');
+
+    container.innerHTML = `
+        <article class="pp-revisao-card">
+            <div class="pp-revisao-pet">
+                ${montarFotoPetAgendamento(pet, 'pp-revisao-pet-foto')}
+
+                <div>
+                    <span>Pet</span>
+                    <strong>${escapeHTML(pet?.nome || 'Pet')}</strong>
+                    ${detalhesPet ? `<small>${escapeHTML(detalhesPet)}</small>` : ''}
+                </div>
+            </div>
+
+            <div class="pp-revisao-lista">
+                <div class="pp-revisao-item">
+                    <span class="pp-revisao-item-icone">
+                        <i class="fa-solid fa-scissors" aria-hidden="true"></i>
+                    </span>
+                    <div>
+                        <small>Serviço${servicos.length === 1 ? '' : 's'}</small>
+                        <strong>
+                            ${servicos.length > 0
+                                ? servicos.map((servico) => escapeHTML(servico?.nome || 'Serviço')).join(' + ')
+                                : 'Não informado'}
+                        </strong>
+                    </div>
+                </div>
+
+                ${
+                    exibirProfissional
+                        ? `
+                            <div class="pp-revisao-item">
+                                <span class="pp-revisao-item-icone">
+                                    <i class="fa-solid fa-user-doctor" aria-hidden="true"></i>
+                                </span>
+                                <div>
+                                    <small>Profissional</small>
+                                    <strong>${escapeHTML(profissional?.nome || 'Não informado')}</strong>
+                                </div>
+                            </div>
+                        `
+                        : ''
+                }
+
+                <div class="pp-revisao-item">
+                    <span class="pp-revisao-item-icone">
+                        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                    </span>
+                    <div>
+                        <small>Data e horário</small>
+                        <strong>${escapeHTML(dataFormatada)} às ${escapeHTML(agendamento?.horario || '--:--')}</strong>
+                    </div>
+                </div>
+
+                <div class="pp-revisao-item">
+                    <span class="pp-revisao-item-icone">
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                    </span>
+                    <div>
+                        <small>Duração estimada</small>
+                        <strong>${duracao > 0 ? `${duracao} min` : 'A confirmar'}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pp-revisao-total">
+                <span>Total</span>
+                <strong>${dinheiro(total)}</strong>
+            </div>
+        </article>
+    `;
+}
+
+export function mostrarConclusaoAgendamento(
+    nomeEmpresa = ''
+) {
+    const texto = document.getElementById('pp-agendamento-sucesso-texto');
+
+    if (texto) {
+        texto.textContent = nomeEmpresa
+            ? `${nomeEmpresa} recebeu seu agendamento.`
+            : 'Seu horário foi reservado com sucesso.';
+    }
+
+    mostrarEtapaAgendamento(
+        'sucesso',
+        {
+            clienteEscolheFuncionario: false,
+            rolar: true
+        }
+    );
+}
+
+export function resetarEtapasAgendamento(
+    {
+        clienteEscolheFuncionario = true
+    } = {}
+) {
+    mostrarMensagemAgendamento('');
+    mostrarEstadoSemPets(false);
+
+    const data = document.getElementById('data-agendamento');
+    const statusData = document.getElementById('pp-agendamento-status-data');
+    const fila = document.getElementById('container-fila-espera');
+
+    if (data) {
+        data.value = '';
+        data.disabled = true;
+    }
+
+    if (statusData) {
+        statusData.textContent = '';
+    }
+
+    if (fila) {
+        fila.style.display = 'none';
+    }
+
+    document
+        .querySelectorAll('#agendamento-form-container .pp-agendamento-etapa')
+        .forEach((secao) => {
+            secao.hidden = true;
+            secao.classList.remove('pp-agendamento-etapa--ativa');
+        });
+
+    atualizarProgressoAgendamento(
+        'pet',
+        clienteEscolheFuncionario
+    );
+}
+
+
 // ======================================================================
 // MODO AGENDAMENTO
 // ======================================================================
@@ -1423,25 +1898,54 @@ export function configurarModoAgendamento(permiteMultiplos) {
     const dataHorarioContainer = document.getElementById('data-e-horario-container');
     const resumoContainer = document.getElementById('servicos-resumo-container');
     const btnConfirmar = document.getElementById('btn-confirmar-agendamento');
+    const fluxoDinamico = Boolean(document.getElementById('etapa-pet'));
 
-    if (dataHorarioContainer) dataHorarioContainer.style.display = 'none';
-    if (resumoContainer) resumoContainer.style.display = 'none';
-    if (btnConfirmar) btnConfirmar.style.display = 'block';
+    if (dataHorarioContainer) {
+        // No HTML antigo, data e horário continuam ocultos até a escolha do serviço.
+        dataHorarioContainer.style.display = fluxoDinamico ? 'block' : 'none';
+    }
+
+    if (resumoContainer) {
+        resumoContainer.style.display = 'none';
+    }
+
+    if (btnConfirmar) {
+        btnConfirmar.style.display = fluxoDinamico ? 'inline-flex' : 'block';
+    }
+
+    if (fluxoDinamico) {
+        configurarAjudaServicos(Boolean(permiteMultiplos));
+    }
 }
 
 export function limparUIAgendamento() {
+    const fluxoDinamico = Boolean(document.getElementById('etapa-pet'));
+
+    if (fluxoDinamico) {
+        limparSelecao('pet');
+    }
+
     limparSelecao('profissional');
     limparSelecao('servico');
     limparSelecao('horario');
 
     const dataHorarioContainer = document.getElementById('data-e-horario-container');
-    if (dataHorarioContainer) dataHorarioContainer.style.display = 'none';
+    if (dataHorarioContainer) {
+        dataHorarioContainer.style.display = fluxoDinamico ? 'block' : 'none';
+    }
 
     const resumoContainer = document.getElementById('servicos-resumo-container');
     if (resumoContainer) resumoContainer.style.display = 'none';
 
     const resumoFinal = document.getElementById('resumo-agendamento-final');
     if (resumoFinal) resumoFinal.innerHTML = '';
+
+    if (fluxoDinamico) {
+        const pets = document.getElementById('lista-pets-agendamento');
+        if (pets) pets.innerHTML = '';
+
+        resetarEtapasAgendamento();
+    }
 
     desabilitarBotaoConfirmar();
 }
