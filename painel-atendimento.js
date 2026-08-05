@@ -31,6 +31,10 @@ Liberado para Retirada
 import { db, storage } from "./firebase-config.js";
 
 import {
+    criarMensagemLiberacaoAtendimento
+} from "./atendimento-mensagens.js";
+
+import {
     doc,
     getDoc,
     updateDoc,
@@ -578,6 +582,51 @@ async function atualizarStatusAtendimento(
         ultimaAtualizacaoStatus: serverTimestamp(),
         timelineAtendimento: novaTimeline
     });
+
+    if (statusNormalizado === "liberado") {
+        try {
+            const resultadoMensagem = await criarMensagemLiberacaoAtendimento({
+                empresaId,
+                agendamentoId,
+                atendimento: {
+                    ...atendimentoAtual,
+                    id: agendamentoId,
+                    statusAtendimento: statusNormalizado
+                }
+            });
+
+            window.dispatchEvent(
+                new CustomEvent("pronti-liberacao-cliente-atualizada", {
+                    detail: {
+                        empresaId,
+                        agendamentoId,
+                        mensagemId: resultadoMensagem.mensagemId,
+                        mensagemCriada: resultadoMensagem.criada
+                    }
+                })
+            );
+        } catch (error) {
+            console.error(
+                "Status liberado, mas não foi possível criar a mensagem para o cliente:",
+                error
+            );
+
+            window.dispatchEvent(
+                new CustomEvent("pronti-erro-mensagem-liberacao", {
+                    detail: {
+                        empresaId,
+                        agendamentoId,
+                        erro: error
+                    }
+                })
+            );
+
+            alert(
+                "O pet foi liberado, mas o aviso ao cliente não foi criado. " +
+                "Tente definir o status como Liberado novamente."
+            );
+        }
+    }
 
     window.dispatchEvent(
         new CustomEvent("pronti-atendimento-atualizado", {
