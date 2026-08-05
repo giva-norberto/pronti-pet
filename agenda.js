@@ -479,14 +479,14 @@ function aplicarEstiloAgendaPet() {
     #lista-agendamentos.dashboard-cards,
     .dashboard-cards {
       background: transparent !important;
-      padding: 18px 0 !important;
+      padding: 12px 0 !important;
       border-radius: 20px;
       width: 100% !important;
       max-width: none !important;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 10px;
     }
 
     #agendamentos-placeholder {
@@ -510,7 +510,7 @@ function aplicarEstiloAgendaPet() {
       border-radius: 18px !important;
       box-shadow: 0 14px 34px rgba(15, 23, 42, 0.13) !important;
       overflow: hidden !important;
-      margin: 0 0 18px 0 !important;
+      margin: 0 0 10px 0 !important;
       max-width: none !important;
       width: 100% !important;
     }
@@ -518,13 +518,13 @@ function aplicarEstiloAgendaPet() {
     .agenda-pet-card-header {
       background: linear-gradient(135deg, #312e81 0%, #4338ca 48%, #6366f1 100%);
       color: #ffffff;
-      padding: 14px 18px;
+      padding: 10px 14px;
     }
 
     .agenda-pet-header-grid {
       display: grid;
       grid-template-columns: minmax(220px, 1.35fr) minmax(180px, 1fr) auto;
-      gap: 14px;
+      gap: 10px;
       align-items: center;
     }
 
@@ -537,9 +537,9 @@ function aplicarEstiloAgendaPet() {
 
     .agenda-pet-foto,
     .agenda-pet-foto-placeholder {
-      width: 58px;
-      height: 58px;
-      border-radius: 18px;
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
       flex-shrink: 0;
       border: 3px solid rgba(255, 255, 255, .75);
       box-shadow: 0 8px 18px rgba(15, 23, 42, .20);
@@ -567,7 +567,7 @@ function aplicarEstiloAgendaPet() {
     }
 
     .agenda-pet-nome {
-      font-size: 1.35rem;
+      font-size: 1.18rem;
       font-weight: 950;
       line-height: 1.1;
       margin-top: 2px;
@@ -577,7 +577,7 @@ function aplicarEstiloAgendaPet() {
     }
 
     .agenda-pet-sub {
-      font-size: .9rem;
+      font-size: .86rem;
       font-weight: 750;
       opacity: .95;
       margin-top: 4px;
@@ -591,13 +591,13 @@ function aplicarEstiloAgendaPet() {
       align-items: center;
       gap: 10px;
       font-weight: 950;
-      font-size: 1rem;
+      font-size: .95rem;
       min-width: 0;
     }
 
     .agenda-pet-servico-icone {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 14px;
       display: inline-flex;
       align-items: center;
@@ -609,7 +609,7 @@ function aplicarEstiloAgendaPet() {
     .agenda-pet-data-hora {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
       white-space: nowrap;
       font-weight: 950;
       font-size: .96rem;
@@ -623,7 +623,7 @@ function aplicarEstiloAgendaPet() {
     }
 
     .agenda-pet-body {
-      padding: 14px 18px 16px 18px;
+      padding: 10px 14px 12px 14px;
       background: #ffffff;
     }
 
@@ -631,7 +631,7 @@ function aplicarEstiloAgendaPet() {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -643,12 +643,12 @@ function aplicarEstiloAgendaPet() {
 
     .agenda-pet-alerta,
     .agenda-pet-info {
-      padding: 11px 13px;
+      padding: 9px 11px;
       border-radius: 14px;
       display: flex;
-      gap: 11px;
+      gap: 9px;
       align-items: flex-start;
-      min-height: 50px;
+      min-height: 44px;
       min-width: 0;
       max-width: 100%;
       width: 100%;
@@ -667,8 +667,8 @@ function aplicarEstiloAgendaPet() {
     }
 
     .agenda-pet-alert-icon {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 13px;
       display: inline-flex;
       align-items: center;
@@ -701,7 +701,7 @@ function aplicarEstiloAgendaPet() {
     .agenda-pet-pet-tutor,
     .agenda-pet-profissional {
       border-radius: 14px;
-      padding: 11px 13px;
+      padding: 9px 11px;
       border: 1px solid #dbeafe;
       min-width: 0;
       max-width: 100%;
@@ -734,8 +734,8 @@ function aplicarEstiloAgendaPet() {
       gap: 12px;
       align-items: center;
       justify-content: flex-end;
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid #edf2f7;
     }
 
@@ -753,7 +753,7 @@ function aplicarEstiloAgendaPet() {
       border: 1.5px solid #fecaca;
       background: #fff1f2;
       color: #dc2626;
-      padding: 10px 16px;
+      padding: 9px 13px;
       border-radius: 13px;
       font-weight: 950;
       cursor: pointer;
@@ -770,10 +770,10 @@ function aplicarEstiloAgendaPet() {
     .status-label {
       display: inline-flex;
       align-items: center;
-      padding: 7px 13px;
+      padding: 7px 11px;
       border-radius: 999px;
       font-weight: 900;
-      font-size: .82rem;
+      font-size: .8rem;
     }
 
     .status-ativo {
@@ -806,10 +806,10 @@ function aplicarEstiloAgendaPet() {
     .status-atendimento {
       display: inline-flex;
       align-items: center;
-      padding: 7px 13px;
+      padding: 7px 11px;
       border-radius: 999px;
       font-weight: 900;
-      font-size: .82rem;
+      font-size: .8rem;
       white-space: nowrap;
     }
 
@@ -831,10 +831,10 @@ function aplicarEstiloAgendaPet() {
     .status-confirmacao-cliente {
       display: inline-flex;
       align-items: center;
-      padding: 7px 13px;
+      padding: 7px 11px;
       border-radius: 999px;
       font-weight: 950;
-      font-size: .82rem;
+      font-size: .8rem;
       white-space: nowrap;
       border: 1px solid transparent;
       transition:
@@ -933,13 +933,13 @@ function aplicarEstiloAgendaPet() {
       .card--agenda {
         width: 100% !important;
         max-width: none !important;
-        margin: 0 0 14px 0 !important;
-        border-radius: 16px !important;
+        margin: 0 0 9px 0 !important;
+        border-radius: 15px !important;
       }
 
       .agenda-pet-header-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 7px;
       }
 
       .agenda-pet-data-hora {
@@ -988,11 +988,11 @@ function aplicarEstiloAgendaPet() {
       }
 
       .agenda-pet-card-header {
-        padding: 13px;
+        padding: 10px 11px;
       }
 
       .agenda-pet-body {
-        padding: 12px;
+        padding: 9px 11px 10px;
       }
 
       .agenda-pet-identidade {
@@ -1001,17 +1001,17 @@ function aplicarEstiloAgendaPet() {
 
       .agenda-pet-foto,
       .agenda-pet-foto-placeholder {
-        width: 52px;
-        height: 52px;
-        border-radius: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
       }
 
       .agenda-pet-nome {
-        font-size: 1.18rem;
+        font-size: 1.08rem;
       }
 
       .agenda-pet-servico-top {
-        font-size: .95rem;
+        font-size: .92rem;
       }
 
       .status-label {
@@ -1776,7 +1776,7 @@ function exibirModalFinalizarDia(docsVencidos, dataReferencia, onFinalizarDia) {
       .modal-finalizar-dia__content button {
         margin: 10px 8px 0 8px;
         padding: 8px 20px;
-        font-size: 1rem;
+        font-size: .95rem;
         border-radius: 6px;
         border: none;
         background: #38bdf8;
@@ -2286,3 +2286,315 @@ function exibirMensagemDeErro(mensagem) {
 window.addEventListener("beforeunload", () => {
   encerrarListenersConfirmacaoAgenda();
 });
+
+
+/* ============================================================
+   AJUSTE COMPACTO DOS CARDS — DESKTOP E CELULAR
+============================================================ */
+const styleAgendaCompacta = document.createElement("style");
+styleAgendaCompacta.id = "style-agenda-pet-compacta";
+styleAgendaCompacta.textContent = `
+  .card--agenda {
+    margin-bottom: 10px !important;
+  }
+
+  .agenda-pet-card-header {
+    padding: 10px 14px !important;
+  }
+
+  .agenda-pet-body {
+    padding: 10px 14px 12px !important;
+  }
+
+  .agenda-pet-foto,
+  .agenda-pet-foto-placeholder {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .agenda-pet-nome {
+    font-size: 1.18rem !important;
+  }
+
+  .agenda-pet-sub,
+  .agenda-pet-mini-label,
+  .agenda-pet-box-text,
+  .agenda-pet-status-linha,
+  .status-label,
+  .status-atendimento,
+  .status-confirmacao-cliente {
+    font-size: .82rem !important;
+  }
+
+  .agenda-pet-mini-value,
+  .agenda-pet-servico-top,
+  .agenda-pet-data-hora {
+    font-size: .94rem !important;
+  }
+
+  .agenda-pet-alerta,
+  .agenda-pet-info,
+  .agenda-pet-pet-tutor,
+  .agenda-pet-profissional {
+    padding: 9px 11px !important;
+  }
+
+  .agenda-pet-footer {
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+  }
+
+  @media (max-width: 520px) {
+    .card--agenda {
+      margin-bottom: 8px !important;
+    }
+
+    .agenda-pet-card-header {
+      padding: 9px 10px !important;
+    }
+
+    .agenda-pet-body {
+      padding: 8px 10px 9px !important;
+    }
+
+    .agenda-pet-header-grid {
+      gap: 6px !important;
+    }
+
+    .agenda-pet-identidade {
+      gap: 9px !important;
+    }
+
+    .agenda-pet-foto,
+    .agenda-pet-foto-placeholder {
+      width: 44px !important;
+      height: 44px !important;
+    }
+
+    .agenda-pet-nome {
+      font-size: 1.08rem !important;
+    }
+
+    .agenda-pet-sub,
+    .agenda-pet-mini-label,
+    .agenda-pet-box-text,
+    .status-label,
+    .status-atendimento,
+    .status-confirmacao-cliente {
+      font-size: .8rem !important;
+    }
+
+    .agenda-pet-mini-value,
+    .agenda-pet-servico-top,
+    .agenda-pet-data-hora {
+      font-size: .9rem !important;
+    }
+
+    .agenda-pet-alert-grid,
+    .agenda-pet-pessoa-grid {
+      gap: 7px !important;
+      margin-bottom: 7px !important;
+    }
+
+    .agenda-pet-alerta,
+    .agenda-pet-info,
+    .agenda-pet-pet-tutor,
+    .agenda-pet-profissional {
+      padding: 8px 9px !important;
+    }
+
+    .agenda-pet-botao-ausencia {
+      padding: 9px 11px !important;
+      font-size: .86rem !important;
+    }
+  }
+`;
+document.head.appendChild(styleAgendaCompacta);
+
+
+/* ============================================================
+   MOBILE ULTRACOMPACTO — CARDS DA AGENDA
+   Mantém leitura confortável sem deixar o card gigante.
+============================================================ */
+const styleAgendaMobileUltracompacta = document.createElement("style");
+styleAgendaMobileUltracompacta.id = "style-agenda-pet-mobile-ultracompacta";
+styleAgendaMobileUltracompacta.textContent = `
+  @media (max-width: 520px) {
+    #lista-agendamentos,
+    #lista-agendamentos.dashboard-cards,
+    .dashboard-cards {
+      gap: 8px !important;
+      padding: 8px 0 !important;
+    }
+
+    .card--agenda {
+      border-radius: 14px !important;
+      margin-bottom: 8px !important;
+    }
+
+    .agenda-pet-card-header {
+      padding: 9px 10px !important;
+    }
+
+    .agenda-pet-header-grid {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto !important;
+      grid-template-areas:
+        "identidade datahora"
+        "servico servico" !important;
+      gap: 7px 10px !important;
+      align-items: center !important;
+    }
+
+    .agenda-pet-identidade {
+      grid-area: identidade !important;
+      gap: 8px !important;
+      min-width: 0 !important;
+    }
+
+    .agenda-pet-servico-top {
+      grid-area: servico !important;
+      min-height: 34px !important;
+      gap: 8px !important;
+      font-size: .9rem !important;
+    }
+
+    .agenda-pet-data-hora {
+      grid-area: datahora !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      justify-content: center !important;
+      gap: 2px !important;
+      font-size: .78rem !important;
+      line-height: 1.15 !important;
+    }
+
+    .agenda-pet-foto,
+    .agenda-pet-foto-placeholder {
+      width: 42px !important;
+      height: 42px !important;
+      border-radius: 13px !important;
+      border-width: 2px !important;
+    }
+
+    .agenda-pet-kicker {
+      font-size: .62rem !important;
+    }
+
+    .agenda-pet-nome {
+      font-size: 1rem !important;
+      line-height: 1.05 !important;
+    }
+
+    .agenda-pet-sub {
+      font-size: .76rem !important;
+      margin-top: 2px !important;
+    }
+
+    .agenda-pet-servico-icone {
+      width: 31px !important;
+      height: 31px !important;
+      border-radius: 11px !important;
+    }
+
+    .agenda-pet-body {
+      padding: 8px 10px 9px !important;
+    }
+
+    .agenda-pet-alert-grid,
+    .agenda-pet-alert-grid--full {
+      grid-template-columns: 1fr !important;
+      gap: 6px !important;
+      margin-bottom: 7px !important;
+    }
+
+    .agenda-pet-alerta,
+    .agenda-pet-info {
+      min-height: 0 !important;
+      padding: 7px 8px !important;
+      gap: 7px !important;
+      border-radius: 11px !important;
+      align-items: center !important;
+    }
+
+    .agenda-pet-alert-icon {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 9px !important;
+      font-size: 1rem !important;
+    }
+
+    .agenda-pet-box-title {
+      font-size: .78rem !important;
+      margin-bottom: 1px !important;
+    }
+
+    .agenda-pet-box-text {
+      font-size: .8rem !important;
+      line-height: 1.2 !important;
+      text-align: left !important;
+    }
+
+    .agenda-pet-pessoa-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6px !important;
+    }
+
+    .agenda-pet-pet-tutor,
+    .agenda-pet-profissional {
+      padding: 7px 8px !important;
+      border-radius: 11px !important;
+      min-height: 0 !important;
+    }
+
+    .agenda-pet-mini-label {
+      font-size: .7rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .agenda-pet-mini-value {
+      font-size: .8rem !important;
+      line-height: 1.15 !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .agenda-pet-footer {
+      margin-top: 7px !important;
+      padding-top: 7px !important;
+      gap: 6px !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+    }
+
+    .agenda-pet-footer > div:last-child {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 6px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .status-label,
+    .status-atendimento,
+    .status-confirmacao-cliente {
+      padding: 6px 9px !important;
+      font-size: .72rem !important;
+    }
+
+    .status-label.status-ativo {
+      width: 12px !important;
+      height: 12px !important;
+      padding: 0 !important;
+    }
+
+    .agenda-pet-botao-ausencia {
+      padding: 7px 10px !important;
+      font-size: .78rem !important;
+      border-radius: 10px !important;
+      flex: 0 0 auto !important;
+    }
+  }
+`;
+document.head.appendChild(styleAgendaMobileUltracompacta);
+
