@@ -55,6 +55,11 @@ let contextoAtual = null;
 let mensagemExibidaId = null;
 let confirmacaoEmAndamento = false;
 
+// Suporte a dois ou mais pets com atendimentos simultâneos.
+const canceladoresMensagensPorAtendimento = new Map();
+const mensagensPorAtendimento = new Map();
+let contextoMensagensMultiplas = null;
+
 /* =====================================================
    INICIALIZAÇÃO
 ===================================================== */
@@ -167,6 +172,188 @@ export function encerrarMensagensAtendimentoCliente() {
 }
 
 /* =====================================================
+   MÚLTIPLOS ATENDIMENTOS SIMULTÂNEOS
+===================================================== */
+
+/**
+ * Sincroniza os listeners das mensagens de todos os atendimentos ativos.
+ * Mantém um listener por agendamento e exibe apenas a mensagem prioritária.
+ *
+ * @param {Object} params
+ * @param {Object} params.db
+ * @param {string} params.empresaId
+ * @param {Array<Object>} params.atendimentos
+ * @param {string} params.clienteId
+ * @param {string} [params.clienteNome]
+ * @param {Function} [params.aoConfirmar]
+ * @param {Function} [params.aoErro]
+ */
+export function sincronizarMensagensAtendimentosCliente({
+    db,
+    empresaId,
+    atendimentos = [],
+    clienteId,
+    clienteNome = "Cliente",
+    aoConfirmar,
+    aoErro
+}) {
+    if (!db || !empresaId || !clienteId) {
+        encerrarMensagensAtendimentosCliente();
+        return;
+    }
+
+    aplicarCssMensagensAtendimento();
+
+    contextoMensagensMultiplas = {
+        db,
+        empresaId,
+        clienteId,
+        clienteNome: limparTexto(clienteNome) || "Cliente",
+        aoConfirmar:
+            typeof aoConfirmar === "function" ? aoConfirmar : null,
+        aoErro:
+            typeof aoErro === "function" ? aoErro : null
+    };
+
+    const idsDesejados = new Set(
+        atendimentos
+            .map((atendimento) =>
+                limparTexto(atendimento?.id || atendimento?.agendamentoId)
+            )
+            .filter(Boolean)
+    );
+
+    for (const [agendamentoId, cancelar] of
+        canceladoresMensagensPorAtendimento.entries()) {
+        if (!idsDesejados.has(agendamentoId)) {
+            try {
+                cancelar();
+            } catch (erro) {
+                console.warn(
+                    `Listener de mensagens ${agendamentoId} não encerrado:`,
+                    erro
+                );
+            }
+
+            canceladoresMensagensPorAtendimento.delete(agendamentoId);
+            mensagensPorAtendimento.delete(agendamentoId);
+        }
+    }
+
+    for (const agendamentoId of idsDesejados) {
+        if (canceladoresMensagensPorAtendimento.has(agendamentoId)) {
+            continue;
+        }
+
+        const mensagensRef = collection(
+            db,
+            "empresarios",
+            empresaId,
+            "agendamentos",
+            agendamentoId,
+            "mensagens"
+        );
+
+        const cancelar = onSnapshot(
+            mensagensRef,
+            (snapshot) => {
+                const mensagens = snapshot.docs.map((documento) => ({
+                    id: documento.id,
+                    ...documento.data(),
+                    _agendamentoId: agendamentoId,
+                    _chaveExibicao: `${agendamentoId}:${documento.id}`
+                }));
+
+                mensagensPorAtendimento.set(
+                    agendamentoId,
+                    mensagens
+                );
+
+                renderizarMensagemPrioritariaMultipla();
+            },
+            (erro) => {
+                console.error(
+                    `Erro ao acompanhar mensagens de ${agendamentoId}:`,
+                    erro
+                );
+
+                if (
+                    typeof contextoMensagensMultiplas?.aoErro ===
+                    "function"
+                ) {
+                    contextoMensagensMultiplas.aoErro(erro);
+                }
+            }
+        );
+
+        canceladoresMensagensPorAtendimento.set(
+            agendamentoId,
+            cancelar
+        );
+    }
+
+    renderizarMensagemPrioritariaMultipla();
+}
+
+export function encerrarMensagensAtendimentosCliente() {
+    for (const cancelar of
+        canceladoresMensagensPorAtendimento.values()) {
+        try {
+            cancelar();
+        } catch (erro) {
+            console.warn(
+                "Listener múltiplo de mensagens não encerrado:",
+                erro
+            );
+        }
+    }
+
+    canceladoresMensagensPorAtendimento.clear();
+    mensagensPorAtendimento.clear();
+    contextoMensagensMultiplas = null;
+
+    contextoAtual = null;
+    mensagemExibidaId = null;
+    confirmacaoEmAndamento = false;
+
+    removerCardMensagem();
+}
+
+function renderizarMensagemPrioritariaMultipla() {
+    if (!contextoMensagensMultiplas) {
+        removerCardMensagem();
+        return;
+    }
+
+    const mensagens = [
+        ...mensagensPorAtendimento.values()
+    ]
+        .flat()
+        .filter(mensagemDeveAparecer)
+        .sort(ordenarMensagens);
+
+    const mensagemPrioritaria = mensagens[0] || null;
+
+    if (!mensagemPrioritaria) {
+        removerCardMensagem();
+        mensagemExibidaId = null;
+        return;
+    }
+
+    contextoAtual = {
+        ...contextoMensagensMultiplas,
+        agendamentoId: mensagemPrioritaria._agendamentoId
+    };
+
+    exibirMensagemObrigatoria(mensagemPrioritaria).catch((erro) => {
+        tratarErro(
+            "Erro ao exibir mensagem prioritária do atendimento.",
+            erro
+        );
+    });
+}
+
+/* =====================================================
    EXIBIÇÃO DO CARD
 ===================================================== */
 
@@ -175,10 +362,11 @@ async function exibirMensagemObrigatoria(mensagem) {
         return;
     }
 
-    const mudouMensagem = mensagemExibidaId !== mensagem.id;
+    const chaveExibicao = mensagem._chaveExibicao || mensagem.id;
+    const mudouMensagem = mensagemExibidaId !== chaveExibicao;
 
     if (mudouMensagem) {
-        mensagemExibidaId = mensagem.id;
+        mensagemExibidaId = chaveExibicao;
         renderizarCardMensagem(mensagem);
     } else {
         atualizarCardMensagem(mensagem);
