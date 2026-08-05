@@ -366,6 +366,87 @@ export async function garantirPetParaAgendamento(empresaId, user) {
 }
 
 // ======================================================================
+// Fluxo dinâmico: preparar, cadastrar e definir pet sem abrir seleção modal
+// ======================================================================
+
+/**
+ * Prepara os pets do cliente para o assistente dinâmico de agendamento.
+ * Mantém o mesmo caminho de leitura utilizado por carregarPetsDoCliente().
+ */
+export async function prepararPetsParaAgendamento(
+    empresaId,
+    userOuClienteId
+) {
+    if (!empresaId || !userOuClienteId) {
+        petsCliente = [];
+        petSelecionado = null;
+        return [];
+    }
+
+    await garantirClientePet(
+        empresaId,
+        userOuClienteId
+    );
+
+    return carregarPetsDoCliente(
+        empresaId,
+        userOuClienteId
+    );
+}
+
+/**
+ * Abre o cadastro existente e devolve o pet criado para o novo fluxo.
+ * O cadastro e os caminhos do Firebase continuam sob responsabilidade
+ * de vitrine-pets-gestao.js.
+ */
+export async function cadastrarPetParaAgendamento(
+    empresaId,
+    userOuClienteId
+) {
+    if (!empresaId || !userOuClienteId) {
+        return null;
+    }
+
+    await garantirClientePet(
+        empresaId,
+        userOuClienteId
+    );
+
+    const novoPet = await abrirModalCadastroPet(
+        empresaId,
+        userOuClienteId
+    );
+
+    if (!novoPet) {
+        return null;
+    }
+
+    petSelecionado = novoPet;
+
+    await carregarPetsDoCliente(
+        empresaId,
+        userOuClienteId
+    );
+
+    return petSelecionado;
+}
+
+/**
+ * Define explicitamente o pet selecionado pelo assistente em cards.
+ */
+export function definirPetSelecionado(pet) {
+    petSelecionado = pet || null;
+    return petSelecionado;
+}
+
+/**
+ * Limpa apenas o estado local de seleção do agendamento.
+ */
+export function limparPetSelecionado() {
+    petSelecionado = null;
+}
+
+// ======================================================================
 // Getters
 // ======================================================================
 
