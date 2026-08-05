@@ -9,7 +9,8 @@
 //  - Cada atendimento é identificado pelo próprio agendamentoId.
 //  - Um cliente pode acompanhar dois ou mais pets simultaneamente.
 //  - Cada documento ativo possui seu próprio onSnapshot().
-//  - O card e o modal usam exatamente o mesmo snapshot do mesmo documento.
+//  - O card usa exatamente o snapshot em tempo real do mesmo documento.
+//  - O modal detalhado permanece desativado para evitar uma tela redundante.
 //  - statusAtendimento ausente é interpretado como "aguardando",
 //    seguindo a mesma regra visual utilizada pelo painel do dono.
 //  - Atendimentos retirados, cancelados, faltas e documentos antigos
@@ -28,6 +29,7 @@ import {
 
 const CONTAINER_ID = "atendimento-em-andamento-container";
 const MODAL_ID = "vitrine-atendimento-modal";
+const MODAL_DETALHES_HABILITADO = false;
 
 const STATUS_FLUXO_PADRAO = [
     "aguardando",
@@ -352,9 +354,6 @@ function acompanharDocumentoAtendimento(contexto, agendamentoId) {
             atendimentosAtivos.set(agendamentoId, atendimento);
             renderizarTodosAtendimentos();
 
-            if (modalAgendamentoId === agendamentoId) {
-                abrirModalDetalhes(atendimento);
-            }
         },
         (error) => {
             if (contexto.ciclo !== cicloAtual) return;
@@ -546,27 +545,15 @@ function obterMomentoAgendamento(atendimento) {
 // ============================================================================
 
 function configurarEventoContainer(container) {
-    if (container.dataset.ppAtendimentoEventos === "1") return;
+    if (!container || container.dataset.ppAtendimentoEventos === "1") {
+        return;
+    }
 
+    /*
+     * O card já apresenta foto, serviço, status e evolução em tempo real.
+     * Não registramos mais ações para abrir uma segunda tela redundante.
+     */
     container.dataset.ppAtendimentoEventos = "1";
-
-    container.addEventListener("click", (event) => {
-        const botao = event.target.closest(
-            '[data-acao-atendimento="abrir"][data-agendamento-id]'
-        );
-
-        if (!botao || !container.contains(botao)) return;
-
-        const agendamentoId = limparTexto(
-            botao.dataset.agendamentoId
-        );
-
-        const atendimento = atendimentosAtivos.get(agendamentoId);
-
-        if (atendimento) {
-            abrirModalDetalhes(atendimento);
-        }
-    });
 }
 
 function renderizarTodosAtendimentos() {
@@ -661,19 +648,16 @@ function montarHtmlCardAtendimento(atendimento) {
                 ${
                     fotoAtendimento
                         ? `
-                            <button
-                                type="button"
+                            <div
                                 class="vitrine-atendimento-mini-foto"
-                                data-acao-atendimento="abrir"
-                                data-agendamento-id="${escaparAtributo(agendamentoId)}"
-                                aria-label="Ver foto do atendimento de ${escaparAtributo(nomePet || "pet")}"
+                                aria-label="Foto do atendimento de ${escaparAtributo(nomePet || "pet")}"
                             >
                                 <img
                                     src="${escaparAtributo(fotoAtendimento.url)}"
                                     alt="Foto do atendimento${nomePet ? ` de ${escaparAtributo(nomePet)}` : ""}"
                                     loading="lazy"
                                 >
-                            </button>
+                            </div>
                         `
                         : ""
                 }
@@ -685,16 +669,6 @@ function montarHtmlCardAtendimento(atendimento) {
 
             <div class="vitrine-atendimento-rodape">
                 <small>Atualizações enviadas diretamente pelo pet shop</small>
-
-                <button
-                    type="button"
-                    class="vitrine-atendimento-abrir"
-                    data-acao-atendimento="abrir"
-                    data-agendamento-id="${escaparAtributo(agendamentoId)}"
-                >
-                    Acompanhar atendimento
-                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                </button>
             </div>
         </article>
     `;
@@ -711,6 +685,11 @@ function esconderAtendimentos(container) {
 // ============================================================================
 
 function abrirModalDetalhes(atendimento) {
+    if (!MODAL_DETALHES_HABILITADO) {
+        removerModalDetalhes();
+        return;
+    }
+
     removerModalDetalhes();
 
     const agendamentoId = limparTexto(atendimento?.id);
