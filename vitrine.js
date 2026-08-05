@@ -49,7 +49,7 @@ import * as UI from './vitrini-ui.js';
 import {
     iniciarAcompanhamentoVitrine,
     encerrarAcompanhamentoVitrine
-} from './vitrine-atendimento.js?v=20260803-6';
+} from './vitrine-atendimento.js?v=20260805-1422';
 
 // --- PRONTI PET ---
 // Importação por namespace mantém compatibilidade durante a publicação gradual.
@@ -914,6 +914,119 @@ let promessaClienteResolvido = null;
 
 function normalizarEmail(email) {
     return String(email || "").trim().toLowerCase();
+}
+
+function formatarTelefonePerfil(valor) {
+    const digitos = String(valor || '').replace(/\D/g, '');
+
+    if (!digitos) {
+        return '';
+    }
+
+    if (digitos.length === 13 && digitos.startsWith('55')) {
+        return `+55 (${digitos.slice(2, 4)}) ${digitos.slice(4, 9)}-${digitos.slice(9)}`;
+    }
+
+    if (digitos.length === 12 && digitos.startsWith('55')) {
+        return `+55 (${digitos.slice(2, 4)}) ${digitos.slice(4, 8)}-${digitos.slice(8)}`;
+    }
+
+    if (digitos.length === 11) {
+        return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+    }
+
+    if (digitos.length === 10) {
+        return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+    }
+
+    return digitos;
+}
+
+function atualizarCampoContatoPerfil(id, valor) {
+    const campo = document.getElementById(id);
+
+    if (!campo) {
+        return;
+    }
+
+    const texto = campo.querySelector('[data-perfil-contato-texto]');
+    const valorLimpo = String(valor || '').trim();
+
+    if (!valorLimpo) {
+        campo.hidden = true;
+
+        if (texto) {
+            texto.textContent = '';
+        }
+
+        return;
+    }
+
+    if (texto) {
+        texto.textContent = valorLimpo;
+    }
+
+    campo.hidden = false;
+}
+
+function limparContatosPerfil() {
+    atualizarCampoContatoPerfil('user-email', '');
+    atualizarCampoContatoPerfil('user-telefone', '');
+}
+
+async function carregarContatosPerfil(user, clienteId) {
+    if (!user) {
+        limparContatosPerfil();
+        return;
+    }
+
+    let email = String(user.email || '').trim();
+    let telefone = '';
+
+    if (state.empresaId && clienteId) {
+        try {
+            const clienteRef = doc(
+                db,
+                'empresarios',
+                state.empresaId,
+                'clientes',
+                clienteId
+            );
+
+            const snapshot = await getDoc(clienteRef);
+
+            if (snapshot.exists()) {
+                const perfil = snapshot.data() || {};
+
+                email = String(
+                    perfil.email ||
+                    user.email ||
+                    ''
+                ).trim();
+
+                telefone = String(
+                    perfil.telefone ||
+                    ''
+                ).trim();
+            }
+
+        } catch (error) {
+            console.info(
+                'Não foi possível carregar os contatos do perfil:',
+                error.message
+            );
+        }
+    }
+
+    atualizarCampoContatoPerfil(
+        'user-email',
+        email
+    );
+
+    atualizarCampoContatoPerfil(
+        'user-telefone',
+        formatarTelefonePerfil(telefone)
+    );
 }
 
 function obterUidVinculado(perfil = {}) {
@@ -2294,7 +2407,13 @@ async function handleUserAuthStateChange(user) {
 
     if (user && state.empresaId) {
         try {
-            await obterClienteIdResolvido();
+            const clienteId = await obterClienteIdResolvido();
+
+            await carregarContatosPerfil(
+                user,
+                clienteId
+            );
+
             await atualizarAssinaturasDoCliente();
 
             iniciarAcompanhamentoVitrine({
@@ -2319,6 +2438,7 @@ async function handleUserAuthStateChange(user) {
 
     } else {
         encerrarAcompanhamentoVitrine();
+        limparContatosPerfil();
 
         renderizarCardProximoAgendamento({
             tipo: 'login'
@@ -5022,6 +5142,11 @@ async function exigirCelularParaAgendamento(
         {
             merge: true
         }
+    );
+
+    atualizarCampoContatoPerfil(
+        'user-telefone',
+        formatarTelefonePerfil(telefone)
     );
 
     return true;
