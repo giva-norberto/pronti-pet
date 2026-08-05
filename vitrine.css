@@ -4192,3 +4192,29 @@ input[type="date"]:focus {
         font-size: 0.64rem;
     }
 }
+
+/* ==========================================================
+   AJUSTE V6 — LARGURA IGUAL DOS 4 CARDS PRINCIPAIS
+   Corrige especificamente o card "Próximo agendamento".
+   ========================================================== */
+
+.pp-vitrine-home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pp-vitrine-home-grid > .pp-vitrine-home-card {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    justify-self: stretch;
+    align-self: stretch;
+}
+
+.pp-vitrine-home-card--next {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
+    box-sizing: border-box;
+}
