@@ -4218,3 +4218,22 @@ input[type="date"]:focus {
     align-self: stretch !important;
     box-sizing: border-box;
 }
+
+/* ==========================================================
+   AJUSTE V7 — MESMA ALTURA NOS 4 CARDS PRINCIPAIS
+   Corrige o card "Próximo agendamento", que estava menor.
+   ========================================================== */
+
+.pp-vitrine-home-grid > .pp-vitrine-home-card,
+.pp-vitrine-home-card--next {
+    min-height: 118px !important;
+    height: 118px !important;
+}
+
+@media (max-width: 430px) {
+    .pp-vitrine-home-grid > .pp-vitrine-home-card,
+    .pp-vitrine-home-card--next {
+        min-height: 118px !important;
+        height: 118px !important;
+    }
+}
