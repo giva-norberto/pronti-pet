@@ -3495,3 +3495,210 @@ input[type="date"]:focus {
         transition: none !important;
     }
 }
+
+/* ==========================================================
+   AJUSTE V2 — FOTO DO PRÓXIMO AGENDAMENTO E CARDS COMPACTOS
+   Apenas apresentação visual. Nenhuma lógica de atendimento,
+   Firebase, status, listener ou caminho de dados é alterado.
+   ========================================================== */
+
+/* A foto do próximo agendamento fica restrita à miniatura lateral. */
+.pp-vitrine-home-card--next .pp-vitrine-home-card-icon {
+    overflow: hidden;
+    padding: 0;
+    background: #ffffff;
+}
+
+.pp-vitrine-home-card--next .pp-vitrine-proximo-pet-foto {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: inherit;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Mantém o card de próximo agendamento alinhado aos demais cards da home. */
+.pp-vitrine-home-card--next {
+    min-height: 104px;
+    height: 104px;
+}
+
+.pp-vitrine-home-card--next .pp-vitrine-home-card-copy {
+    min-width: 0;
+}
+
+.pp-vitrine-home-card--next .pp-vitrine-home-card-copy strong,
+.pp-vitrine-home-card--next .pp-vitrine-home-card-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pp-vitrine-home-card--next .pp-vitrine-home-card-copy small {
+    display: -webkit-box;
+    margin-top: 3px;
+    line-height: 1.28;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+/* Cards de atendimento mais compactos, mantendo foto e evolução do status. */
+.pp-vitrine-home-tracking {
+    gap: 10px;
+}
+
+.vitrine-atendimento-card {
+    padding: 12px 13px;
+    border-left-width: 4px;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(85, 34, 182, 0.10);
+}
+
+.vitrine-atendimento-card::after {
+    right: -42px;
+    top: -48px;
+    width: 104px;
+    height: 104px;
+    border-width: 17px;
+}
+
+.vitrine-atendimento-card:hover {
+    transform: none;
+    box-shadow: 0 8px 20px rgba(85, 34, 182, 0.10);
+}
+
+.vitrine-atendimento-etiqueta {
+    min-height: 20px;
+    margin-bottom: 7px;
+    padding: 3px 7px;
+    font-size: 0.57rem;
+}
+
+.vitrine-atendimento-resumo {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 9px;
+}
+
+.vitrine-atendimento-avatar {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+    border-radius: 13px;
+}
+
+.vitrine-atendimento-avatar-vazio {
+    font-size: 0.95rem;
+}
+
+.vitrine-atendimento-info h2 {
+    gap: 5px;
+    font-size: 0.90rem;
+    line-height: 1.18;
+}
+
+.vitrine-atendimento-info p,
+.vitrine-atendimento-info small {
+    margin-top: 2px;
+    font-size: 0.63rem;
+    line-height: 1.28;
+}
+
+.vitrine-atendimento-status-texto {
+    gap: 4px;
+    padding: 4px 6px;
+    font-size: 0.55rem;
+}
+
+.vitrine-atendimento-mini-foto {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+    border-radius: 13px;
+    cursor: default;
+}
+
+.vitrine-atendimento-mini-timeline {
+    gap: 2px;
+    margin-top: 11px;
+}
+
+.vitrine-atendimento-mini-etapa {
+    padding-top: 18px;
+    font-size: 0.46rem;
+    line-height: 1.1;
+}
+
+.vitrine-atendimento-mini-etapa::before {
+    width: 11px;
+    height: 11px;
+    border-width: 2px;
+}
+
+.vitrine-atendimento-mini-etapa::after {
+    top: 5px;
+    left: calc(50% + 6px);
+    width: calc(100% - 9px);
+}
+
+/* O rodapé perdeu a função após a retirada do botão/modal. */
+.vitrine-atendimento-rodape {
+    display: none !important;
+}
+
+@media (max-width: 430px) {
+    .pp-vitrine-home-card--next {
+        min-height: 100px;
+        height: 100px;
+    }
+
+    .vitrine-atendimento-card {
+        padding: 11px;
+        border-radius: 17px;
+    }
+
+    .vitrine-atendimento-resumo {
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+
+    .vitrine-atendimento-avatar,
+    .vitrine-atendimento-mini-foto {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+    }
+
+    .vitrine-atendimento-info h2 {
+        font-size: 0.86rem;
+    }
+
+    .vitrine-atendimento-status-texto {
+        font-size: 0.52rem;
+    }
+
+    .vitrine-atendimento-mini-timeline {
+        margin-top: 10px;
+    }
+
+    .vitrine-atendimento-mini-etapa {
+        padding-top: 17px;
+        font-size: 0.43rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .vitrine-atendimento-status-texto {
+        max-width: 145px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vitrine-atendimento-mini-etapa {
+        font-size: 0.40rem;
+    }
+}
+
