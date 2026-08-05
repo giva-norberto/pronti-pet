@@ -166,37 +166,306 @@
                     <p class="info" style="color: #fff;">A carregar planos disponíveis...</p>
                 </div>
             </div>
-            
+
             <div id="menu-agendamento" class="menu-content" style="display: none;">
-                <button class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                <div class="card"> <h2>Faça o seu Agendamento</h2>
-                    <div id="agendamento-login-prompt" style="display: none;"><p>Você precisa <a href="#" id="login-link-agendamento">fazer login</a> para agendar um horário.</p></div>
-                    <div class="form-group"><label>1. Escolha um profissional</label><div id="lista-profissionais" class="profissionais-container"></div></div>
-                    <div id="agendamento-form-container" style="display: none;">
-                        <div class="form-group"><label id="label-servicos">2. Escolha o(s) serviço(s)</label><div id="lista-servicos" class="servicos-container-cards"></div><div id="servicos-resumo-container" style="display: none; margin-top: 20px;"><div class="servicos-resumo"><p id="resumo-texto"></p></div><button id="btn-prosseguir-data" class="btn-prosseguir">Escolher Data e Horário</button></div></div>
-                        <div id="data-e-horario-container" style="display:none;">
-                            <div class="form-group"><label for="data-agendamento">3. Escolha uma data</label><input type="date" id="data-agendamento" required disabled></div>
-                            <div class="form-group"><label>4. Escolha um horário</label>
-                                <div id="grade-horarios" class="horarios-container-grid">
-                                    <p class="aviso-horarios">Selecione um profissional e um serviço.</p>
+                <button class="btn-voltar">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Voltar
+                </button>
+
+                <div class="card pp-agendamento-card">
+                    <header class="pp-agendamento-cabecalho">
+                        <span class="pp-agendamento-etiqueta">Agendamento online</span>
+                        <h2>Agende o atendimento do seu pet</h2>
+                        <p>Escolha o pet, os serviços e o melhor horário disponível.</p>
+                    </header>
+
+                    <div id="agendamento-login-prompt" class="pp-agendamento-login" style="display: none;">
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        <div>
+                            <strong>Entre para continuar</strong>
+                            <p>
+                                Você precisa
+                                <a href="#" id="login-link-agendamento">fazer login</a>
+                                para realizar um agendamento.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        id="pp-agendamento-progresso"
+                        class="pp-agendamento-progresso"
+                        role="progressbar"
+                        aria-label="Progresso do agendamento"
+                        aria-valuemin="1"
+                        aria-valuemax="6"
+                        aria-valuenow="1"
+                    >
+                        <div class="pp-agendamento-progresso-trilho" aria-hidden="true">
+                            <div id="pp-agendamento-progresso-preenchimento" class="pp-agendamento-progresso-preenchimento"></div>
+                        </div>
+
+                        <ol class="pp-agendamento-progresso-etapas">
+                            <li data-progress-step="pet" class="ativo">
+                                <span>1</span>
+                                <small>Pet</small>
+                            </li>
+                            <li data-progress-step="profissional">
+                                <span>2</span>
+                                <small>Profissional</small>
+                            </li>
+                            <li data-progress-step="servicos">
+                                <span>3</span>
+                                <small>Serviços</small>
+                            </li>
+                            <li data-progress-step="data">
+                                <span>4</span>
+                                <small>Data</small>
+                            </li>
+                            <li data-progress-step="horario">
+                                <span>5</span>
+                                <small>Horário</small>
+                            </li>
+                            <li data-progress-step="revisao">
+                                <span>6</span>
+                                <small>Revisão</small>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div
+                        id="pp-agendamento-mensagem"
+                        class="pp-agendamento-aviso"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="agendamento-form-container"
+                        class="pp-agendamento-conteudo"
+                        style="display: none;"
+                        aria-live="polite"
+                    >
+                        <!-- ETAPA 1: PET -->
+                        <section id="etapa-pet" class="pp-agendamento-etapa" hidden>
+                            <div class="pp-agendamento-etapa-topo">
+                                <div>
+                                    <span class="pp-agendamento-passo">Etapa 1</span>
+                                    <h3>Qual pet será atendido?</h3>
+                                    <p>Selecione um dos pets cadastrados para continuar.</p>
                                 </div>
                             </div>
 
-                            <div id="container-fila-espera" style="display:none; margin: 20px 0; padding: 20px; border: 2px dashed #6366f1; border-radius: 15px; text-align: center; background-color: #f5f3ff;">
-                                <p style="color: #4338ca; font-weight: bold; margin-bottom: 5px;">📅 Dia lotado? Não fique de fora!</p>
-                                <p style="color: #6366f1; font-size: 0.85em; margin-bottom: 15px;">Entre na fila! Se alguém cancelar, avisaremos você.</p>
-                                <button onclick="entrarNaFilaDeAgendamento()" 
-                                        style="background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; padding: 10px 22px; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);">
-                                    Entrar na Fila de Espera
+                            <div id="lista-pets-agendamento" class="pp-agendamento-pets-lista"></div>
+
+                            <div id="pp-agendamento-sem-pets" class="pp-agendamento-vazio" hidden>
+                                <span class="pp-agendamento-vazio-icone" aria-hidden="true">
+                                    <i class="fa-solid fa-paw"></i>
+                                </span>
+                                <h3>Cadastre seu primeiro pet</h3>
+                                <p>É necessário cadastrar um pet antes de iniciar o agendamento.</p>
+                                <button
+                                    type="button"
+                                    id="btn-cadastrar-pet-agendamento"
+                                    class="pp-agendamento-btn pp-agendamento-btn--primario"
+                                >
+                                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                    Cadastrar pet
                                 </button>
                             </div>
+                        </section>
 
-                            <div id="resumo-agendamento-final" style="margin: 24px 0 8px 0;"></div>
-                            <button id="btn-confirmar-agendamento" disabled>Confirmar Agendamento</button>
+                        <!-- ETAPA 2: PROFISSIONAL -->
+                        <section id="etapa-profissional" class="pp-agendamento-etapa" hidden>
+                            <button
+                                type="button"
+                                class="pp-agendamento-voltar-etapa"
+                                data-voltar-etapa="pet"
+                            >
+                                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                Voltar para o pet
+                            </button>
+
+                            <div class="pp-agendamento-etapa-topo">
+                                <div>
+                                    <span class="pp-agendamento-passo">Próxima etapa</span>
+                                    <h3>Escolha o profissional</h3>
+                                    <p>Selecione quem realizará o atendimento.</p>
+                                </div>
+                            </div>
+
+                            <div id="lista-profissionais" class="profissionais-container"></div>
+                        </section>
+
+                        <!-- ETAPA 3: SERVIÇOS -->
+                        <section id="etapa-servicos" class="pp-agendamento-etapa" hidden>
+                            <button
+                                type="button"
+                                class="pp-agendamento-voltar-etapa"
+                                data-voltar-etapa="anterior-servicos"
+                            >
+                                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                Voltar
+                            </button>
+
+                            <div class="pp-agendamento-etapa-topo">
+                                <div>
+                                    <span class="pp-agendamento-passo">Próxima etapa</span>
+                                    <h3 id="label-servicos">Escolha o(s) serviço(s)</h3>
+                                    <p id="pp-agendamento-servicos-ajuda">
+                                        Selecione um serviço para continuar.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div id="lista-servicos" class="servicos-container-cards"></div>
+
+                            <div id="servicos-resumo-container" class="pp-agendamento-servicos-resumo" style="display: none;">
+                                <div class="servicos-resumo">
+                                    <p id="resumo-texto"></p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    id="btn-prosseguir-data"
+                                    class="btn-prosseguir pp-agendamento-btn pp-agendamento-btn--primario"
+                                >
+                                    Continuar para a data
+                                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </section>
+
+                        <div id="data-e-horario-container" class="pp-agendamento-data-horario" style="display: block;">
+                            <!-- ETAPA 4: DATA -->
+                            <section id="etapa-data" class="pp-agendamento-etapa" hidden>
+                                <button
+                                    type="button"
+                                    class="pp-agendamento-voltar-etapa"
+                                    data-voltar-etapa="servicos"
+                                >
+                                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                    Voltar para os serviços
+                                </button>
+
+                                <div class="pp-agendamento-etapa-topo">
+                                    <div>
+                                        <span class="pp-agendamento-passo">Próxima etapa</span>
+                                        <h3>Escolha a data</h3>
+                                        <p>O sistema abre automaticamente a primeira data com disponibilidade. Você também pode consultar outra data.</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-group pp-agendamento-campo-data">
+                                    <label for="data-agendamento">Data do atendimento</label>
+                                    <input type="date" id="data-agendamento" required disabled>
+                                    <p id="pp-agendamento-status-data" class="pp-agendamento-status-data" aria-live="polite"></p>
+                                </div>
+                            </section>
+
+                            <!-- ETAPA 5: HORÁRIO -->
+                            <section id="etapa-horario" class="pp-agendamento-etapa" hidden>
+                                <button
+                                    type="button"
+                                    class="pp-agendamento-voltar-etapa"
+                                    data-voltar-etapa="data"
+                                >
+                                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                    Escolher outra data
+                                </button>
+
+                                <div class="pp-agendamento-etapa-topo">
+                                    <div>
+                                        <span class="pp-agendamento-passo">Próxima etapa</span>
+                                        <h3>Escolha o horário</h3>
+                                        <p>Selecione um dos horários disponíveis para a data escolhida.</p>
+                                    </div>
+                                </div>
+
+                                <div id="grade-horarios" class="horarios-container-grid">
+                                    <p class="aviso-horarios">Calculando horários...</p>
+                                </div>
+
+                                <!-- A lógica atual da fila continua decidindo quando este bloco aparece. -->
+                                <div
+                                    id="container-fila-espera"
+                                    class="pp-agendamento-fila"
+                                    style="display: none;"
+                                >
+                                    <span class="pp-agendamento-fila-icone" aria-hidden="true">
+                                        <i class="fa-regular fa-calendar-xmark"></i>
+                                    </span>
+
+                                    <div class="pp-agendamento-fila-conteudo">
+                                        <strong>Dia lotado? Não fique de fora!</strong>
+                                        <p>Entre na fila. Se alguém cancelar, avisaremos você.</p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onclick="entrarNaFilaDeAgendamento()"
+                                        class="pp-agendamento-btn pp-agendamento-btn--fila"
+                                    >
+                                        Entrar na fila de espera
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- ETAPA 6: REVISÃO -->
+                            <section id="etapa-revisao" class="pp-agendamento-etapa" hidden>
+                                <button
+                                    type="button"
+                                    class="pp-agendamento-voltar-etapa"
+                                    data-voltar-etapa="horario"
+                                >
+                                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                    Alterar horário
+                                </button>
+
+                                <div class="pp-agendamento-etapa-topo">
+                                    <div>
+                                        <span class="pp-agendamento-passo">Última etapa</span>
+                                        <h3>Revise seu agendamento</h3>
+                                        <p>Confira os dados antes de confirmar.</p>
+                                    </div>
+                                </div>
+
+                                <div id="resumo-agendamento-final" class="pp-agendamento-revisao"></div>
+
+                                <button
+                                    type="button"
+                                    id="btn-confirmar-agendamento"
+                                    class="pp-agendamento-btn pp-agendamento-btn--confirmar"
+                                    disabled
+                                >
+                                    <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+                                    Confirmar agendamento
+                                </button>
+                            </section>
+
+                            <!-- CONCLUSÃO -->
+                            <section id="etapa-sucesso" class="pp-agendamento-etapa pp-agendamento-sucesso" hidden>
+                                <span class="pp-agendamento-sucesso-icone" aria-hidden="true">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </span>
+                                <h3>Agendamento confirmado!</h3>
+                                <p id="pp-agendamento-sucesso-texto">Seu horário foi reservado com sucesso.</p>
+
+                                <button
+                                    type="button"
+                                    id="btn-voltar-inicio-agendamento"
+                                    class="pp-agendamento-btn pp-agendamento-btn--primario"
+                                >
+                                    Voltar ao início
+                                </button>
+                            </section>
                         </div>
                     </div>
                 </div>
             </div>
+
+
 
           <div id="menu-pets" class="menu-content" style="display: none !important;">
                 <button class="btn-voltar">
@@ -373,7 +642,7 @@
         </div>
     </div>
     
-    <script type="module" src="./vitrine.js?v=20260803-0912"></script>
+    <script type="module" src="./vitrine.js?v=20260805-1014"></script>
 
     <!-- AÇÃO DO CARD MEUS PETS -->
     <script type="module">
@@ -710,9 +979,17 @@ if (menuKey === 'visualizacao') {
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('agendamento:salvo', (e) => {
+                // O fluxo dinâmico mostra a conclusão e retorna ao início.
+                // Ofertas aceitas pela fila continuam abrindo os agendamentos.
+                if (e.detail?.empresaId && document.getElementById('etapa-sucesso')) {
+                    return;
+                }
+
                 const visualCard = document.querySelector('[data-menu-card="visualizacao"]');
+
                 if (visualCard) {
                     visualCard.click();
+
                     setTimeout(() => {
                         const btnAtivos = document.getElementById('btn-ver-ativos');
                         if (btnAtivos) btnAtivos.click();
