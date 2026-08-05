@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Pronti Pet</title>
     
-    <link rel="stylesheet" href="./vitrine.css?v=20260805-1345">
+    <link rel="stylesheet" href="./vitrine.css?v=20260805-1408">
     <link rel="stylesheet" href="menu-principal.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -531,34 +531,86 @@
 
             <div id="menu-perfil" class="menu-content" style="display: none;">
                 <button class="btn-voltar">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Voltar
                 </button>
 
-                <div class="card">
-                    <h2>Meu Perfil</h2>
+                <div class="card pp-perfil-card">
+                    <header class="pp-perfil-cabecalho">
+                        <span class="pp-perfil-etiqueta">Conta Pronti Pet</span>
+                        <h2>Meu perfil</h2>
+                        <p>Consulte sua conta e mantenha sua sessão protegida.</p>
+                    </header>
 
-                    <div id="user-info" style="display: none;">
-                        <img
-                            id="user-photo"
-                            src=""
-                            alt="Foto do Utilizador"
-                            style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 15px;"
-                        >
+                    <div id="user-info" class="pp-perfil-usuario" style="display: none;">
+                        <div class="pp-perfil-identidade">
+                            <div class="pp-perfil-avatar-container">
+                                <img
+                                    id="user-photo"
+                                    src=""
+                                    alt="Foto do usuário"
+                                >
+                                <span class="pp-perfil-avatar-status" aria-label="Conta conectada">
+                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                </span>
+                            </div>
 
-                        <p id="user-name" style="font-weight: 600; font-size: 1.2rem;"></p>
+                            <div class="pp-perfil-identidade-texto">
+                                <span class="pp-perfil-status">
+                                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                                    Conta conectada
+                                </span>
 
-                        <button id="btn-logout" class="btn-secondary">
-                            Sair
+                                <p id="user-name"></p>
+                                <small>Cliente Pronti Pet</small>
+                            </div>
+                        </div>
+
+                        <div class="pp-perfil-informacoes">
+                            <div class="pp-perfil-informacao">
+                                <span class="pp-perfil-informacao-icone">
+                                    <i class="fa-solid fa-paw" aria-hidden="true"></i>
+                                </span>
+                                <div>
+                                    <strong>Seus dados em um só lugar</strong>
+                                    <small>Pets, agendamentos e planos vinculados à sua conta.</small>
+                                </div>
+                            </div>
+
+                            <div class="pp-perfil-informacao">
+                                <span class="pp-perfil-informacao-icone">
+                                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                </span>
+                                <div>
+                                    <strong>Acesso protegido</strong>
+                                    <small>Sua sessão permanece vinculada ao login utilizado.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="btn-logout" class="btn-secondary pp-perfil-logout">
+                            <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                            Sair da conta
                         </button>
                     </div>
 
-                    <div id="btn-login-container">
-                        <button id="btn-login" class="btn-submit">
-                            Fazer Login com Google
+                    <div id="btn-login-container" class="pp-perfil-login">
+                        <span class="pp-perfil-login-icone" aria-hidden="true">
+                            <i class="fa-regular fa-user"></i>
+                        </span>
+
+                        <h3>Entre na sua conta</h3>
+                        <p>Acesse seus pets, agendamentos e benefícios.</p>
+
+                        <button id="btn-login" class="btn-submit pp-perfil-login-botao">
+                            <i class="fa-brands fa-google" aria-hidden="true"></i>
+                            Entrar com Google
                         </button>
                     </div>
                 </div>
             </div>
+
+
 
             <div id="menu-minhas-assinaturas" class="menu-content" style="display:none;">
                 <button class="btn-voltar">
