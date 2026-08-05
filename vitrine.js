@@ -29,7 +29,8 @@ import {
     salvarAgendamento,
     buscarAgendamentosDoCliente,
     cancelarAgendamento,
-    encontrarPrimeiraDataComSlots
+    encontrarPrimeiraDataComSlots,
+    profissionalTemAusencia
 } from './vitrini-agendamento.js';
 
 import {
@@ -47,7 +48,10 @@ import {
 
 // --- PRONTI PET ---
 import {
-    garantirPetParaAgendamento,
+    prepararPetsParaAgendamento,
+    cadastrarPetParaAgendamento,
+    definirPetSelecionado,
+    limparPetSelecionado,
     obterPrecoDuracaoPorPet
 } from './vitrine-pets.js';
 
@@ -107,6 +111,689 @@ function calcularPrecoServico(servico) {
 
 function calcularDuracaoServico(servico) {
     return Number(servico?.duracao || 0);
+}
+
+
+// =====================================================================
+// FLUXO DINÂMICO DE AGENDAMENTO
+// =====================================================================
+
+let etapaAtualAgendamento = 'pet';
+let petsAgendamentoCache = [];
+let inicializacaoAgendamentoAtual = 0;
+let agendamentoSendoInicializado = false;
+
+function clienteEscolheFuncionario() {
+    /*
+     * Compatibilidade:
+     * - campo ausente ou true: mantém o fluxo atual com escolha;
+     * - false: oculta a etapa e usa o dono internamente.
+     */
+    return state.dadosEmpresa
+        ?.clienteEscolheFuncionario !==
+        false;
+}
+
+function profissionalEstaAtivo(profissional = {}) {
+    const status = String(
+        profissional.status || 'ativo'
+    )
+        .trim()
+        .toLowerCase();
+
+    return (
+        status === 'ativo' ||
+        status === 'active' ||
+        status === ''
+    );
+}
+
+function obterProfissionaisAtivos() {
+    return (
+        Array.isArray(state.listaProfissionais)
+            ? state.listaProfissionais
+            : []
+    ).filter(profissionalEstaAtivo);
+}
+
+function obterProfissionalDono() {
+    const profissionais =
+        obterProfissionaisAtivos();
+
+    const donoId = String(
+        state.dadosEmpresa?.donoId || ''
+    ).trim();
+
+    return (
+        profissionais.find(
+            profissional =>
+                profissional?.ehDono === true
+        ) ||
+        profissionais.find(
+            profissional =>
+                donoId &&
+                String(profissional?.id || '') ===
+                donoId
+        ) ||
+        null
+    );
+}
+
+function menuAgendamentoEstaVisivel() {
+    const menu =
+        document.getElementById(
+            'menu-agendamento'
+        );
+
+    if (!menu) {
+        return false;
+    }
+
+    return (
+        menu.classList.contains('ativo') ||
+        (
+            menu.style.display !== 'none' &&
+            getComputedStyle(menu).display !==
+                'none'
+        )
+    );
+}
+
+function limparEscolhasDepoisDoPet({
+    preservarProfissional = false
+} = {}) {
+    if (!preservarProfissional) {
+        setAgendamento(
+            'profissional',
+            null
+        );
+    }
+
+    setAgendamento('servicos', []);
+    setAgendamento('data', null);
+    setAgendamento('horario', null);
+
+    const dataInput =
+        document.getElementById(
+            'data-agendamento'
+        );
+
+    if (dataInput) {
+        dataInput.value = '';
+        dataInput.disabled = true;
+    }
+
+    UI.limparSelecao('profissional');
+    UI.limparSelecao('servico');
+    UI.limparSelecao('horario');
+    UI.renderizarHorarios([]);
+    UI.atualizarResumoAgendamento([]);
+    UI.desabilitarBotaoConfirmar();
+}
+
+function limparEscolhasDepoisDoProfissional() {
+    setAgendamento('servicos', []);
+    setAgendamento('data', null);
+    setAgendamento('horario', null);
+
+    const dataInput =
+        document.getElementById(
+            'data-agendamento'
+        );
+
+    if (dataInput) {
+        dataInput.value = '';
+        dataInput.disabled = true;
+    }
+
+    UI.limparSelecao('servico');
+    UI.limparSelecao('horario');
+    UI.renderizarHorarios([]);
+    UI.atualizarResumoAgendamento([]);
+    UI.desabilitarBotaoConfirmar();
+}
+
+function limparEscolhasDepoisDosServicos() {
+    setAgendamento('data', null);
+    setAgendamento('horario', null);
+
+    const dataInput =
+        document.getElementById(
+            'data-agendamento'
+        );
+
+    if (dataInput) {
+        dataInput.value = '';
+        dataInput.disabled = true;
+    }
+
+    UI.limparSelecao('horario');
+    UI.renderizarHorarios([]);
+    UI.desabilitarBotaoConfirmar();
+}
+
+async function carregarProfissionalComHorarios(
+    profissional
+) {
+    if (!profissional?.id) {
+        throw new Error(
+            'Profissional não identificado.'
+        );
+    }
+
+    const horarios =
+        await getHorariosDoProfissional(
+            state.empresaId,
+            profissional.id
+        );
+
+    if (!horarios) {
+        throw new Error(
+            'Este profissional ainda não possui horários configurados.'
+        );
+    }
+
+    return {
+        ...profissional,
+        horarios
+    };
+}
+
+function obterServicosDoProfissional(
+    profissional
+) {
+    const ids = Array.isArray(
+        profissional?.servicos
+    )
+        ? profissional.servicos
+        : [];
+
+    return ids
+        .map(
+            servicoId =>
+                state.todosOsServicos.find(
+                    servico =>
+                        servico.id ===
+                        servicoId
+                )
+        )
+        .filter(Boolean);
+}
+
+async function renderizarServicosDoProfissional(
+    profissional
+) {
+    const servicos =
+        obterServicosDoProfissional(
+            profissional
+        );
+
+    try {
+        await marcarServicosInclusosParaUsuario(
+            servicos,
+            state.empresaId,
+            state.clienteId
+        );
+    } catch (err) {
+        console.info(
+            'Não foi possível verificar assinatura ao carregar serviços:',
+            err.message
+        );
+    }
+
+    const permiteMultiplos =
+        profissional
+            ?.horarios
+            ?.permitirAgendamentoMultiplo ===
+        true;
+
+    UI.renderizarServicos(
+        servicos,
+        permiteMultiplos
+    );
+
+    UI.configurarAjudaServicos(
+        permiteMultiplos
+    );
+
+    UI.configurarModoAgendamento(
+        permiteMultiplos
+    );
+
+    return {
+        servicos,
+        permiteMultiplos
+    };
+}
+
+async function definirProfissionalNoFluxo(
+    profissional,
+    {
+        selecionarVisualmente = false
+    } = {}
+) {
+    const profissionalCompleto =
+        await carregarProfissionalComHorarios(
+            profissional
+        );
+
+    setAgendamento(
+        'profissional',
+        profissionalCompleto
+    );
+
+    limparEscolhasDepoisDoProfissional();
+
+    if (selecionarVisualmente) {
+        UI.selecionarCard(
+            'profissional',
+            profissionalCompleto.id
+        );
+    }
+
+    return profissionalCompleto;
+}
+
+function irParaEtapaAgendamento(
+    etapa,
+    {
+        rolar = true
+    } = {}
+) {
+    etapaAtualAgendamento = etapa;
+
+    UI.mostrarEtapaAgendamento(
+        etapa,
+        {
+            clienteEscolheFuncionario:
+                clienteEscolheFuncionario(),
+            rolar
+        }
+    );
+}
+
+async function prepararEtapaDepoisDoPet() {
+    if (
+        clienteEscolheFuncionario()
+    ) {
+        const profissionais =
+            obterProfissionaisAtivos();
+
+        UI.renderizarProfissionais(
+            profissionais
+        );
+
+        if (profissionais.length === 0) {
+            UI.mostrarMensagemAgendamento(
+                'Nenhum profissional ativo está disponível para agendamento.',
+                'erro'
+            );
+
+            return;
+        }
+
+        irParaEtapaAgendamento(
+            'profissional'
+        );
+
+        return;
+    }
+
+    let profissional =
+        state.agendamento.profissional;
+
+    if (!profissional) {
+        const dono =
+            obterProfissionalDono();
+
+        if (!dono) {
+            throw new Error(
+                'O profissional responsável pelo pet shop não foi encontrado.'
+            );
+        }
+
+        profissional =
+            await definirProfissionalNoFluxo(
+                dono
+            );
+    }
+
+    const { servicos } =
+        await renderizarServicosDoProfissional(
+            profissional
+        );
+
+    if (servicos.length === 0) {
+        UI.mostrarMensagemAgendamento(
+            'O pet shop ainda não vinculou serviços ao profissional responsável.',
+            'erro'
+        );
+    }
+
+    irParaEtapaAgendamento(
+        'servicos'
+    );
+}
+
+async function selecionarPetEAvancar(
+    pet,
+    {
+        selecaoAutomatica = false
+    } = {}
+) {
+    if (!pet) {
+        return;
+    }
+
+    definirPetSelecionado(pet);
+    setAgendamento('pet', pet);
+
+    limparEscolhasDepoisDoPet({
+        preservarProfissional:
+            !clienteEscolheFuncionario()
+    });
+
+    UI.renderizarPetsParaAgendamento(
+        petsAgendamentoCache,
+        pet.id
+    );
+
+    UI.selecionarCard(
+        'pet',
+        pet.id
+    );
+
+    if (selecaoAutomatica) {
+        await new Promise(
+            resolve =>
+                setTimeout(resolve, 180)
+        );
+    }
+
+    await prepararEtapaDepoisDoPet();
+}
+
+async function iniciarFluxoAgendamento({
+    resetar = true
+} = {}) {
+    if (agendamentoSendoInicializado) {
+        return;
+    }
+
+    const numeroInicializacao =
+        ++inicializacaoAgendamentoAtual;
+
+    agendamentoSendoInicializado = true;
+
+    try {
+        UI.toggleAgendamentoLoginPrompt(
+            !state.currentUser
+        );
+
+        UI.mostrarContainerForm(
+            Boolean(state.currentUser)
+        );
+
+        if (resetar) {
+            resetarAgendamento();
+            limparPetSelecionado();
+            petsAgendamentoCache = [];
+
+            UI.limparUIAgendamento();
+            UI.resetarEtapasAgendamento({
+                clienteEscolheFuncionario:
+                    clienteEscolheFuncionario()
+            });
+        }
+
+        if (!state.currentUser) {
+            UI.mostrarContainerForm(false);
+            return;
+        }
+
+        UI.mostrarContainerForm(true);
+        irParaEtapaAgendamento(
+            'pet',
+            {
+                rolar: false
+            }
+        );
+
+        UI.definirAgendamentoCarregando(
+            true,
+            'Carregando seus pets...'
+        );
+
+        const clienteId =
+            await obterClienteIdResolvido();
+
+        if (
+            numeroInicializacao !==
+            inicializacaoAgendamentoAtual
+        ) {
+            return;
+        }
+
+        if (
+            !clienteEscolheFuncionario()
+        ) {
+            const dono =
+                obterProfissionalDono();
+
+            if (!dono) {
+                throw new Error(
+                    'O perfil profissional do dono não foi encontrado.'
+                );
+            }
+
+            await definirProfissionalNoFluxo(
+                dono
+            );
+        }
+
+        petsAgendamentoCache =
+            await prepararPetsParaAgendamento(
+                state.empresaId,
+                clienteId
+            );
+
+        if (
+            numeroInicializacao !==
+            inicializacaoAgendamentoAtual
+        ) {
+            return;
+        }
+
+        UI.definirAgendamentoCarregando(
+            false
+        );
+
+        if (
+            petsAgendamentoCache.length ===
+            0
+        ) {
+            UI.renderizarPetsParaAgendamento(
+                []
+            );
+
+            UI.mostrarEstadoSemPets(true);
+            irParaEtapaAgendamento(
+                'pet',
+                {
+                    rolar: false
+                }
+            );
+
+            return;
+        }
+
+        UI.renderizarPetsParaAgendamento(
+            petsAgendamentoCache
+        );
+
+        if (
+            petsAgendamentoCache.length ===
+            1
+        ) {
+            await selecionarPetEAvancar(
+                petsAgendamentoCache[0],
+                {
+                    selecaoAutomatica: true
+                }
+            );
+
+            return;
+        }
+
+        irParaEtapaAgendamento(
+            'pet',
+            {
+                rolar: false
+            }
+        );
+
+    } catch (error) {
+        console.error(
+            'Erro ao iniciar fluxo de agendamento:',
+            error
+        );
+
+        UI.definirAgendamentoCarregando(
+            false
+        );
+
+        UI.mostrarMensagemAgendamento(
+            error.message ||
+                'Não foi possível iniciar o agendamento.',
+            'erro'
+        );
+
+        irParaEtapaAgendamento(
+            'pet',
+            {
+                rolar: false
+            }
+        );
+
+    } finally {
+        agendamentoSendoInicializado = false;
+    }
+}
+
+async function handleMenuAgendamentoClick(
+    event
+) {
+    const petCard =
+        event.target.closest(
+            '.pp-agendamento-pet-card'
+        );
+
+    if (petCard) {
+        const pet =
+            petsAgendamentoCache.find(
+                item =>
+                    String(item.id) ===
+                    String(
+                        petCard.dataset.petId
+                    )
+            );
+
+        await selecionarPetEAvancar(pet);
+        return;
+    }
+
+    const cadastrar =
+        event.target.closest(
+            '#btn-cadastrar-pet-agendamento'
+        );
+
+    if (cadastrar) {
+        if (!state.currentUser) {
+            fazerLogin();
+            return;
+        }
+
+        cadastrar.disabled = true;
+
+        try {
+            const clienteId =
+                await obterClienteIdResolvido();
+
+            const pet =
+                await cadastrarPetParaAgendamento(
+                    state.empresaId,
+                    clienteId
+                );
+
+            if (!pet) {
+                return;
+            }
+
+            petsAgendamentoCache =
+                await prepararPetsParaAgendamento(
+                    state.empresaId,
+                    clienteId
+                );
+
+            UI.mostrarEstadoSemPets(false);
+            await selecionarPetEAvancar(pet);
+
+        } catch (error) {
+            console.error(
+                'Erro ao cadastrar pet durante o agendamento:',
+                error
+            );
+
+            await UI.mostrarAlerta(
+                'Erro',
+                error.message ||
+                    'Não foi possível cadastrar o pet.'
+            );
+
+        } finally {
+            cadastrar.disabled = false;
+        }
+
+        return;
+    }
+
+    const voltar =
+        event.target.closest(
+            '[data-voltar-etapa]'
+        );
+
+    if (voltar) {
+        const destino =
+            voltar.dataset.voltarEtapa;
+
+        if (
+            destino ===
+            'anterior-servicos'
+        ) {
+            irParaEtapaAgendamento(
+                clienteEscolheFuncionario()
+                    ? 'profissional'
+                    : 'pet'
+            );
+
+            return;
+        }
+
+        irParaEtapaAgendamento(
+            destino
+        );
+
+        return;
+    }
+
+    const voltarInicio =
+        event.target.closest(
+            '#btn-voltar-inicio-agendamento'
+        );
+
+    if (voltarInicio) {
+        mostrarInicioVitrine();
+    }
 }
 
 // =====================================================================
@@ -678,6 +1365,12 @@ function configurarEventosGerais() {
     );
 
     addSafeListener(
+        'menu-agendamento',
+        'click',
+        handleMenuAgendamentoClick
+    );
+
+    addSafeListener(
         'lista-profissionais',
         'click',
         handleProfissionalClick
@@ -714,6 +1407,15 @@ function configurarEventosGerais() {
     );
 
     addSafeListener(
+        'login-link-agendamento',
+        'click',
+        (event) => {
+            event.preventDefault();
+            fazerLogin();
+        }
+    );
+
+    addSafeListener(
         'modal-auth-btn-google',
         'click',
         fazerLogin
@@ -741,6 +1443,38 @@ function configurarEventosGerais() {
         'lista-agendamentos-visualizacao',
         'click',
         handleCancelarClick
+    );
+
+    /*
+     * Os cards da home ainda são controlados por um módulo inline
+     * do HTML. Este listener inicia o assistente depois que o card
+     * "Agendar" abre a área de agendamento.
+     */
+    document.addEventListener(
+        'click',
+        (event) => {
+            const card =
+                event.target.closest(
+                    '[data-menu-card="agendamento"]'
+                );
+
+            if (!card) {
+                return;
+            }
+
+            setTimeout(
+                () => {
+                    if (
+                        menuAgendamentoEstaVisivel()
+                    ) {
+                        iniciarFluxoAgendamento({
+                            resetar: true
+                        });
+                    }
+                },
+                0
+            );
+        }
     );
 }
 
@@ -809,6 +1543,12 @@ async function handleUserAuthStateChange(user) {
                 UI.exibirMensagemDeLoginAgendamentos();
             }
         }
+    }
+
+    if (menuAgendamentoEstaVisivel()) {
+        await iniciarFluxoAgendamento({
+            resetar: true
+        });
     }
 }
 
@@ -1214,6 +1954,12 @@ function abrirMenuVitrine(menuId, destinoRodape) {
         behavior: 'smooth'
     });
 
+    if (menuId === 'menu-agendamento') {
+        void iniciarFluxoAgendamento({
+            resetar: true
+        });
+    }
+
     return true;
 }
 
@@ -1356,33 +2102,38 @@ async function handleAcompanharHome(event) {
 
 async function handleProfissionalClick(e) {
     const card =
-        e.target.closest('.card-profissional');
+        e.target.closest(
+            '.card-profissional'
+        );
 
     if (!card) {
         return;
     }
 
-    resetarAgendamento();
+    if (!state.agendamento.pet) {
+        await UI.mostrarAlerta(
+            'Atenção',
+            'Selecione o pet antes de escolher o profissional.'
+        );
 
-    UI.limparSelecao('servico');
-    UI.limparSelecao('horario');
-    UI.desabilitarBotaoConfirmar();
-    UI.mostrarContainerForm(false);
-    UI.renderizarServicos([]);
-    UI.renderizarHorarios([]);
+        irParaEtapaAgendamento('pet');
+        return;
+    }
 
     const profissionalId =
         card.dataset.id;
 
     const profissional =
-        state.listaProfissionais.find(
-            p => p.id === profissionalId
+        obterProfissionaisAtivos().find(
+            item =>
+                String(item.id) ===
+                String(profissionalId)
         );
 
     if (!profissional) {
         await UI.mostrarAlerta(
-            "Erro",
-            "Profissional não encontrado."
+            'Erro',
+            'Profissional não encontrado ou indisponível.'
         );
 
         return;
@@ -1394,72 +2145,50 @@ async function handleProfissionalClick(e) {
         true
     );
 
+    UI.mostrarMensagemAgendamento(
+        'Carregando horários e serviços do profissional...',
+        'carregando'
+    );
+
     try {
-        profissional.horarios =
-            await getHorariosDoProfissional(
-                state.empresaId,
-                profissionalId
+        const profissionalCompleto =
+            await definirProfissionalNoFluxo(
+                profissional,
+                {
+                    selecionarVisualmente: true
+                }
             );
 
-        setAgendamento(
-            'profissional',
-            profissional
-        );
-
-        const permiteMultiplos =
-            profissional.horarios
-                ?.permitirAgendamentoMultiplo ||
-            false;
-
-        const servicosDoProfissional =
-            (
-                profissional.servicos ||
-                []
-            )
-                .map(
-                    servicoId =>
-                        state.todosOsServicos.find(
-                            servico =>
-                                servico.id ===
-                                servicoId
-                        )
-                )
-                .filter(Boolean);
-
-        try {
-            await marcarServicosInclusosParaUsuario(
-                servicosDoProfissional,
-                state.empresaId,
-                state.clienteId
+        const { servicos } =
+            await renderizarServicosDoProfissional(
+                profissionalCompleto
             );
 
-        } catch (err) {
-            console.info(
-                "Não foi possível verificar assinatura ao selecionar profissional:",
-                err.message
+        UI.mostrarMensagemAgendamento('');
+
+        if (servicos.length === 0) {
+            UI.mostrarMensagemAgendamento(
+                'Este profissional ainda não possui serviços vinculados.',
+                'erro'
             );
         }
 
-        UI.mostrarContainerForm(true);
-
-        UI.renderizarServicos(
-            servicosDoProfissional,
-            permiteMultiplos
-        );
-
-        UI.configurarModoAgendamento(
-            permiteMultiplos
+        irParaEtapaAgendamento(
+            'servicos'
         );
 
     } catch (error) {
         console.error(
-            "Erro ao buscar horários do profissional:",
+            'Erro ao selecionar profissional:',
             error
         );
 
+        UI.mostrarMensagemAgendamento('');
+
         await UI.mostrarAlerta(
-            "Erro",
-            "Não foi possível carregar os dados deste profissional."
+            'Erro',
+            error.message ||
+                'Não foi possível carregar os dados deste profissional.'
         );
 
     } finally {
@@ -1477,27 +2206,15 @@ async function handleProfissionalClick(e) {
 
 async function handleServicoClick(e) {
     const card =
-        e.target.closest('.card-servico');
+        e.target.closest(
+            '.card-servico'
+        );
 
     if (!card) {
         return;
     }
 
-    if (!state.agendamento.profissional) {
-        await UI.mostrarAlerta(
-            "Atenção",
-            "Por favor, selecione um profissional antes de escolher um serviço."
-        );
-
-        return;
-    }
-
     if (!state.currentUser) {
-        await UI.mostrarAlerta(
-            "Login Necessário",
-            "Você precisa fazer login para escolher um serviço."
-        );
-
         if (UI.abrirModalLogin) {
             UI.abrirModalLogin();
         }
@@ -1505,43 +2222,77 @@ async function handleServicoClick(e) {
         return;
     }
 
-    const clienteId =
-        await obterClienteIdResolvido();
-
     const pet =
-        await garantirPetParaAgendamento(
-            state.empresaId,
-            clienteId
-        );
+        state.agendamento.pet;
 
     if (!pet) {
         await UI.mostrarAlerta(
-            "Atenção",
-            "Cadastre ou selecione um pet para continuar."
+            'Atenção',
+            'Selecione o pet antes de escolher o serviço.'
+        );
+
+        irParaEtapaAgendamento('pet');
+        return;
+    }
+
+    const profissional =
+        state.agendamento.profissional;
+
+    if (!profissional) {
+        await UI.mostrarAlerta(
+            'Atenção',
+            'Selecione o profissional antes de escolher o serviço.'
+        );
+
+        irParaEtapaAgendamento(
+            clienteEscolheFuncionario()
+                ? 'profissional'
+                : 'pet'
         );
 
         return;
     }
 
     const permiteMultiplos =
-        state.agendamento
-            .profissional
-            .horarios
-            ?.permitirAgendamentoMultiplo ||
-        false;
+        profissional
+            ?.horarios
+            ?.permitirAgendamentoMultiplo ===
+        true;
 
     const servicoId =
         card.dataset.id;
 
     const servicoOriginal =
         state.todosOsServicos.find(
-            s => s.id === servicoId
+            servico =>
+                String(servico.id) ===
+                String(servicoId)
         );
 
     if (!servicoOriginal) {
         await UI.mostrarAlerta(
-            "Erro",
-            "Serviço não encontrado."
+            'Erro',
+            'Serviço não encontrado.'
+        );
+
+        return;
+    }
+
+    const servicosPermitidos =
+        new Set(
+            Array.isArray(profissional.servicos)
+                ? profissional.servicos.map(String)
+                : []
+        );
+
+    if (
+        !servicosPermitidos.has(
+            String(servicoId)
+        )
+    ) {
+        await UI.mostrarAlerta(
+            'Atenção',
+            'Este serviço não está vinculado ao profissional selecionado.'
         );
 
         return;
@@ -1567,21 +2318,20 @@ async function handleServicoClick(e) {
 
         preco:
             Number(
-                precoDuracao.preco ||
-                0
+                precoDuracao.preco || 0
             ),
 
         duracao:
             Number(
-                precoDuracao.duracao ||
-                0
+                precoDuracao.duracao || 0
             ),
 
         precoCobrado:
-            Number(
-                precoDuracao.preco ||
-                0
-            )
+            servicoOriginal.precoCobrado === 0
+                ? 0
+                : Number(
+                    precoDuracao.preco || 0
+                )
     };
 
     if (
@@ -1589,24 +2339,26 @@ async function handleServicoClick(e) {
         servicoSelecionado.duracao <= 0
     ) {
         await UI.mostrarAlerta(
-            "Atenção",
-            "Este serviço ainda não possui duração cadastrada para o porte do pet selecionado."
+            'Atenção',
+            'Este serviço ainda não possui duração cadastrada para o porte do pet selecionado.'
         );
 
         return;
     }
 
     let servicosAtuais = [
-        ...state.agendamento.servicos
+        ...(state.agendamento.servicos || [])
     ];
 
     if (permiteMultiplos) {
         const index =
             servicosAtuais.findIndex(
-                s => s.id === servicoId
+                servico =>
+                    String(servico.id) ===
+                    String(servicoId)
             );
 
-        if (index > -1) {
+        if (index >= 0) {
             servicosAtuais.splice(
                 index,
                 1
@@ -1617,7 +2369,10 @@ async function handleServicoClick(e) {
             );
         }
 
-        card.classList.toggle('selecionado');
+        UI.selecionarCard(
+            'servico',
+            servicoId
+        );
 
     } else {
         servicosAtuais = [
@@ -1630,38 +2385,23 @@ async function handleServicoClick(e) {
         );
     }
 
-    setAgendamento('pet', pet);
-
     setAgendamento(
         'servicos',
         servicosAtuais
     );
 
-    setAgendamento('data', null);
-    setAgendamento('horario', null);
-
-    UI.limparSelecao('horario');
-    UI.desabilitarBotaoConfirmar();
+    limparEscolhasDepoisDosServicos();
 
     if (permiteMultiplos) {
         UI.atualizarResumoAgendamento(
             servicosAtuais
         );
 
-    } else {
-        const containerDataHorario =
-            document.getElementById(
-                'data-e-horario-container'
-            );
+        return;
+    }
 
-        if (containerDataHorario) {
-            containerDataHorario.style.display =
-                'block';
-        }
-
-        if (servicosAtuais.length > 0) {
-            await buscarPrimeiraDataDisponivel();
-        }
+    if (servicosAtuais.length > 0) {
+        await avancarParaEtapaData();
     }
 }
 
@@ -1670,53 +2410,66 @@ async function handleServicoClick(e) {
 // =====================================================================
 
 async function handleProsseguirDataClick() {
+    await avancarParaEtapaData();
+}
+
+async function avancarParaEtapaData() {
     const servicos =
         state.agendamento.servicos;
 
     if (
-        !servicos ||
+        !Array.isArray(servicos) ||
         servicos.length === 0
     ) {
         await UI.mostrarAlerta(
-            "Atenção",
-            "Selecione pelo menos um serviço para continuar."
+            'Atenção',
+            'Selecione pelo menos um serviço para continuar.'
         );
 
         return;
     }
 
-    const container =
-        document.getElementById(
-            'data-e-horario-container'
-        );
-
-    if (container) {
-        container.style.display =
-            'block';
-    }
+    irParaEtapaAgendamento(
+        'data'
+    );
 
     await buscarPrimeiraDataDisponivel();
 }
 
 async function buscarPrimeiraDataDisponivel() {
-    UI.atualizarStatusData(
-        true,
-        'A procurar a data mais próxima com vagas...'
-    );
+    const profissional =
+        state.agendamento.profissional;
+
+    const servicos =
+        state.agendamento.servicos || [];
+
+    if (
+        !profissional ||
+        servicos.length === 0
+    ) {
+        return;
+    }
 
     const duracaoTotal =
-        state.agendamento.servicos.reduce(
-            (total, s) =>
+        servicos.reduce(
+            (total, servico) =>
                 total +
-                calcularDuracaoServico(s),
+                calcularDuracaoServico(
+                    servico
+                ),
             0
         );
+
+    UI.atualizarStatusData(
+        true,
+        'Procurando a data mais próxima com vagas...'
+    );
 
     try {
         const primeiraData =
             await encontrarPrimeiraDataComSlots(
                 state.empresaId,
-                state.agendamento.profissional,
+                profissional,
                 duracaoTotal
             );
 
@@ -1725,45 +2478,85 @@ async function buscarPrimeiraDataDisponivel() {
                 'data-agendamento'
             );
 
-        if (primeiraData && dataInput) {
+        if (
+            primeiraData &&
+            dataInput
+        ) {
+            dataInput.min =
+                new Date()
+                    .toISOString()
+                    .slice(0, 10);
+
             dataInput.value =
                 primeiraData;
 
             dataInput.disabled =
                 false;
 
-            dataInput.dispatchEvent(
-                new Event('change')
+            UI.atualizarStatusData(
+                false,
+                ''
             );
 
-        } else {
-            UI.renderizarHorarios(
-                [],
-                'Nenhuma data disponível para os serviços selecionados nos próximos 3 meses.'
-            );
+            await handleDataChange({
+                target: dataInput
+            });
 
-            UI.atualizarStatusData(false);
+            return;
         }
+
+        UI.atualizarStatusData(
+            false,
+            'Nenhuma data disponível nos próximos 3 meses.'
+        );
+
+        UI.renderizarHorarios(
+            [],
+            'Nenhuma data disponível para os serviços selecionados nos próximos 3 meses.'
+        );
 
     } catch (error) {
         console.error(
-            "Erro ao encontrar data disponível:",
+            'Erro ao encontrar data disponível:',
             error
         );
 
-        await UI.mostrarAlerta(
-            "Erro",
-            "Ocorreu um problema ao verificar a disponibilidade."
+        UI.atualizarStatusData(
+            false,
+            'Não foi possível verificar a disponibilidade.'
         );
 
-        UI.atualizarStatusData(false);
+        await UI.mostrarAlerta(
+            'Erro',
+            'Ocorreu um problema ao verificar a disponibilidade.'
+        );
     }
 }
 
 async function handleDataChange(e) {
+    const dataSelecionada =
+        String(e?.target?.value || '');
+
+    const {
+        profissional,
+        pet
+    } = state.agendamento;
+
+    let servicos =
+        state.agendamento.servicos || [];
+
+    if (
+        !profissional ||
+        !pet ||
+        servicos.length === 0 ||
+        !dataSelecionada
+    ) {
+        return;
+    }
+
     setAgendamento(
         'data',
-        e.target.value
+        dataSelecionada
     );
 
     setAgendamento(
@@ -1774,24 +2567,35 @@ async function handleDataChange(e) {
     UI.limparSelecao('horario');
     UI.desabilitarBotaoConfirmar();
 
-    const {
-        profissional,
-        servicos,
-        data
-    } = state.agendamento;
+    irParaEtapaAgendamento(
+        'horario'
+    );
 
-    const duracaoTotal =
-        servicos.reduce(
-            (total, s) =>
-                total +
-                calcularDuracaoServico(s),
-            0
+    UI.renderizarHorarios(
+        [],
+        'Calculando horários...'
+    );
+
+    const estaAusente =
+        await profissionalTemAusencia(
+            state.empresaId,
+            profissional.id,
+            dataSelecionada
         );
+
+    if (estaAusente) {
+        UI.renderizarHorarios(
+            [],
+            'O profissional não atende nesta data.'
+        );
+
+        return;
+    }
 
     await aplicarPromocoesNaVitrine(
         state.todosOsServicos,
         state.empresaId,
-        data,
+        dataSelecionada,
         false
     );
 
@@ -1801,87 +2605,101 @@ async function handleDataChange(e) {
             state.empresaId,
             state.clienteId
         );
-
     } catch (err) {
         console.info(
-            "Não foi possível verificar assinatura ao mudar data:",
+            'Não foi possível verificar assinatura ao mudar data:',
             err.message
         );
     }
 
-    if (profissional) {
-        const permiteMultiplos =
-            profissional.horarios
-                ?.permitirAgendamentoMultiplo ||
-            false;
+    /*
+     * Atualiza preço e duração usando o porte do pet sem perder
+     * a seleção já realizada.
+     */
+    servicos = servicos
+        .map((selecionado) => {
+            const original =
+                state.todosOsServicos.find(
+                    item =>
+                        String(item.id) ===
+                        String(selecionado.id)
+                );
 
-        const servicosDoProfissional =
-            (
-                profissional.servicos ||
-                []
-            )
-                .map(
-                    servicoId =>
-                        state.todosOsServicos.find(
-                            servico =>
-                                servico.id ===
-                                servicoId
+            if (!original) {
+                return selecionado;
+            }
+
+            const precoDuracao =
+                obterPrecoDuracaoPorPet(
+                    original,
+                    pet
+                );
+
+            return {
+                ...selecionado,
+                ...original,
+                petId: pet.id,
+                petNome: pet.nome,
+                petPorte: pet.porte,
+                preco:
+                    Number(
+                        precoDuracao.preco || 0
+                    ),
+                duracao:
+                    Number(
+                        precoDuracao.duracao || 0
+                    ),
+                precoCobrado:
+                    original.precoCobrado === 0
+                        ? 0
+                        : Number(
+                            precoDuracao.preco || 0
                         )
-                )
-                .filter(Boolean);
+            };
+        });
 
-        UI.renderizarServicos(
-            servicosDoProfissional,
-            permiteMultiplos
+    setAgendamento(
+        'servicos',
+        servicos
+    );
+
+    const duracaoTotal =
+        servicos.reduce(
+            (total, servico) =>
+                total +
+                calcularDuracaoServico(
+                    servico
+                ),
+            0
         );
 
-        state.agendamento.servicos.forEach(
-            s =>
-                UI.selecionarCard(
-                    'servico',
-                    s.id
-                )
+    if (duracaoTotal <= 0) {
+        UI.renderizarHorarios(
+            [],
+            'Os serviços selecionados não possuem duração válida.'
         );
 
-        if (permiteMultiplos) {
-            UI.atualizarResumoAgendamento(
-                state.agendamento.servicos
-            );
-        } else {
-            UI.atualizarResumoAgendamentoFinal();
-        }
-    }
-
-    if (
-        !profissional ||
-        duracaoTotal === 0 ||
-        !data
-    ) {
         return;
     }
-
-    UI.renderizarHorarios(
-        [],
-        'A calcular horários...'
-    );
 
     try {
         const todosAgendamentos =
             await buscarAgendamentosDoDia(
                 state.empresaId,
-                data
+                dataSelecionada
             );
 
         const agendamentosProfissional =
             todosAgendamentos.filter(
-                ag =>
-                    ag.profissionalId ===
+                agendamento =>
+                    agendamento
+                        .profissionalId ===
                     profissional.id
             );
 
         const slots =
             calcularSlotsDisponiveis(
-                data,
+                dataSelecionada,
                 agendamentosProfissional,
                 profissional.horarios,
                 duracaoTotal
@@ -1891,7 +2709,7 @@ async function handleDataChange(e) {
 
     } catch (error) {
         console.error(
-            "Erro ao buscar agendamentos do dia:",
+            'Erro ao buscar agendamentos do dia:',
             error
         );
 
@@ -1904,7 +2722,9 @@ async function handleDataChange(e) {
 
 function handleHorarioClick(e) {
     const btn =
-        e.target.closest('.btn-horario');
+        e.target.closest(
+            '.btn-horario'
+        );
 
     if (!btn || btn.disabled) {
         return;
@@ -1920,8 +2740,19 @@ function handleHorarioClick(e) {
         btn.dataset.horario
     );
 
-    UI.atualizarResumoAgendamentoFinal();
+    UI.renderizarRevisaoAgendamento(
+        state.agendamento,
+        {
+            exibirProfissional:
+                clienteEscolheFuncionario()
+        }
+    );
+
     UI.habilitarBotaoConfirmar();
+
+    irParaEtapaAgendamento(
+        'revisao'
+    );
 }
 
 // =====================================================================
@@ -1930,14 +2761,33 @@ function handleHorarioClick(e) {
 
 async function handleConfirmarAgendamento() {
     if (!state.currentUser) {
-        await UI.mostrarAlerta(
-            "Login Necessário",
-            "Você precisa fazer login para confirmar o agendamento."
-        );
-
         if (UI.abrirModalLogin) {
             UI.abrirModalLogin();
         }
+
+        return;
+    }
+
+    const {
+        profissional,
+        servicos,
+        data,
+        horario,
+        pet
+    } = state.agendamento;
+
+    if (
+        !pet ||
+        !profissional ||
+        !Array.isArray(servicos) ||
+        servicos.length === 0 ||
+        !data ||
+        !horario
+    ) {
+        await UI.mostrarAlerta(
+            'Informação incompleta',
+            'Revise pet, profissional, serviço, data e horário antes de confirmar.'
+        );
 
         return;
     }
@@ -1954,126 +2804,158 @@ async function handleConfirmarAgendamento() {
         return;
     }
 
-    const {
-        profissional,
-        servicos,
-        data,
-        horario,
-        pet
-    } = state.agendamento;
-
-    if (
-        !profissional ||
-        !servicos ||
-        servicos.length === 0 ||
-        !data ||
-        !horario
-    ) {
-        await UI.mostrarAlerta(
-            "Informação Incompleta",
-            "Por favor, selecione profissional, serviço(s), data e horário."
-        );
-
-        return;
-    }
-
     const btn =
         document.getElementById(
             'btn-confirmar-agendamento'
         );
 
-    const textoOriginal =
-        btn
-            ? btn.textContent
-            : "Confirmar Agendamento";
+    const htmlOriginal =
+        btn?.innerHTML || '';
 
     if (btn) {
         btn.disabled = true;
-        btn.textContent = 'A agendar...';
+        btn.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            Confirmando...
+        `;
     }
 
     try {
-        const precoTotalCalculado =
+        const duracaoTotalCalculada =
             servicos.reduce(
-                (total, s) =>
+                (total, servico) =>
                     total +
-                    calcularPrecoServico(s),
+                    calcularDuracaoServico(
+                        servico
+                    ),
                 0
             );
 
-        const duracaoTotalCalculada =
+        /*
+         * Revalidação imediatamente antes de salvar.
+         * Evita confirmar um horário que acabou de atingir a capacidade
+         * enquanto o cliente estava na tela de revisão.
+         */
+        const agendamentosDoDia =
+            await buscarAgendamentosDoDia(
+                state.empresaId,
+                data
+            );
+
+        const agendamentosProfissional =
+            agendamentosDoDia.filter(
+                agendamento =>
+                    agendamento
+                        .profissionalId ===
+                    profissional.id
+            );
+
+        const slotsAindaDisponiveis =
+            calcularSlotsDisponiveis(
+                data,
+                agendamentosProfissional,
+                profissional.horarios,
+                duracaoTotalCalculada
+            );
+
+        if (
+            !slotsAindaDisponiveis.includes(
+                horario
+            )
+        ) {
+            setAgendamento(
+                'horario',
+                null
+            );
+
+            UI.limparSelecao('horario');
+            UI.desabilitarBotaoConfirmar();
+
+            await UI.mostrarAlerta(
+                'Horário indisponível',
+                'Este horário acabou de atingir a capacidade. Escolha outro horário.'
+            );
+
+            irParaEtapaAgendamento(
+                'horario'
+            );
+
+            await handleDataChange({
+                target: {
+                    value: data
+                }
+            });
+
+            return;
+        }
+
+        const precoTotalCalculado =
             servicos.reduce(
-                (total, s) =>
+                (total, servico) =>
                     total +
-                    calcularDuracaoServico(s),
+                    calcularPrecoServico(
+                        servico
+                    ),
                 0
             );
 
         const servicoParaSalvar = {
             id:
                 servicos
-                    .map(s => s.id)
+                    .map(servico => servico.id)
                     .join(','),
 
             nome:
                 servicos
-                    .map(s => s.nome)
+                    .map(servico => servico.nome)
                     .join(' + '),
 
             duracao:
                 duracaoTotalCalculada,
 
             preco:
-                precoTotalCalculado
+                precoTotalCalculado,
+
+            precoOriginal:
+                precoTotalCalculado,
+
+            fazParteDaAssinatura:
+                servicos.length === 1 &&
+                servicos[0]
+                    ?.precoCobrado === 0
         };
 
         const agendamentoParaSalvar = {
-            profissional:
-                state.agendamento.profissional,
-
-            data:
-                state.agendamento.data,
-
-            horario:
-                state.agendamento.horario,
-
+            profissional,
+            data,
+            horario,
             servico:
                 servicoParaSalvar,
-
             empresa:
                 state.dadosEmpresa,
 
-            pet: pet
-                ? {
-                    id:
-                        pet.id ||
-                        null,
+            pet: {
+                id:
+                    pet.id || null,
 
-                    nome:
-                        pet.nome ||
-                        "",
+                nome:
+                    pet.nome || '',
 
-                    porte:
-                        pet.porte ||
-                        "",
+                porte:
+                    pet.porte || '',
 
-                    raca:
-                        pet.raca ||
-                        "",
+                raca:
+                    pet.raca || '',
 
-                    fotoUrl:
-                        pet.fotoUrl ||
-                        "",
+                fotoUrl:
+                    pet.fotoUrl || '',
 
-                    fotoPath:
-                        pet.fotoPath ||
-                        "",
+                fotoPath:
+                    pet.fotoPath || '',
 
-                    observacoes:
-                        pet.observacoes ||
-                        ""
-                }
-                : null
+                observacoes:
+                    pet.observacoes || ''
+            }
         };
 
         await salvarAgendamento(
@@ -2086,53 +2968,55 @@ async function handleConfirmarAgendamento() {
         );
 
         const nomeEmpresa =
-            state.dadosEmpresa.nomeFantasia ||
-            "A empresa";
+            state.dadosEmpresa
+                ?.nomeFantasia ||
+            'O pet shop';
 
-        await UI.mostrarAlerta(
-            "Agendamento Confirmado!",
-            `${nomeEmpresa} agradece pelo seu agendamento.`
+        document.dispatchEvent(
+            new CustomEvent(
+                'agendamento:salvo',
+                {
+                    detail: {
+                        empresaId:
+                            state.empresaId,
+                        data,
+                        horario
+                    }
+                }
+            )
+        );
+
+        UI.mostrarConclusaoAgendamento(
+            nomeEmpresa
         );
 
         resetarAgendamento();
+        limparPetSelecionado();
+        petsAgendamentoCache = [];
 
-        UI.trocarAba(
-            'menu-visualizacao'
+        setTimeout(
+            () => {
+                UI.limparUIAgendamento();
+                mostrarInicioVitrine();
+            },
+            1800
         );
-
-        requestAnimationFrame(() => {
-            const btnAtivos =
-                document.getElementById(
-                    'btn-ver-ativos'
-                );
-
-            if (!btnAtivos) {
-                return;
-            }
-
-            btnAtivos.classList.add('ativo');
-
-            handleFiltroAgendamentos({
-                target: btnAtivos
-            });
-        });
 
     } catch (error) {
         console.error(
-            "Erro ao salvar agendamento:",
+            'Erro ao salvar agendamento:',
             error
         );
 
         await UI.mostrarAlerta(
-            "Erro",
+            'Erro',
             `Não foi possível confirmar o agendamento. ${error.message}`
         );
 
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.textContent =
-                textoOriginal;
+            btn.innerHTML = htmlOriginal;
         }
     }
 }
