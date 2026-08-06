@@ -3,14 +3,23 @@ const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
 
-const db = getFirestore("pronti-app");
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+// Banco padrão do projeto Pronti Pet.
+const db = getFirestore();
 const fcm = admin.messaging();
+
+const REGION = "southamerica-east1";
+const TIME_ZONE = "America/Sao_Paulo";
+const APP_URL = "https://pronti-pet.web.app";
 
 exports.rotinaLembreteCliente = onSchedule(
   {
-    schedule: "*/5 * * * *", // roda a cada 5 min
-    timeZone: "America/Sao_Paulo",
-    region: "southamerica-east1",
+    schedule: "*/5 * * * *",
+    timeZone: TIME_ZONE,
+    region: REGION,
     memory: "256MiB",
   },
   async () => {
@@ -42,58 +51,92 @@ exports.rotinaLembreteCliente = onSchedule(
             processandoEm: admin.firestore.FieldValue.serverTimestamp(),
           });
 
+          const clienteId = String(lembrete.clienteId || "").trim();
+
+          if (!clienteId) {
+            await ref.update({
+              enviado: "dados_incompletos",
+              processando: false,
+              processadoEm: admin.firestore.FieldValue.serverTimestamp(),
+              ultimoErro: "clienteId_ausente",
+            });
+            continue;
+          }
+
           const tokenDoc = await db
             .collection("mensagensTokens")
-            .doc(lembrete.clienteId)
+            .doc(clienteId)
             .get();
 
           if (!tokenDoc.exists) {
-            logger.warn(`Sem token cliente ${lembrete.clienteId}`);
-
             await ref.update({
               enviado: "sem_token",
               processando: false,
               processadoEm: admin.firestore.FieldValue.serverTimestamp(),
             });
-
             continue;
           }
 
-          const tokenData = tokenDoc.data();
-          const fcmToken = tokenData?.fcmToken;
+          const tokenData = tokenDoc.data() || {};
+          const fcmToken = tokenData.fcmToken;
 
-          if (!tokenData?.ativo || !fcmToken) {
-            logger.warn(`Token inválido ${lembrete.clienteId}`);
-
+          if (tokenData.ativo === false || !fcmToken) {
             await ref.update({
               enviado: "sem_token",
               processando: false,
               processadoEm: admin.firestore.FieldValue.serverTimestamp(),
             });
-
             continue;
           }
 
-          const link = `https://prontiapp.com.br/vitrine.html?empresa=${lembrete.empresaId}`;
+          const empresaId = String(lembrete.empresaId || "").trim();
+
+          if (!empresaId) {
+            await ref.update({
+              enviado: "dados_incompletos",
+              processando: false,
+              processadoEm: admin.firestore.FieldValue.serverTimestamp(),
+              ultimoErro: "empresaId_ausente",
+            });
+            continue;
+          }
+
+          const link =
+            `${APP_URL}/vitrine.html?empresa=${encodeURIComponent(empresaId)}`;
+
+          const servicoNome =
+            String(lembrete.servicoNome || "Seu atendimento").trim();
+
+          const profissionalNome =
+            String(lembrete.profissionalNome || "profissional").trim();
+
+          const horarioTexto =
+            String(lembrete.horarioTexto || lembrete.horario || "").trim();
+
+          const dataAgendamento =
+            String(lembrete.dataAgendamento || lembrete.data || "").trim();
 
           try {
             const messageId = await fcm.send({
               token: fcmToken,
-
               webpush: {
                 notification: {
                   title: "⏰ Seu horário está chegando!",
-                  body: `${lembrete.servicoNome} com ${lembrete.profissionalNome || "profissional"} às ${lembrete.horarioTexto}.\n\nVai conseguir ir?\nSe não, toque aqui e cancele para liberar o horário.`,
-                  icon: "https://prontiapp.com.br/icon.png",
-                  badge: "https://prontiapp.com.br/icon.png",
+                  body:
+                    `${servicoNome} com ${profissionalNome}` +
+                    `${horarioTexto ? ` às ${horarioTexto}` : ""}.` +
+                    "\n\nVai conseguir ir?" +
+                    "\nSe não, toque aqui e cancele para liberar o horário.",
+                  icon: `${APP_URL}/icon.png`,
+                  badge: `${APP_URL}/icon.png`,
                   vibrate: [200, 100, 200],
                   requireInteraction: true,
-                  tag: `lembrete-${lembrete.clienteId}-${lembrete.dataAgendamento}-${lembrete.horarioTexto}`,
+                  tag:
+                    `lembrete-${clienteId}-${dataAgendamento}-${horarioTexto}`,
                   renotify: true,
                 },
                 fcmOptions: { link },
               },
-
               android: {
                 priority: "high",
                 notification: {
@@ -101,10 +144,11 @@ exports.rotinaLembreteCliente = onSchedule(
                   priority: "high",
                 },
               },
-
               data: {
                 tipo: "lembrete",
-                link: link,
+                empresaId,
+                lembreteId: String(docLembrete.id),
+                link,
               },
             });
 
@@ -115,20 +159,20 @@ exports.rotinaLembreteCliente = onSchedule(
               messageId,
             });
 
-            logger.info(`✅ Enviado para ${lembrete.clienteId}`);
+            logger.info(`✅ Lembrete enviado para ${clienteId}.`);
           } catch (err) {
-            logger.error("Erro envio:", err);
+            logger.error("Erro ao enviar lembrete:", err);
 
-            // NÃO apagar token!
             if (err.code === "messaging/registration-token-not-registered") {
               await db
                 .collection("mensagensTokens")
-                .doc(lembrete.clienteId)
+                .doc(clienteId)
                 .set(
                   {
                     ativo: false,
                     ultimoErro: err.code,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt:
+                      admin.firestore.FieldValue.serverTimestamp(),
                   },
                   { merge: true }
                 );
@@ -137,22 +181,23 @@ exports.rotinaLembreteCliente = onSchedule(
             await ref.update({
               enviado: false,
               processando: false,
-              ultimoErro: err.code || err.message,
+              ultimoErro: err.code || err.message || "erro_envio_push",
             });
           }
-        } catch (e) {
-          logger.error("Erro interno:", e);
+        } catch (errorInterno) {
+          logger.error("Erro interno ao processar lembrete:", errorInterno);
 
           await ref.update({
             processando: false,
-            ultimoErro: e.message,
+            ultimoErro:
+              errorInterno.message || "erro_interno_processamento",
           });
         }
       }
 
-      logger.info("Rotina concluída.");
+      logger.info("Rotina de lembrete do cliente concluída.");
     } catch (error) {
-      logger.error("Erro geral:", error);
+      logger.error("Erro geral na rotina de lembrete do cliente:", error);
     }
   }
 );
