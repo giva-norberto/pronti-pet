@@ -1,12 +1,8 @@
 [
   {
     "origin": [
-      "https://pronti-app.vercel.app",
-      "https://pronti.vercel.app",
-      "https://prontiapp.com.br",
-      "https://www.prontiapp.com.br",
-      "https://pronti-app-37c6e.web.app",
-      "https://pronti-app-37c6e.firebaseapp.com",
+      "https://pronti-pet.web.app",
+      "https://pronti-pet.firebaseapp.com",
       "http://localhost:3000",
       "http://localhost:5001",
       "http://localhost:8080"
