@@ -6,7 +6,7 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const db = getFirestore("pronti-app");
+const db = getFirestore();
 const fcm = admin.messaging();
 
 const REGION = "southamerica-east1";
@@ -192,7 +192,7 @@ async function enviarAvisoAutomatico({
       await fcm.send({
         token,
         notification: {
-          title: "Pronti • Aviso de retorno",
+          title: "Pronti Pet • Aviso de retorno",
           body: mensagem
         },
         data: {
