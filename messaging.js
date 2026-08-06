@@ -33,7 +33,7 @@ class MessagingService {
   constructor() {
     this.token = null;
     this.isSupported = 'serviceWorker' in navigator && 'Notification' in window;
-    this.vapidKey = 'BAdbSkQO73zQ0hz3lOeyXjSSGO78NhJaLYYjKtzmfMxmnEL8u_7tvYkrQUYotGD5_qv0S5Bfkn3YI6E9ccGMB4w';
+    this.vapidKey = 'BFRsOSpuWhq84mfFJ3zsfP3lvxmdUnu-E5SmFgYT1kG_jaBWKqmE1UG_B_kkMDtEja7xwTjJdnSLd_AeV_NU0ZU';
   }
   async initialize() {
     if (!this.isSupported) {
