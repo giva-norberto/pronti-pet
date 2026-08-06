@@ -3,14 +3,23 @@ const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
 
-const db = getFirestore("pronti-app");
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+// Banco padrão do projeto Pronti Pet.
+const db = getFirestore();
 const fcm = admin.messaging();
+
+const REGION = "southamerica-east1";
+const TIME_ZONE = "America/Sao_Paulo";
+const APP_URL = "https://pronti-pet.web.app";
 
 exports.rotinaResumoAgendamentosDono = onSchedule(
   {
-    schedule: "0 * * * *", // roda de 1 em 1 hora
-    timeZone: "America/Sao_Paulo",
-    region: "southamerica-east1",
+    schedule: "0 * * * *",
+    timeZone: TIME_ZONE,
+    region: REGION,
     memory: "256MiB",
   },
   async () => {
@@ -20,7 +29,11 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
 
       const snap = await db
         .collectionGroup("agendamentos")
-        .where("criadoEm", ">=", admin.firestore.Timestamp.fromDate(janelaInicio))
+        .where(
+          "criadoEm",
+          ">=",
+          admin.firestore.Timestamp.fromDate(janelaInicio)
+        )
         .limit(300)
         .get();
 
@@ -56,7 +69,10 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
 
       for (const [empresaId, agendamentos] of porEmpresa.entries()) {
         try {
-          const empresaSnap = await db.collection("empresarios").doc(empresaId).get();
+          const empresaSnap = await db
+            .collection("empresarios")
+            .doc(empresaId)
+            .get();
 
           if (!empresaSnap.exists) {
             logger.warn(`Empresa não encontrada para resumo: ${empresaId}`);
@@ -66,7 +82,10 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
           const empresa = empresaSnap.data() || {};
           const donoId = empresa.donoId || empresa.userId || empresaId;
 
-          const tokenSnap = await db.collection("mensagensTokens").doc(donoId).get();
+          const tokenSnap = await db
+            .collection("mensagensTokens")
+            .doc(donoId)
+            .get();
 
           if (!tokenSnap.exists) {
             logger.warn(`Token do dono não encontrado: ${donoId}`);
@@ -76,21 +95,23 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
           const tokenData = tokenSnap.data() || {};
           const fcmToken = tokenData.fcmToken;
 
-          if (!tokenData.ativo || !fcmToken) {
+          if (tokenData.ativo === false || !fcmToken) {
             logger.warn(`Token do dono inválido ou inativo: ${donoId}`);
             continue;
           }
 
           const quantidade = agendamentos.length;
-          const nomeEmpresa = empresa.nomeFantasia || "seu negócio";
+          const nomeEmpresa =
+            empresa.nomeFantasia || empresa.nome || "seu pet shop";
 
-          const titulo = "📊 Novos agendamentos no Pronti";
+          const titulo = "📊 Novos agendamentos no Pronti Pet";
+
           const mensagem =
             quantidade === 1
               ? `Você recebeu 1 novo agendamento na última hora em ${nomeEmpresa}.`
               : `Você recebeu ${quantidade} novos agendamentos na última hora em ${nomeEmpresa}.`;
 
-          const link = "https://prontiapp.com.br/agenda.html";
+          const link = `${APP_URL}/agenda.html`;
 
           const messageId = await fcm.send({
             token: fcmToken,
@@ -104,8 +125,8 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
               notification: {
                 title: titulo,
                 body: mensagem,
-                icon: "https://prontiapp.com.br/icon.png",
-                badge: "https://prontiapp.com.br/icon.png",
+                icon: `${APP_URL}/icon.png`,
+                badge: `${APP_URL}/icon.png`,
                 vibrate: [200, 100, 200],
                 requireInteraction: true,
                 tag: `resumo-agendamentos-${empresaId}`,
@@ -124,7 +145,7 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
 
             data: {
               tipo: "resumo_agendamentos",
-              empresaId,
+              empresaId: String(empresaId),
               quantidade: String(quantidade),
               link,
             },
@@ -137,7 +158,8 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
               item.ref,
               {
                 resumoDonoEnviado: true,
-                resumoDonoEnviadoEm: admin.firestore.FieldValue.serverTimestamp(),
+                resumoDonoEnviadoEm:
+                  admin.firestore.FieldValue.serverTimestamp(),
                 resumoDonoMessageId: messageId,
               },
               { merge: true }
@@ -152,13 +174,19 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
             messageId,
           });
         } catch (errEmpresa) {
-          logger.error(`Erro ao processar resumo da empresa ${empresaId}:`, errEmpresa);
+          logger.error(
+            `Erro ao processar resumo da empresa ${empresaId}:`,
+            errEmpresa
+          );
         }
       }
 
       logger.info("Rotina de resumo de agendamentos concluída.");
     } catch (error) {
-      logger.error("Erro geral na rotina de resumo de agendamentos:", error);
+      logger.error(
+        "Erro geral na rotina de resumo de agendamentos:",
+        error
+      );
     }
   }
 );
