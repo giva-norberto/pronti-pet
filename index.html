@@ -2498,19 +2498,16 @@
             }
         }
 
-        window.addEventListener("sessionProfileReady", (event) => {
-            carregarResumoHojeIndex(event?.detail || {});
-        });
-    </script>
+      window.addEventListener("sessionProfileReady", (event) => {
+    carregarResumoHojeIndex(event?.detail || {});
+});
+</script>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(() => console.log('✅ Service Worker registrado com sucesso.'))
-                    .catch(err => console.warn('⚠️ Falha ao registrar o Service Worker:', err));
-            });
-        }
-    </script>
+<!--
+    O firebase-messaging-sw.js já é registrado pelo messaging.js
+    quando as notificações são ativadas.
+    Não registrar novamente o service-worker.js antigo aqui.
+-->
+
 </body>
 </html>
