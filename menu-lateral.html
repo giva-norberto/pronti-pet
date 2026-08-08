@@ -286,5 +286,10 @@
     height: auto !important;
     min-height: 0 !important;
   }
+
+  /* Refinamento exclusivo do Index: reduz apenas a sobra inferior do conteúdo. */
+  body:has(.index-shell) main.main-content {
+    padding-bottom: 62px !important;
+  }
 }
 </style>
