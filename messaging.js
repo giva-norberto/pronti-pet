@@ -3,7 +3,7 @@
 // ✅ Token FCM vinculado ao service worker correto
 // ✅ Revalidação automática do token quando a permissão já existe
 // ======================================================================
-import { app, db } from '/firebase-config.js';
+import { app, db, auth } from '/firebase-config.js';
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 import { doc, setDoc, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { verificarAcesso } from '/userService.js';
@@ -46,8 +46,6 @@ class MessagingService {
     try {
       let permission = Notification.permission;
 
-      // Só abre o prompt quando ainda não existe decisão do usuário.
-      // Se já estiver granted, não pede novamente: apenas recupera/gera o token.
       if (permission === 'default' && solicitarPermissao) {
         permission = await Notification.requestPermission();
       }
@@ -267,8 +265,6 @@ async function obterIdentidadeParaToken(userIdParam = null, empresaIdParam = nul
   return { userId: null, empresaId: null };
 }
 
-// Recria/atualiza o documento mensagensTokens/{uid} sem abrir prompt.
-// Usado quando a permissão do navegador já está concedida.
 export async function sincronizarTokenAutorizado(userIdParam = null, empresaIdParam = null) {
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return false;
@@ -477,13 +473,27 @@ function aplicarFonteMaiorNoIndexMobile() {
 
 async function sincronizarTokenNoIndexAoEntrar() {
   if (!ehIndexProntiPet()) return;
-  if (!('Notification' in window)) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-  // Se a permissão já existe, recria/atualiza mensagensTokens/{uid} automaticamente.
-  // Se estiver "default", o botão existente no index continua responsável pelo prompt.
-  if (Notification.permission === 'granted') {
-    await sincronizarTokenAutorizado();
+  // Não chama verificarAcesso() novamente no primeiro carregamento.
+  // Aguarda de forma independente o Firebase Auth restaurar o usuário e
+  // reutiliza a empresa já definida pelo fluxo principal no localStorage.
+  const MAX_TENTATIVAS = 10;
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+    const userId = auth.currentUser?.uid || null;
+    const empresaId = localStorage.getItem('empresaAtivaId');
+
+    if (userId && empresaId) {
+      await sincronizarTokenAutorizado(userId, empresaId);
+      return;
+    }
+
+    if (tentativa < MAX_TENTATIVAS) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
   }
+
+  console.warn('[messaging.js] Token não sincronizado no index: usuário/empresa ainda indisponíveis.');
 }
 
 function inicializarAjustesDoIndex() {
