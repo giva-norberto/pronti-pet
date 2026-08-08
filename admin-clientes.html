@@ -6,31 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <style>
-        body { font-family: Arial, sans-serif; background: #f6f6fa; margin: 0; } 
-        .main { margin-left: 260px; padding: 32px; } 
-        @media (max-width: 900px ) { .main { margin-left: 0; } } 
-        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px #0001; padding: 32px; } 
-        h2 { font-size: 1.7em; margin-bottom: 24px; } 
-        .empresa { border: 1px solid #eee; margin-bottom: 32px; border-radius: 8px; padding: 16px; background: #fafbfc; } 
-        .empresa-header { display: flex; align-items: center; justify-content: space-between; } 
-        .empresa-status { font-weight: bold; } 
-        .btn-block { background: #dc2626; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; } 
-        .btn-unblock { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; } 
-        table { width: 100%; margin-top: 8px; border-collapse: collapse; } 
-        th, td { padding: 6px 9px; text-align: left; } 
-        thead tr { background: #f3f4f6; } 
-        tbody tr.blocked { background: #fde2e2; } 
-        .loading, .restricted { padding: 32px; text-align: center; font-size: 1.1em; } 
-        .sidebar { width: 240px; background: linear-gradient(180deg, #4f46e5 0%, #6366f1 100%); min-height: 100vh; color: #fff; box-shadow: 2px 0 8px rgba(0,0,0,0.05); position: fixed; left: 0; top: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; padding-top: 24px; } 
-        .sidebar-brand { font-size: 2rem; font-weight: 900; color: #fff; text-decoration: none; letter-spacing: 2px; padding: 0 32px 12px 32px; display: block; margin-bottom: 8px; text-align: left; } 
-        .sidebar hr { margin: 0 32px 16px 32px; border: none; border-top: 1px solid #787cff55; } 
-        .sidebar-links { display: flex; flex-direction: column; gap: 10px; padding: 0 24px; } 
-        .sidebar-links a { display: flex; align-items: center; gap: 10px; background: #fff; color: #4f46e5; font-weight: 600; font-size: 1.08em; border-radius: 10px; margin-bottom: 0; box-shadow: 0 2px 6px rgba(79,70,229,0.07); transition: background 0.17s, color 0.18s, box-shadow 0.18s; padding: 12px 18px; text-align: left; text-decoration: none; letter-spacing: 0.01em; border: 2px solid transparent; } 
-        .sidebar-links a.active, .sidebar-links a:focus { background: #4f46e5; color: #fff; font-weight: 700; border: 2px solid #fff; box-shadow: 2px 4px 0 0 #ff3e7f22; } 
-        .sidebar-links a:hover:not(.active) { background: #ececff; color: #3b2fd6; border: 2px solid #d1d5fa; } 
-        .sidebar-footer { margin-top: auto; padding: 32px 32px 24px 32px; } 
-        .btn-logout { background: #fff; color: #4f46e5; border: none; padding: 12px 0; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1.05em; cursor: pointer; transition: background 0.2s, color 0.2s; box-shadow: 0 2px 6px rgba(79,70,229,0.07); border: 2px solid transparent; outline: none; } 
-        .btn-logout:hover, .btn-logout:focus { background: #4f46e5; color: #fff; border: 2px solid #fff; } 
+        body { font-family: Arial, sans-serif; background: #f6f6fa; margin: 0; }
+        .main { margin-left: 260px; padding: 32px; }
+        @media (max-width: 900px ) { .main { margin-left: 0; } }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px #0001; padding: 32px; }
+        h2 { font-size: 1.7em; margin-bottom: 24px; }
+        .empresa { border: 1px solid #eee; margin-bottom: 32px; border-radius: 8px; padding: 16px; background: #fafbfc; }
+        .empresa-header { display: flex; align-items: center; justify-content: space-between; }
+        .empresa-status { font-weight: bold; }
+        .btn-block { background: #dc2626; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; }
+        .btn-unblock { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; }
+        table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+        th, td { padding: 6px 9px; text-align: left; }
+        thead tr { background: #f3f4f6; }
+        tbody tr.blocked { background: #fde2e2; }
+        .loading, .restricted { padding: 32px; text-align: center; font-size: 1.1em; }
+        .sidebar { width: 240px; background: linear-gradient(180deg, #4f46e5 0%, #6366f1 100%); min-height: 100vh; color: #fff; box-shadow: 2px 0 8px rgba(0,0,0,0.05); position: fixed; left: 0; top: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; padding-top: 24px; }
+        .sidebar-brand { font-size: 2rem; font-weight: 900; color: #fff; text-decoration: none; letter-spacing: 2px; padding: 0 32px 12px 32px; display: block; margin-bottom: 8px; text-align: left; }
+        .sidebar hr { margin: 0 32px 16px 32px; border: none; border-top: 1px solid #787cff55; }
+        .sidebar-links { display: flex; flex-direction: column; gap: 10px; padding: 0 24px; }
+        .sidebar-links a { display: flex; align-items: center; gap: 10px; background: #fff; color: #4f46e5; font-weight: 600; font-size: 1.08em; border-radius: 10px; margin-bottom: 0; box-shadow: 0 2px 6px rgba(79,70,229,0.07); transition: background 0.17s, color 0.18s, box-shadow 0.18s; padding: 12px 18px; text-align: left; text-decoration: none; letter-spacing: 0.01em; border: 2px solid transparent; }
+        .sidebar-links a.active, .sidebar-links a:focus { background: #4f46e5; color: #fff; font-weight: 700; border: 2px solid #fff; box-shadow: 2px 4px 0 0 #ff3e7f22; }
+        .sidebar-links a:hover:not(.active) { background: #ececff; color: #3b2fd6; border: 2px solid #d1d5fa; }
+        .sidebar-footer { margin-top: auto; padding: 32px 32px 24px 32px; }
+        .btn-logout { background: #fff; color: #4f46e5; border: none; padding: 12px 0; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1.05em; cursor: pointer; transition: background 0.2s, color 0.2s; box-shadow: 0 2px 6px rgba(79,70,229,0.07); border: 2px solid transparent; outline: none; }
+        .btn-logout:hover, .btn-logout:focus { background: #4f46e5; color: #fff; border: 2px solid #fff; }
         @media (max-width: 900px) { .sidebar { width: 100vw; min-height: auto; position: static; flex-direction: row; align-items: flex-start; padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 0.95em; } .sidebar-brand { font-size: 1.4rem; padding: 10px 10px 4px 10px; margin-bottom: 0; text-align: left; } .sidebar hr { display: none; } .sidebar-links { flex-direction: row; gap: 6px; padding: 0 8px 0 8px; } .sidebar-links a { font-size: 1em; padding: 10px 12px; margin-bottom: 0; } .sidebar-footer { padding: 8px 8px 10px 8px; } .btn-logout { padding: 10px 0; font-size: 1em; } }
         .btn-delete { background: #6b7280; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 0.9em; }
         .btn-delete:hover { background: #4b5563; }
@@ -41,20 +41,17 @@
         .btn-save-trial:hover, .btn-save-license:hover { background: #1d4ed8; }
         .dias-restantes-span { margin-left: 14px; color: #374151; background: #e0e7ff; border-radius: 8px; padding: 3px 8px; font-size: 0.98em; }
 
-        /* === CSS PARA O CABEÇALHO E O BOTÃO NOVO === */
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            margin-bottom: 24px; /* Mantém a margem que o h2 original tinha */
+            margin-bottom: 24px;
         }
-        .page-header h2 {
-            margin: 0; /* Remove a margem do h2 para o container controlar */
-        }
-        .btn-pendentes {
-            background-color: #f59e0b;
+        .page-header h2 { margin: 0; }
+        .page-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .btn-voltar-index, .btn-pendentes {
             color: #fff;
             padding: 10px 20px;
             border-radius: 6px;
@@ -62,20 +59,30 @@
             font-weight: bold;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             border: none;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        .btn-pendentes:hover {
-            background-color: #d97706;
+        .btn-voltar-index { background-color: #5522b6; }
+        .btn-voltar-index:hover { background-color: #3f168f; }
+        .btn-pendentes { background-color: #f59e0b; }
+        .btn-pendentes:hover { background-color: #d97706; }
+
+        @media (max-width: 600px) {
+            .main { padding: 16px; }
+            .page-header { align-items: stretch; }
+            .page-header-actions { width: 100%; }
+            .btn-voltar-index, .btn-pendentes { flex: 1 1 auto; padding: 10px 12px; }
+            .empresa-header { align-items: flex-start; gap: 12px; flex-direction: column; }
+            .trial-management, .license-management { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
-    </aside>
+    <aside class="sidebar" id="sidebar"></aside>
     <div class="main">
         <div id="conteudo-admin"></div>
     </div>
@@ -83,9 +90,9 @@
     <script type="module">
         import { auth, db } from "./firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import { collection, getDocs, doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-        const ADMIN_UID = "BX6Q7HrVMrcCBqe72r7K76EBPkX2";
+        const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
         const conteudoDiv = document.getElementById('conteudo-admin');
         let currentData = [];
 
@@ -93,15 +100,12 @@
             if (conteudoDiv) conteudoDiv.innerHTML = html;
         }
 
-        // =====================================================================
-        // RESTAURADO: Suas funções originais, 100% INALTERADAS
-        // =====================================================================
         async function toggleBloqueio(empresaId, novoStatus, button) {
-            // Sua função original, sem alterações
+            // Função já estava sem implementação nesta versão do arquivo.
         }
 
         async function excluirEmpresa(empresaId, button) {
-            // Sua função original, sem alterações
+            // Função já estava sem implementação nesta versão do arquivo.
         }
         
         async function salvarDiasTeste(empresaId, donoId, button) {
@@ -137,12 +141,9 @@
         }
         
         async function salvarLicencas(empresaId, button) {
-            // Sua função original, sem alterações
+            // Função já estava sem implementação nesta versão do arquivo.
         }
 
-        // =====================================================================
-        // RESTAURADO: Seu addEventListener completo e original
-        // =====================================================================
         conteudoDiv.addEventListener('click', function(event) {
             const target = event.target;
             const empresaId = target.dataset.id;
@@ -175,27 +176,22 @@
             return diff > 0 ? diff : 0;
         }
         
-        // =====================================================================
-        // ÚNICA FUNÇÃO ALTERADA (Apenas para adicionar o botão no cabeçalho)
-        // =====================================================================
         function renderizarDados(empresas) {
             currentData = empresas;
             
-            // Adicionado o cabeçalho da página com o título e o novo botão
             let htmlFinal = `
                 <div class="page-header">
                     <h2>Gestão de Empresas e Funcionários</h2>
-                    <a href="aprovacao-manual.html" class="btn-pendentes">
-                        <i class="fa-solid fa-bell"></i>
-                        Pagamentos Pendentes
-                    </a>
+                    <div class="page-header-actions">
+                        <a href="index.html" class="btn-voltar-index" aria-label="Voltar para o início">← Voltar ao início</a>
+                        <a href="aprovacao-manual.html" class="btn-pendentes">Pagamentos Pendentes</a>
+                    </div>
                 </div>
             `;
 
             if (empresas.length === 0) {
                 htmlFinal += '<p>Nenhuma empresa encontrada.</p>';
             } else {
-                // O resto da renderização é o seu código original, concatenado ao cabeçalho
                 htmlFinal += empresas.map(empresa => {
                     const totalFuncionarios = empresa.funcionarios ? empresa.funcionarios.length : 0;
                     const licencaValue = empresa.usuariosLicenciados === undefined ? totalFuncionarios : empresa.usuariosLicenciados;
@@ -211,9 +207,7 @@
                                 </div>
                                 <div class="button-group">
                                     <button data-id="${empresa.uid}" class="btn-delete">Excluir</button>
-                                    <button data-id="${empresa.uid}" class="${empresa.bloqueado ? 'btn-unblock' : 'btn-block'}">
-                                        ${empresa.bloqueado ? 'Desbloquear' : 'Bloquear'}
-                                    </button>
+                                    <button data-id="${empresa.uid}" class="${empresa.bloqueado ? 'btn-unblock' : 'btn-block'}">${empresa.bloqueado ? 'Desbloquear' : 'Bloquear'}</button>
                                 </div>
                             </div>
                             <div class="trial-management">
@@ -229,8 +223,8 @@
                             </div>
                             <div style="margin-top: 16px;">
                                 <strong>Funcionários:</strong>
-                                <table style="width: 100%; margin-top: 8px; border-collapse: collapse;">
-                                    <thead><tr style="background: #f3f4f6;"><th>Nome</th><th>Email</th><th>Status</th></tr></thead>
+                                <table>
+                                    <thead><tr><th>Nome</th><th>Email</th><th>Status</th></tr></thead>
                                     <tbody>
                                         ${(empresa.funcionarios && empresa.funcionarios.length > 0)
                                             ? empresa.funcionarios.map(f => `
