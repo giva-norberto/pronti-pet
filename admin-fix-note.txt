@@ -1,1 +1,0 @@
-Ajuste de administração: atualizar UID do administrador do Pronti Pet e adicionar botão de retorno ao index.
