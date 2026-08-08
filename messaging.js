@@ -1,14 +1,13 @@
 // ======================================================================
 // messaging.js - Serviço de notificações Firebase
-// ✅ VERSÃO CORRIGIDA - Token FCM vinculado ao service worker correto
-// ✅ AJUSTE: Usa SEMPRE a registration do firebase-messaging-sw.js para gerar o token
-//    (corrige bug onde navigator.serviceWorker.ready retornava o SW do PWA)
+// ✅ Token FCM vinculado ao service worker correto
+// ✅ Revalidação automática do token quando a permissão já existe
 // ======================================================================
 import { app, db } from '/firebase-config.js';
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
-import { doc, setDoc, collection, addDoc, query, where, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { doc, setDoc, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { verificarAcesso } from '/userService.js';
-// --- INÍCIO DA MELHORIA DE ÁUDIO ---
+
 let audioUnlocked = false;
 export function unlockAudio() {
   if (audioUnlocked) return;
@@ -26,48 +25,61 @@ export function unlockAudio() {
     console.error('[Audio] Falha ao desbloquear áudio:', error);
   }
 }
-// --- FIM DA MELHORIA DE ÁUDIO ---
+
 const messaging = getMessaging(app);
 console.log('[DEBUG][messaging.js] Módulo carregado, usando instância central do Firebase.');
+
 class MessagingService {
   constructor() {
     this.token = null;
     this.isSupported = 'serviceWorker' in navigator && 'Notification' in window;
     this.vapidKey = 'BFRsOSpuWhq84mfFJ3zsfP3lvxmdUnu-E5SmFgYT1kG_jaBWKqmE1UG_B_kkMDtEja7xwTjJdnSLd_AeV_NU0ZU';
+    this.foregroundListenerConfigured = false;
   }
-  async initialize() {
+
+  async initialize({ solicitarPermissao = true } = {}) {
     if (!this.isSupported) {
       console.warn('[messaging.js] Notificações não suportadas neste navegador.');
       return false;
     }
+
     try {
-      const permission = await Notification.requestPermission();
+      let permission = Notification.permission;
+
+      // Só abre o prompt quando ainda não existe decisão do usuário.
+      // Se já estiver granted, não pede novamente: apenas recupera/gera o token.
+      if (permission === 'default' && solicitarPermissao) {
+        permission = await Notification.requestPermission();
+      }
+
       console.log('[DEBUG][messaging.js] Permissão de notificação:', permission);
+
       if (permission !== 'granted') {
-        console.warn('[messaging.js] Permissão negada pelo usuário.');
+        console.warn('[messaging.js] Permissão de notificações não concedida.');
         return false;
       }
-      // ✅ CORREÇÃO: Registrar e usar SEMPRE o firebase-messaging-sw.js
+
       let registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
       if (!registration) {
         console.log('[messaging.js] Registrando firebase-messaging-sw.js...');
         registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
       }
-      // ✅ CORREÇÃO: Aguardar o firebase-messaging-sw.js ficar ativo
-      //    (antes usava navigator.serviceWorker.ready que podia retornar o SW do PWA)
+
       if (registration.active) {
         console.log('[DEBUG][messaging.js] firebase-messaging-sw.js já está ativo.');
       } else {
         console.log('[messaging.js] Aguardando ativação do firebase-messaging-sw.js...');
         await this.waitForServiceWorker(registration);
       }
+
       console.log('[DEBUG][messaging.js] Service Worker FCM pronto:', registration);
-      // ✅ CORREÇÃO: Passa a registration do firebase-messaging-sw.js (não activeReg)
+
       await this.getMessagingToken(registration);
       if (!this.token) {
         console.warn('[messaging.js] initialize: token não foi obtido (null).');
         return false;
       }
+
       this.setupForegroundMessageListener();
       console.log('[DEBUG][messaging.js] Serviço de Messaging inicializado com sucesso!');
       return true;
@@ -76,6 +88,7 @@ class MessagingService {
       return false;
     }
   }
+
   async waitForServiceWorker(registration) {
     return new Promise((resolve) => {
       if (registration.active) return resolve();
@@ -93,49 +106,58 @@ class MessagingService {
       }
     });
   }
+
   async getMessagingToken(registration) {
     try {
-      // Pequeno delay para garantir que o SW está pronto (necessário em mobile)
       await new Promise(r => setTimeout(r, 1000));
       const currentToken = await getToken(messaging, {
         vapidKey: this.vapidKey,
         serviceWorkerRegistration: registration
       });
+
       if (currentToken) {
         this.token = currentToken;
         localStorage.setItem('fcm_token', currentToken);
         console.log('[DEBUG][messaging.js] Token FCM obtido:', currentToken);
         return currentToken;
-      } else {
-        console.warn('[DEBUG][messaging.js] Não foi possível obter token FCM.');
-        return null;
       }
+
+      console.warn('[DEBUG][messaging.js] Não foi possível obter token FCM.');
+      return null;
     } catch (error) {
       console.error('[messaging.js] Erro ao obter token FCM:', error);
       return null;
     }
   }
+
   setupForegroundMessageListener() {
+    if (this.foregroundListenerConfigured) return;
+    this.foregroundListenerConfigured = true;
+
     onMessage(messaging, (payload) => {
       console.log('[messaging.js] Mensagem recebida em primeiro plano:', payload);
       this.showForegroundNotification(payload);
     });
   }
+
   showForegroundNotification(payload) {
     const title = payload.notification?.title || payload.data?.title || 'Nova Notificação';
     const body = payload.notification?.body || payload.data?.body || 'Você recebeu uma nova mensagem.';
+
     if (Notification.permission === 'granted') {
       const notification = new Notification(title, {
-        body: body,
+        body,
         icon: payload.notification?.icon || payload.data?.icon || '/icon.png',
         badge: '/badge.png',
         tag: `notif-${Date.now()}`,
         renotify: true
       });
+
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
+
       try {
         if (audioUnlocked) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -152,6 +174,7 @@ class MessagingService {
       }
     }
   }
+
   async sendTokenToServer(userId, empresaId) {
     if (!this.token) {
       console.warn('[messaging.js] Token não disponível.');
@@ -161,17 +184,19 @@ class MessagingService {
       console.error('[messaging.js] userId ou empresaId não fornecidos.');
       return false;
     }
+
     try {
-      const ref = doc(db, "mensagensTokens", userId);
+      const ref = doc(db, 'mensagensTokens', userId);
       await setDoc(ref, {
-        empresaId: empresaId,
-        userId: userId,
+        empresaId,
+        userId,
         fcmToken: this.token,
         updatedAt: new Date(),
         ativo: true,
-        tipo: "web",
-        navegador: navigator.userAgent || "Não identificado",
+        tipo: 'web',
+        navegador: navigator.userAgent || 'Não identificado'
       }, { merge: true });
+
       console.log('[messaging.js] Token salvo/atualizado no Firestore.');
       return true;
     } catch (err) {
@@ -179,16 +204,17 @@ class MessagingService {
       return false;
     }
   }
+
   async saveAlert(empresaId, clienteNome, servico, horario) {
     try {
-      const alertsRef = collection(db, "alerts");
+      const alertsRef = collection(db, 'alerts');
       await addDoc(alertsRef, {
         empresaId,
         clienteNome,
         servico,
         horario,
         createdAt: new Date(),
-        status: "novo"
+        status: 'novo'
       });
       console.log('[messaging.js] Alerta salvo no Firestore.');
       return true;
@@ -197,25 +223,89 @@ class MessagingService {
       return false;
     }
   }
+
   getCurrentToken() {
     return this.token || localStorage.getItem('fcm_token');
   }
 }
-// --- INSTÂNCIA GLOBAL ---
+
 window.messagingService = new MessagingService();
-// ✅ CORREÇÃO CIRÚRGICA: aceita params opcionais (vitrine passa) e mantém fallback (painel)
+
+async function obterIdentidadeParaToken(userIdParam = null, empresaIdParam = null) {
+  let userId = userIdParam;
+  let empresaId = empresaIdParam;
+
+  if (userId && empresaId) return { userId, empresaId };
+
+  const totalTentativas = 6;
+  for (let tentativa = 1; tentativa <= totalTentativas; tentativa++) {
+    try {
+      const sessionProfile = await verificarAcesso();
+      if (
+        sessionProfile &&
+        sessionProfile.user &&
+        sessionProfile.user.uid &&
+        sessionProfile.empresaId
+      ) {
+        return {
+          userId: sessionProfile.user.uid,
+          empresaId: sessionProfile.empresaId
+        };
+      }
+    } catch (erroAcesso) {
+      console.warn(
+        `[messaging.js] Tentativa ${tentativa}/${totalTentativas} para obter o perfil falhou:`,
+        erroAcesso
+      );
+    }
+
+    if (tentativa < totalTentativas) {
+      await new Promise(resolve => setTimeout(resolve, 700));
+    }
+  }
+
+  return { userId: null, empresaId: null };
+}
+
+// Recria/atualiza o documento mensagensTokens/{uid} sem abrir prompt.
+// Usado quando a permissão do navegador já está concedida.
+export async function sincronizarTokenAutorizado(userIdParam = null, empresaIdParam = null) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  try {
+    const inicializado = await window.messagingService.initialize({ solicitarPermissao: false });
+    if (!inicializado) return false;
+
+    const { userId, empresaId } = await obterIdentidadeParaToken(userIdParam, empresaIdParam);
+    if (!userId || !empresaId) {
+      console.warn('[messaging.js] Não foi possível identificar usuário/empresa para sincronizar o token.');
+      return false;
+    }
+
+    const salvo = await window.messagingService.sendTokenToServer(userId, empresaId);
+    if (salvo) {
+      console.log('[messaging.js] Token FCM sincronizado automaticamente.', { userId, empresaId });
+    }
+    return salvo;
+  } catch (error) {
+    console.error('[messaging.js] Falha na sincronização automática do token:', error);
+    return false;
+  }
+}
+
 window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, empresaIdParam = null) {
   unlockAudio();
 
   const btn = document.querySelector('.notification-button');
-
   if (btn) {
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
   }
 
   try {
-    const inicializado = await window.messagingService.initialize();
+    const inicializado = await window.messagingService.initialize({ solicitarPermissao: true });
 
     if (!inicializado) {
       if (window.mostrarMensagemNotificacao) {
@@ -227,44 +317,10 @@ window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, e
       return false;
     }
 
-    let userId = userIdParam;
-    let empresaId = empresaIdParam;
+    const { userId, empresaId } = await obterIdentidadeParaToken(userIdParam, empresaIdParam);
 
     if (!userId || !empresaId) {
-      const totalTentativas = 6;
-
-      for (let tentativa = 1; tentativa <= totalTentativas; tentativa++) {
-        try {
-          const sessionProfile = await verificarAcesso();
-
-          if (
-            sessionProfile &&
-            sessionProfile.user &&
-            sessionProfile.user.uid &&
-            sessionProfile.empresaId
-          ) {
-            userId = sessionProfile.user.uid;
-            empresaId = sessionProfile.empresaId;
-            break;
-          }
-        } catch (erroAcesso) {
-          console.warn(
-            `[messaging.js] Tentativa ${tentativa}/${totalTentativas} para obter o perfil falhou:`,
-            erroAcesso
-          );
-        }
-
-        if (tentativa < totalTentativas) {
-          await new Promise(resolve => setTimeout(resolve, 700));
-        }
-      }
-    }
-
-    if (!userId || !empresaId) {
-      console.error(
-        '[messaging.js] Perfil inválido. Não foi possível identificar usuário e empresa para salvar o token.'
-      );
-
+      console.error('[messaging.js] Perfil inválido. Não foi possível identificar usuário e empresa para salvar o token.');
       if (window.mostrarMensagemNotificacao) {
         window.mostrarMensagemNotificacao(
           'Não foi possível identificar sua empresa. Tente ativar novamente.',
@@ -274,16 +330,9 @@ window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, e
       return false;
     }
 
-    const tokenSalvo = await window.messagingService.sendTokenToServer(
-      userId,
-      empresaId
-    );
-
+    const tokenSalvo = await window.messagingService.sendTokenToServer(userId, empresaId);
     if (!tokenSalvo) {
-      console.error(
-        '[messaging.js] Token obtido, mas não foi salvo no Firestore.'
-      );
-
+      console.error('[messaging.js] Token obtido, mas não foi salvo no Firestore.');
       if (window.mostrarMensagemNotificacao) {
         window.mostrarMensagemNotificacao(
           'Não foi possível concluir a ativação das notificações.',
@@ -293,15 +342,10 @@ window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, e
       return false;
     }
 
-    if (btn) {
-      btn.style.display = 'none';
-    }
+    if (btn) btn.style.display = 'none';
 
     if (window.mostrarMensagemNotificacao) {
-      window.mostrarMensagemNotificacao(
-        'Notificações ativas!',
-        'success'
-      );
+      window.mostrarMensagemNotificacao('Notificações ativas!', 'success');
     }
 
     iniciarOuvinteDeNotificacoes(userId);
@@ -313,18 +357,10 @@ window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, e
 
     return true;
   } catch (error) {
-    console.error(
-      '[messaging.js] Erro ao configurar notificações:',
-      error
-    );
-
+    console.error('[messaging.js] Erro ao configurar notificações:', error);
     if (window.mostrarMensagemNotificacao) {
-      window.mostrarMensagemNotificacao(
-        'Erro ao ativar notificações. Tente novamente.',
-        'error'
-      );
+      window.mostrarMensagemNotificacao('Erro ao ativar notificações. Tente novamente.', 'error');
     }
-
     return false;
   } finally {
     if (btn && btn.style.display !== 'none') {
@@ -336,24 +372,26 @@ window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, e
 
 let unsubscribeDeFila = null;
 export function iniciarOuvinteDeNotificacoes(donoId) {
-  if (unsubscribeDeFila) {
-    unsubscribeDeFila();
-  }
+  if (unsubscribeDeFila) unsubscribeDeFila();
+
   if (!donoId) {
     console.warn('[Ouvinte] donoId não fornecido.');
     return;
   }
+
   const q = query(
-    collection(db, "filaDeNotificacoes"),
-    where("donoId", "==", donoId),
-    where("status", "==", "pendente")
+    collection(db, 'filaDeNotificacoes'),
+    where('donoId', '==', donoId),
+    where('status', '==', 'pendente')
   );
+
   unsubscribeDeFila = onSnapshot(q, (snapshot) => {
     snapshot.docChanges().forEach((change) => {
-      if (change.type === "added") {
+      if (change.type === 'added') {
         const bilhete = change.doc.data();
         const bilheteId = change.doc.id;
-        console.log("✅ [Ouvinte] Novo bilhete recebido:", bilhete);
+        console.log('✅ [Ouvinte] Novo bilhete recebido:', bilhete);
+
         if (window.messagingService) {
           const payload = {
             data: {
@@ -362,36 +400,103 @@ export function iniciarOuvinteDeNotificacoes(donoId) {
             }
           };
           window.messagingService.showForegroundNotification(payload);
-          console.log("✅ [Ouvinte] Notificação local exibida com som.");
+          console.log('✅ [Ouvinte] Notificação local exibida com som.');
         }
+
         const clienteNome = bilhete.clienteNome || bilhete.nomeCliente || bilhete.template?.data?.nomeCliente || null;
         const servico = bilhete.servico || bilhete.servicoNome || bilhete.template?.data?.servicoNome || null;
         const horario = bilhete.horario || bilhete.horarioAgendamento || bilhete.template?.data?.horarioAgendamento || null;
+
         if (clienteNome && servico && horario) {
-          fetch("https://script.google.com/macros/s/AKfycby_Va3ads-umFvz2PpKmSS4-yp1y7riOdsow06nY7pfIvQvZ2mwnnOloszlxuwgEn3L/exec", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          fetch('https://script.google.com/macros/s/AKfycby_Va3ads-umFvz2PpKmSS4-yp1y7riOdsow06nY7pfIvQvZ2mwnnOloszlxuwgEn3L/exec', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               nome: clienteNome,
-              servico: servico,
-              horario: horario
+              servico,
+              horario
             })
-          }).then(() => console.log("📧 E-mail disparado via Web App."))
-            .catch(err => console.error("❌ Erro ao disparar e-mail:", err));
+          }).then(() => console.log('📧 E-mail disparado via Web App.'))
+            .catch(err => console.error('❌ Erro ao disparar e-mail:', err));
         }
-        // Importante: Mantivemos o log de correção para a Cloud Function
+
         console.log(`[Ouvinte] Bilhete ${bilheteId} será processado pela Cloud Function.`);
       }
     });
   }, (error) => {
-    console.error("❌ Erro no listener da fila de notificações:", error);
+    console.error('❌ Erro no listener da fila de notificações:', error);
   });
+
   console.log(`✅ Ouvinte iniciado para o dono: ${donoId}`);
 }
+
 export function pararOuvinteDeNotificacoes() {
   if (unsubscribeDeFila) {
     unsubscribeDeFila();
     unsubscribeDeFila = null;
-    console.log("🛑 Ouvinte parado.");
+    console.log('🛑 Ouvinte parado.');
   }
+}
+
+// ======================================================================
+// INDEX MOBILE — legibilidade + recuperação automática de token
+// ======================================================================
+function ehIndexProntiPet() {
+  const path = (window.location.pathname || '').toLowerCase();
+  return path === '/' || path.endsWith('/index.html') || !!document.querySelector('.index-shell');
+}
+
+function aplicarFonteMaiorNoIndexMobile() {
+  if (!ehIndexProntiPet() || document.getElementById('pronti-index-mobile-font-fix')) return;
+
+  const style = document.createElement('style');
+  style.id = 'pronti-index-mobile-font-fix';
+  style.textContent = `
+    @media (max-width: 680px) {
+      .welcome-copy h1 { font-size: 1.12rem !important; }
+      .owner-chip { font-size: .68rem !important; }
+      .section-title-row h2 { font-size: 1rem !important; }
+      .section-title-row a { font-size: .76rem !important; }
+      .today-metric-value { font-size: 1.35rem !important; }
+      .today-metric-label { font-size: .70rem !important; line-height: 1.25 !important; }
+      .next-hour { font-size: .82rem !important; }
+      .next-main strong { font-size: .86rem !important; }
+      .next-main span { font-size: .72rem !important; }
+      .next-status { font-size: .68rem !important; }
+      .next-empty { font-size: .80rem !important; line-height: 1.4 !important; }
+      .agenda-kicker { font-size: .70rem !important; }
+      .agenda-feature-card p { font-size: .82rem !important; line-height: 1.45 !important; }
+      .agenda-feature-button { font-size: .78rem !important; }
+      .quick-section-header h2 { font-size: 1rem !important; }
+      .menu-card span { font-size: .88rem !important; line-height: 1.2 !important; }
+      .notification-message { font-size: .78rem !important; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+async function sincronizarTokenNoIndexAoEntrar() {
+  if (!ehIndexProntiPet()) return;
+  if (!('Notification' in window)) return;
+
+  // Se a permissão já existe, recria/atualiza mensagensTokens/{uid} automaticamente.
+  // Se estiver "default", o botão existente no index continua responsável pelo prompt.
+  if (Notification.permission === 'granted') {
+    await sincronizarTokenAutorizado();
+  }
+}
+
+function inicializarAjustesDoIndex() {
+  aplicarFonteMaiorNoIndexMobile();
+  setTimeout(() => {
+    sincronizarTokenNoIndexAoEntrar().catch((error) => {
+      console.warn('[messaging.js] Sincronização automática do token no index falhou:', error);
+    });
+  }, 1200);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', inicializarAjustesDoIndex, { once: true });
+} else {
+  inicializarAjustesDoIndex();
 }
