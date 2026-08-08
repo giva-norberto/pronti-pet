@@ -1,7 +1,0 @@
-/* Fonte maior somente para os textos das métricas do Index no celular. */
-@media (max-width: 680px) {
-  body:has(.index-shell) .today-metric-label {
-    font-size: .66rem !important;
-    line-height: 1.22 !important;
-  }
-}
