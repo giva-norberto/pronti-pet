@@ -448,6 +448,28 @@ function aplicarFonteMaiorNoIndexMobile() {
   const style = document.createElement('style');
   style.id = 'pronti-index-mobile-font-fix';
   style.textContent = `
+    /* Corrige a faixa branca no fim da página em Safari/iOS e navegadores móveis. */
+    html {
+      min-height: 100%;
+      background: #f5f1fc !important;
+    }
+
+    body {
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(255, 201, 40, .10), transparent 12rem),
+        linear-gradient(180deg, #fbf9ff 0%, #f5f1fc 100%) !important;
+      background-attachment: scroll !important;
+    }
+
+    main.main-content {
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      height: auto !important;
+      background: transparent !important;
+    }
+
     @media (max-width: 680px) {
       .welcome-copy h1 { font-size: 1.12rem !important; }
       .owner-chip { font-size: .68rem !important; }
