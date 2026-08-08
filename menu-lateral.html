@@ -269,5 +269,22 @@
     min-height: 44px;
     font-size: .92rem;
   }
+
+  /* Correção mobile: evita viewport extra/scroll fantasma após o fim do conteúdo. */
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  #sidebar-placeholder {
+    height: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .main-content {
+    height: auto !important;
+    min-height: 0 !important;
+  }
 }
 </style>
