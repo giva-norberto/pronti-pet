@@ -6,7 +6,8 @@ import {
     signInWithPopup,
     signInWithEmailAndPassword,
     setPersistence,
-    browserLocalPersistence
+    browserLocalPersistence,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
 import { auth, provider } from "./firebase-config.js";
@@ -22,6 +23,15 @@ import { auth, provider } from "./firebase-config.js";
 async function configurarPersistenciaLocal() {
     await setPersistence(auth, browserLocalPersistence);
 }
+
+// Se o Firebase restaurar uma sessão válida, não exige novo login.
+// A seleção/validação da empresa continua sendo responsabilidade da tela
+// selecionar-empresa.html e do fluxo existente do sistema.
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        window.location.replace("selecionar-empresa.html");
+    }
+});
 
 window.addEventListener("DOMContentLoaded", () => {
     const btnLoginGoogle = document.getElementById("btn-login-google");
