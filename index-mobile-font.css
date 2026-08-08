@@ -1,0 +1,7 @@
+/* Ajuste exclusivo do Index em telas de celular. */
+@media (max-width: 680px) {
+  .today-metric-label {
+    font-size: .66rem !important;
+    line-height: 1.22 !important;
+  }
+}
