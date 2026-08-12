@@ -285,9 +285,6 @@
       <a href="https://mpago.la/1dgpefG" id="btn-abrir-link-mp" target="_blank" rel="noopener" class="btn-pagar-opcao mercadopago" style="margin-top:20px;">
         <i class="fa-solid fa-external-link-alt"></i> Abrir Mercado Pago
       </a>
-      <button id="btn-confirmar-mp" class="btn-pagar-opcao confirmar" style="margin-top:20px;">
-        <i class="fa-solid fa-check"></i> Já Realizei o Pagamento
-      </button>
       <button id="btn-fechar-mp-modal" class="btn-cancelar">Cancelar</button>
     </div>
   </div>
@@ -426,7 +423,7 @@
       document.getElementById('pix-modal').style.display = 'flex';
     }
 
-    async function registrarConfirmacao(metodo) {
+    async function registrarConfirmacaoPix() {
       const urlParams = new URLSearchParams(window.location.search);
       const empresaId = urlParams.get("empresaId");
 
@@ -445,13 +442,12 @@
         botoesAcaoContainer.innerHTML = `<button class="btn-pagar-opcao" disabled>Enviando confirmação...</button>`;
 
         const empresaRef = doc(db, "empresarios", empresaId);
-        const nomePagamento = metodo === "pix" ? "PIX - confirmação pelo app" : "MercadoPago - confirmação pelo app";
         const pagamentoPendente = {
           valor: PRECO_PLANO,
-          metodo,
+          metodo: "pix",
           dataSolicitacao: serverTimestamp(),
           plano: PLANO,
-          nome: nomePagamento,
+          nome: "PIX - confirmação pelo app",
           createdBy: user.uid,
           clienteId: user.uid
         };
@@ -466,10 +462,10 @@
           await addDoc(collection(db, "pagamentosPendentes"), {
             empresaId,
             valor: PRECO_PLANO,
-            metodo,
+            metodo: "pix",
             status: "aguardando_liberacao",
             plano: PLANO,
-            nome: nomePagamento,
+            nome: pagamentoPendente.nome,
             dataSolicitacao: serverTimestamp(),
             createdAt: serverTimestamp(),
             createdBy: user.uid,
@@ -482,8 +478,8 @@
         try {
           await addDoc(collection(db, "mail"), {
             to: "giva.norberto@gmail.com",
-            subject: `Pagamento confirmado - Pronti Pet - ${metodo.toUpperCase()}`,
-            body: `O usuário ${user.displayName || user.email} confirmou pagamento.\nEmpresa: ${empresaId}\nPlano: Pronti Pet - Plano Único\nValor: R$ 79,90\nMétodo: ${metodo}\nData: ${new Date().toLocaleString()}`,
+            subject: "Pagamento confirmado - Pronti Pet - PIX",
+            body: `O usuário ${user.displayName || user.email} confirmou pagamento.\nEmpresa: ${empresaId}\nPlano: Pronti Pet - Plano Único\nValor: R$ 79,90\nMétodo: PIX\nData: ${new Date().toLocaleString()}`,
             dataCriacao: serverTimestamp(),
             createdBy: user.uid,
             empresaId,
@@ -526,11 +522,7 @@
       });
       document.getElementById('btn-confirmar-pix').addEventListener('click', async () => {
         document.getElementById('pix-modal').style.display = 'none';
-        await registrarConfirmacao('pix');
-      });
-      document.getElementById('btn-confirmar-mp').addEventListener('click', async () => {
-        document.getElementById('mp-modal').style.display = 'none';
-        await registrarConfirmacao('mercadopago');
+        await registrarConfirmacaoPix();
       });
       document.getElementById('btn-copiar-pix-modal').addEventListener('click', () => {
         const input = document.getElementById('pix-copia-cola-input');
