@@ -132,7 +132,9 @@ exports.verificarEmpresa = onRequest({ region: REGION }, (req, res) => {
 // ============================================================================
 // createPreference — Mercado Pago temporariamente sem secret obrigatório
 // ============================================================================
-exports.createPreference = onRequest({ region: REGION }, (req, res) => {
+exports.createPreference = onRequest(
+  { region: REGION, secrets: ["MERCADOPAGO_TOKEN"] },
+  (req, res) => {
   corsHandler(req, res, async () => {
     if (req.method === "OPTIONS") {
       return res.status(204).send("");
@@ -283,7 +285,9 @@ exports.createPreference = onRequest({ region: REGION }, (req, res) => {
 // ============================================================================
 // receberWebhookMercadoPago — Mercado Pago temporariamente sem secret obrigatório
 // ============================================================================
-exports.receberWebhookMercadoPago = onRequest({ region: REGION }, (req, res) => {
+exports.receberWebhookMercadoPago = onRequest(
+  { region: REGION, secrets: ["MERCADOPAGO_TOKEN"] },
+  (req, res) => {
   corsHandler(req, res, async () => {
     if (req.method === "OPTIONS") {
       return res.status(204).send("");
