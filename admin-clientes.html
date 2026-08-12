@@ -125,13 +125,22 @@
 
             button.disabled = true;
             try {
+                const agora = new Date();
+                const fimTrial = new Date(agora);
+                fimTrial.setDate(fimTrial.getDate() + novoValor);
+                fimTrial.setHours(23, 59, 59, 999);
+
                 const empresaRef = doc(db, "empresarios", empresaId);
-                await updateDoc(empresaRef, { freeEmDias: novoValor });
+                await updateDoc(empresaRef, {
+                    freeEmDias: novoValor,
+                    trialStart: serverTimestamp(),
+                    trialEndDate: fimTrial
+                });
 
                 const donoRef = doc(db, "usuarios", donoId);
                 await updateDoc(donoRef, { trialStart: serverTimestamp() });
 
-                alert('Dias de teste atualizados e período de trial reiniciado!');
+                alert(`Período de teste atualizado para ${novoValor} dias. Nova validade: ${fimTrial.toLocaleString('pt-BR')}`);
                 carregarDados();
 
             } catch (error) {
