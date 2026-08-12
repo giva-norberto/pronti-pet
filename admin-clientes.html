@@ -4,20 +4,23 @@
     <meta charset="UTF-8">
     <title>Administração de Clientes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <style>
         body { font-family: Arial, sans-serif; background: #f6f6fa; margin: 0; }
         .main { margin-left: 260px; padding: 32px; }
         @media (max-width: 900px ) { .main { margin-left: 0; } }
         .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px #0001; padding: 32px; }
         h2 { font-size: 1.7em; margin-bottom: 24px; }
-        .empresa { border: 1px solid #eee; margin-bottom: 32px; border-radius: 8px; padding: 16px; background: #fafbfc; }
-        .empresa-header { display: flex; align-items: center; justify-content: space-between; }
+        .empresa { border: 1px solid #e5e7eb; margin-bottom: 32px; border-radius: 12px; padding: 18px; background: #fff; box-shadow: 0 3px 14px rgba(15,23,42,0.05); }
+        .empresa-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+        .empresa-identificacao { display: grid; gap: 5px; }
+        .empresa-identificacao .fantasia { font-size: 1.2rem; color: #111827; }
+        .empresa-identificacao .tecnico { color: #6b7280; font-size: 0.86rem; word-break: break-all; }
         .empresa-status { font-weight: bold; }
-        .btn-block { background: #dc2626; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; }
-        .btn-unblock { background: #10b981; color: #fff; border: none; border-radius: 4px; padding: 6px 18px; cursor: pointer; }
+        .btn-block { background: #dc2626; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; cursor: pointer; }
+        .btn-unblock { background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; cursor: pointer; }
         table { width: 100%; margin-top: 8px; border-collapse: collapse; }
-        th, td { padding: 6px 9px; text-align: left; }
+        th, td { padding: 8px 9px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         thead tr { background: #f3f4f6; }
         tbody tr.blocked { background: #fde2e2; }
         .loading, .restricted { padding: 32px; text-align: center; font-size: 1.1em; }
@@ -32,51 +35,50 @@
         .btn-logout { background: #fff; color: #4f46e5; border: none; padding: 12px 0; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1.05em; cursor: pointer; transition: background 0.2s, color 0.2s; box-shadow: 0 2px 6px rgba(79,70,229,0.07); border: 2px solid transparent; outline: none; }
         .btn-logout:hover, .btn-logout:focus { background: #4f46e5; color: #fff; border: 2px solid #fff; }
         @media (max-width: 900px) { .sidebar { width: 100vw; min-height: auto; position: static; flex-direction: row; align-items: flex-start; padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 0.95em; } .sidebar-brand { font-size: 1.4rem; padding: 10px 10px 4px 10px; margin-bottom: 0; text-align: left; } .sidebar hr { display: none; } .sidebar-links { flex-direction: row; gap: 6px; padding: 0 8px 0 8px; } .sidebar-links a { font-size: 1em; padding: 10px 12px; margin-bottom: 0; } .sidebar-footer { padding: 8px 8px 10px 8px; } .btn-logout { padding: 10px 0; font-size: 1em; } }
-        .btn-delete { background: #6b7280; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 0.9em; }
+        .btn-delete { background: #6b7280; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 0.9em; }
         .btn-delete:hover { background: #4b5563; }
         .button-group { display: flex; gap: 8px; align-items: center; }
-        .trial-management, .license-management { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 0.9em; padding-top: 12px; border-top: 1px solid #eee;}
-        .trial-input, .license-input { width: 50px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-save-trial, .btn-save-license { background: #2563eb; color: white; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-save-trial:hover, .btn-save-license:hover { background: #1d4ed8; }
-        .dias-restantes-span { margin-left: 14px; color: #374151; background: #e0e7ff; border-radius: 8px; padding: 3px 8px; font-size: 0.98em; }
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 24px;
-        }
+        .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+        .status-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; background: #f8fafc; }
+        .status-card.assinatura { background: #f0fdf4; border-color: #bbf7d0; }
+        .status-card.trial { background: #eef2ff; border-color: #c7d2fe; }
+        .status-card h3 { margin: 0 0 10px; font-size: 1rem; color: #111827; }
+        .status-linha { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; font-size: 0.92rem; }
+        .status-linha span:first-child { color: #6b7280; }
+        .status-linha strong { text-align: right; color: #111827; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; }
+        .badge-ok { background: #dcfce7; color: #166534; }
+        .badge-alerta { background: #fef3c7; color: #92400e; }
+        .badge-erro { background: #fee2e2; color: #991b1b; }
+        .badge-neutro { background: #e5e7eb; color: #374151; }
+
+        .trial-management { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 0.9em; padding-top: 12px; border-top: 1px solid #eee; }
+        .trial-input { width: 50px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-save-trial { background: #2563eb; color: white; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-save-trial:hover { background: #1d4ed8; }
+        .dias-restantes-span { margin-left: 14px; color: #374151; background: #e0e7ff; border-radius: 8px; padding: 3px 8px; font-size: 0.98em; }
+        .equipe-box { margin-top: 18px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 24px; }
         .page-header h2 { margin: 0; }
         .page-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .btn-voltar-index, .btn-pendentes {
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        .btn-voltar-index, .btn-pendentes { color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-voltar-index { background-color: #5522b6; }
         .btn-voltar-index:hover { background-color: #3f168f; }
         .btn-pendentes { background-color: #f59e0b; }
         .btn-pendentes:hover { background-color: #d97706; }
 
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
             .main { padding: 16px; }
             .page-header { align-items: stretch; }
             .page-header-actions { width: 100%; }
             .btn-voltar-index, .btn-pendentes { flex: 1 1 auto; padding: 10px 12px; }
             .empresa-header { align-items: flex-start; gap: 12px; flex-direction: column; }
-            .trial-management, .license-management { flex-wrap: wrap; }
+            .button-group { width: 100%; justify-content: flex-end; }
+            .status-grid { grid-template-columns: 1fr; }
+            .trial-management { flex-wrap: wrap; }
+            .dias-restantes-span { margin-left: 0; }
         }
     </style>
 </head>
@@ -107,7 +109,7 @@
         async function excluirEmpresa(empresaId, button) {
             // Função já estava sem implementação nesta versão do arquivo.
         }
-        
+
         async function salvarDiasTeste(empresaId, donoId, button) {
             const input = document.getElementById(`trial-input-${empresaId}`);
             const novoValor = parseInt(input.value, 10);
@@ -128,7 +130,7 @@
 
                 const donoRef = doc(db, "usuarios", donoId);
                 await updateDoc(donoRef, { trialStart: serverTimestamp() });
-                
+
                 alert('Dias de teste atualizados e período de trial reiniciado!');
                 carregarDados();
 
@@ -138,10 +140,6 @@
             } finally {
                 button.disabled = false;
             }
-        }
-        
-        async function salvarLicencas(empresaId, button) {
-            // Função já estava sem implementação nesta versão do arquivo.
         }
 
         conteudoDiv.addEventListener('click', function(event) {
@@ -156,29 +154,73 @@
                 excluirEmpresa(empresaId, target);
             } else if (target.classList.contains('btn-save-trial')) {
                 salvarDiasTeste(empresaId, donoId, target);
-            } else if (target.classList.contains('btn-save-license')) {
-                salvarLicencas(empresaId, target);
             }
         });
 
+        function toMillis(value) {
+            if (value === null || value === undefined) return NaN;
+            try {
+                if (typeof value === 'number') return value;
+                if (typeof value.toDate === 'function') return value.toDate().getTime();
+                if (value && typeof value.seconds === 'number') return value.seconds * 1000;
+                const d = new Date(value);
+                return isNaN(d.getTime()) ? NaN : d.getTime();
+            } catch (_) {
+                return NaN;
+            }
+        }
+
+        function formatarDataHora(value) {
+            const ms = toMillis(value);
+            if (isNaN(ms)) return '-';
+            return new Date(ms).toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function calcularDiasAte(value) {
+            const ms = toMillis(value);
+            if (isNaN(ms)) return null;
+            const diff = Math.ceil((ms - Date.now()) / (1000 * 60 * 60 * 24));
+            return Math.max(0, diff);
+        }
+
         function calcularDiasRestantes(trialStart, freeEmDias) {
             if (!trialStart || typeof freeEmDias !== 'number') return '-';
-            let startDate;
-            if (trialStart.seconds) {
-                startDate = new Date(trialStart.seconds * 1000);
-            } else {
-                startDate = new Date(trialStart);
-            }
-            const endDate = new Date(startDate);
+            const startMs = toMillis(trialStart);
+            if (isNaN(startMs)) return '-';
+            const endDate = new Date(startMs);
             endDate.setDate(endDate.getDate() + freeEmDias);
-            const now = new Date();
-            const diff = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+            const diff = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
             return diff > 0 ? diff : 0;
         }
-        
+
+        function obterStatusAssinatura(empresa) {
+            const validaAteMs = toMillis(empresa.assinaturaValidaAte || empresa.assinatura_valida_ate);
+            const temData = !isNaN(validaAteMs);
+            const vigente = empresa.assinaturaAtiva === true && temData && validaAteMs > Date.now();
+
+            if (vigente) return { texto: 'Ativa', classe: 'badge-ok' };
+            if (empresa.assinaturaAtiva === true && temData && validaAteMs <= Date.now()) return { texto: 'Vencida', classe: 'badge-erro' };
+            if (empresa.assinaturaAtiva === true && !temData) return { texto: 'Ativa sem validade', classe: 'badge-alerta' };
+            return { texto: 'Inativa', classe: 'badge-neutro' };
+        }
+
+        function obterStatusTrial(empresa, diasRestantes) {
+            const trialEndMs = toMillis(empresa.trialEndDate);
+            if (!isNaN(trialEndMs)) {
+                return trialEndMs >= Date.now()
+                    ? { texto: 'Em teste', classe: 'badge-ok' }
+                    : { texto: 'Encerrado', classe: 'badge-neutro' };
+            }
+            if (diasRestantes === '-' || Number(diasRestantes) <= 0) return { texto: 'Encerrado', classe: 'badge-neutro' };
+            return { texto: 'Em teste', classe: 'badge-ok' };
+        }
+
         function renderizarDados(empresas) {
             currentData = empresas;
-            
+
             let htmlFinal = `
                 <div class="page-header">
                     <h2>Gestão de Empresas e Funcionários</h2>
@@ -194,34 +236,61 @@
             } else {
                 htmlFinal += empresas.map(empresa => {
                     const totalFuncionarios = empresa.funcionarios ? empresa.funcionarios.length : 0;
-                    const licencaValue = empresa.usuariosLicenciados === undefined ? totalFuncionarios : empresa.usuariosLicenciados;
-                    const diasRestantes = calcularDiasRestantes(empresa.trialStart, empresa.freeEmDias === undefined ? 15 : empresa.freeEmDias);
+                    const freeEmDias = empresa.freeEmDias === undefined ? 15 : empresa.freeEmDias;
+                    const diasTrialPelaData = calcularDiasAte(empresa.trialEndDate);
+                    const diasRestantes = diasTrialPelaData !== null
+                        ? diasTrialPelaData
+                        : calcularDiasRestantes(empresa.trialStart, freeEmDias);
+                    const statusAssinatura = obterStatusAssinatura(empresa);
+                    const statusTrial = obterStatusTrial(empresa, diasRestantes);
+                    const validadeAssinatura = empresa.assinaturaValidaAte || empresa.assinatura_valida_ate || null;
+                    const diasAssinatura = calcularDiasAte(validadeAssinatura);
+                    const statusEmpresa = empresa.bloqueado || empresa.status === 'bloqueado' ? 'Bloqueada' : 'Ativa';
+                    const statusEmpresaCor = statusEmpresa === 'Bloqueada' ? '#dc2626' : '#10b981';
+
                     return `
                         <div class="empresa">
                             <div class="empresa-header">
-                                <div>
+                                <div class="empresa-identificacao">
+                                    <div class="fantasia"><strong>${empresa.nomeFantasia || empresa.nome || empresa.email || 'Empresa sem nome'}</strong></div>
                                     <div><strong>Empresa:</strong> ${empresa.nome || empresa.email || empresa.uid}</div>
-                                    <div><strong>Nome Fantasia:</strong> ${empresa.nomeFantasia || '-'}</div>
-                                    <div><strong>Status:</strong> <span style="color: ${empresa.bloqueado ? '#dc2626' : '#10b981'}">${empresa.bloqueado ? 'Bloqueada' : 'Ativa'}</span></div>
-                                    <div><strong>Funcionários Cadastrados:</strong> <strong>${totalFuncionarios}</strong></div>
+                                    <div class="tecnico"><strong>ID:</strong> ${empresa.uid}</div>
+                                    <div><strong>Status da empresa:</strong> <span style="color:${statusEmpresaCor};font-weight:700;">${statusEmpresa}</span></div>
+                                    <div><strong>Funcionários cadastrados:</strong> ${totalFuncionarios}</div>
                                 </div>
                                 <div class="button-group">
                                     <button data-id="${empresa.uid}" class="btn-delete">Excluir</button>
                                     <button data-id="${empresa.uid}" class="${empresa.bloqueado ? 'btn-unblock' : 'btn-block'}">${empresa.bloqueado ? 'Desbloquear' : 'Bloquear'}</button>
                                 </div>
                             </div>
+
+                            <div class="status-grid">
+                                <section class="status-card assinatura">
+                                    <h3>Assinatura</h3>
+                                    <div class="status-linha"><span>Status</span><strong><span class="badge ${statusAssinatura.classe}">${statusAssinatura.texto}</span></strong></div>
+                                    <div class="status-linha"><span>assinaturaAtiva</span><strong>${empresa.assinaturaAtiva === true ? 'true' : 'false'}</strong></div>
+                                    <div class="status-linha"><span>Válida até</span><strong>${formatarDataHora(validadeAssinatura)}</strong></div>
+                                    <div class="status-linha"><span>Dias até a validade</span><strong>${diasAssinatura === null ? '-' : diasAssinatura}</strong></div>
+                                    <div class="status-linha"><span>Plano cadastrado</span><strong>${empresa.plano || '-'}</strong></div>
+                                </section>
+
+                                <section class="status-card trial">
+                                    <h3>Período de teste</h3>
+                                    <div class="status-linha"><span>Status</span><strong><span class="badge ${statusTrial.classe}">${statusTrial.texto}</span></strong></div>
+                                    <div class="status-linha"><span>Fim do teste</span><strong>${formatarDataHora(empresa.trialEndDate)}</strong></div>
+                                    <div class="status-linha"><span>Dias restantes</span><strong>${diasRestantes}</strong></div>
+                                    <div class="status-linha"><span>Dias configurados</span><strong>${freeEmDias}</strong></div>
+                                </section>
+                            </div>
+
                             <div class="trial-management">
                                 <strong>Dias de Teste Grátis:</strong>
-                                <input type="number" class="trial-input" id="trial-input-${empresa.uid}" value="${empresa.freeEmDias === undefined ? 15 : empresa.freeEmDias}">
+                                <input type="number" class="trial-input" id="trial-input-${empresa.uid}" value="${freeEmDias}">
                                 <button data-id="${empresa.uid}" data-donoid="${empresa.donoId || ''}" class="btn-save-trial">Salvar</button>
                                 <span class="dias-restantes-span"><strong>Dias Restantes:</strong> ${diasRestantes}</span>
                             </div>
-                            <div class="license-management">
-                                <strong>Licenças Contratadas (para cobrança):</strong>
-                                <input type="number" class="license-input" id="license-input-${empresa.uid}" value="${licencaValue}">
-                                <button data-id="${empresa.uid}" class="btn-save-license">Salvar</button>
-                            </div>
-                            <div style="margin-top: 16px;">
+
+                            <div class="equipe-box">
                                 <strong>Funcionários:</strong>
                                 <table>
                                     <thead><tr><th>Nome</th><th>Email</th><th>Status</th></tr></thead>
