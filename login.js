@@ -24,6 +24,18 @@ async function configurarPersistenciaLocal() {
     await setPersistence(auth, browserLocalPersistence);
 }
 
+/**
+ * O Google/Firebase pode bloquear autenticação OAuth dentro do WebView
+ * interno do TikTok. Detectamos esse ambiente antes de abrir o popup
+ * para evitar que o cliente receba a tela de erro do Google.
+ *
+ * O login por e-mail e senha continua disponível normalmente.
+ */
+function estaNoNavegadorInternoTikTok() {
+    const ua = navigator.userAgent || navigator.vendor || "";
+    return /TikTok|Bytedance|musical_ly|aweme/i.test(ua);
+}
+
 // Se o Firebase restaurar uma sessão válida, não exige novo login.
 // A seleção/validação da empresa continua sendo responsabilidade da tela
 // selecionar-empresa.html e do fluxo existente do sistema.
@@ -44,11 +56,31 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    const navegadorTikTok = estaNoNavegadorInternoTikTok();
+
+    if (navegadorTikTok && btnLoginGoogle) {
+        btnLoginGoogle.disabled = true;
+        btnLoginGoogle.title = "Abra o Pronti Pet no Safari ou Chrome para entrar com o Google.";
+        exibirMensagem(
+            "Você abriu o Pronti Pet dentro do TikTok. Para entrar com o Google, abra este link no Safari ou Chrome. O login por e-mail e senha continua disponível nesta tela."
+        );
+    }
+
     // ==============================================================
     // LOGIN COM GOOGLE
     // ==============================================================
     if (btnLoginGoogle) {
         btnLoginGoogle.addEventListener("click", async () => {
+            // Proteção adicional caso o WebView seja identificado somente
+            // no momento da interação.
+            if (estaNoNavegadorInternoTikTok()) {
+                btnLoginGoogle.disabled = true;
+                exibirMensagem(
+                    "O Google não permite este login dentro do navegador do TikTok. Abra o Pronti Pet no Safari ou Chrome."
+                );
+                return;
+            }
+
             btnLoginGoogle.disabled = true;
             exibirMensagem("");
 
