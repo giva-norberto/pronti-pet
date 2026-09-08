@@ -3,6 +3,121 @@
 import { db } from './firebase-config.js';
 import { doc, getDoc, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
+const PRONTI_PET_LOGO_FALLBACK =
+    "https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b";
+
+let manifestBlobUrl = null;
+
+function garantirMeta(name, content) {
+    let meta = document.head.querySelector(`meta[name="${name}"]`);
+
+    if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+    }
+
+    meta.setAttribute('content', content);
+}
+
+function garantirLink(rel, href, marcador) {
+    const seletor = marcador
+        ? `link[rel="${rel}"][data-pronti="${marcador}"]`
+        : `link[rel="${rel}"]`;
+
+    let link = document.head.querySelector(seletor);
+
+    if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+
+        if (marcador) {
+            link.dataset.pronti = marcador;
+        }
+
+        document.head.appendChild(link);
+    }
+
+    link.setAttribute('href', href);
+    return link;
+}
+
+function obterNomeCurto(nome) {
+    const texto = String(nome || 'Pet Shop').trim();
+
+    if (texto.length <= 24) {
+        return texto;
+    }
+
+    return texto.slice(0, 24).trim();
+}
+
+function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
+    if (
+        typeof window === 'undefined' ||
+        typeof document === 'undefined' ||
+        !dadosEmpresa ||
+        !empresaId
+    ) {
+        return;
+    }
+
+    const nomeEmpresa =
+        String(dadosEmpresa.nomeFantasia || 'Pet Shop').trim() || 'Pet Shop';
+
+    const logoEmpresa =
+        String(dadosEmpresa.logoUrl || '').trim() || PRONTI_PET_LOGO_FALLBACK;
+
+    const tema =
+        String(dadosEmpresa.corPrimaria || '#5522b6').trim() || '#5522b6';
+
+    const startUrl =
+        `/vitrine.html?empresa=${encodeURIComponent(empresaId)}`;
+
+    const manifest = {
+        id: startUrl,
+        name: nomeEmpresa,
+        short_name: obterNomeCurto(nomeEmpresa),
+        description: `Agendamentos e acompanhamento de serviços - ${nomeEmpresa}`,
+        start_url: startUrl,
+        scope: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: tema,
+        orientation: 'portrait-primary',
+        icons: [
+            {
+                src: logoEmpresa,
+                sizes: 'any',
+                purpose: 'any'
+            }
+        ]
+    };
+
+    if (manifestBlobUrl) {
+        URL.revokeObjectURL(manifestBlobUrl);
+    }
+
+    manifestBlobUrl = URL.createObjectURL(
+        new Blob(
+            [JSON.stringify(manifest)],
+            { type: 'application/manifest+json' }
+        )
+    );
+
+    garantirLink('manifest', manifestBlobUrl, 'manifest-vitrine');
+    garantirLink('apple-touch-icon', logoEmpresa, 'icone-vitrine-ios');
+    garantirLink('icon', logoEmpresa, 'icone-vitrine');
+
+    garantirMeta('theme-color', tema);
+    garantirMeta('mobile-web-app-capable', 'yes');
+    garantirMeta('apple-mobile-web-app-capable', 'yes');
+    garantirMeta('apple-mobile-web-app-status-bar-style', 'default');
+    garantirMeta('apple-mobile-web-app-title', obterNomeCurto(nomeEmpresa));
+
+    document.title = nomeEmpresa;
+}
+
 /**
  * Pega o ID da empresa a partir da URL ou do localStorage.
  * @returns {string|null} O ID da empresa ou nulo.
@@ -22,7 +137,13 @@ export async function getDadosEmpresa(empresaId) {
         // CORRIGIDO: Usando 'empresarios' para corresponder às suas regras de segurança.
         const empresaRef = doc(db, 'empresarios', empresaId);
         const empresaSnap = await getDoc(empresaRef);
-        return empresaSnap.exists() ? empresaSnap.data() : null;
+        const dadosEmpresa = empresaSnap.exists() ? empresaSnap.data() : null;
+
+        if (dadosEmpresa) {
+            aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId);
+        }
+
+        return dadosEmpresa;
     } catch (error) {
         console.error("Erro ao buscar dados da empresa:", error);
         return null;
@@ -65,7 +186,7 @@ export async function getTodosServicosDaEmpresa(empresaId) {
 
 /**
  * Busca a configuração de horários de um profissional específico.
- * @param {string} empresaId - O ID da empresa.
+ * @param {string} empresaId - O ID do profissional.
  * @param {string} profissionalId - O ID do profissional.
  * @returns {Promise<Object|null>} O objeto de horários ou nulo.
  */
