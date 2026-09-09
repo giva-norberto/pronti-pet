@@ -6,6 +6,8 @@ import { doc, getDoc, collection, getDocs, query } from "https://www.gstatic.com
 const PRONTI_PET_LOGO_FALLBACK =
     "https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b";
 
+const CHAVE_EMPRESA_VITRINE = 'pronti_pet_vitrine_empresa';
+
 let manifestBlobUrl = null;
 
 function registrarServiceWorkerVitrine() {
@@ -74,6 +76,32 @@ function obterNomeCurto(nome) {
     return texto.slice(0, 24).trim();
 }
 
+function estaNaVitrine() {
+    const caminho = String(window.location.pathname || '').toLowerCase();
+    return caminho === '/' || caminho.endsWith('/vitrine.html');
+}
+
+function persistirEmpresaDaVitrine(empresaId) {
+    const id = String(empresaId || '').trim();
+    if (!id || typeof window === 'undefined' || !estaNaVitrine()) return;
+
+    try {
+        localStorage.setItem(CHAVE_EMPRESA_VITRINE, id);
+    } catch (error) {
+        console.info('[Pronti Pet] Não foi possível persistir a empresa da vitrine:', error?.message || error);
+    }
+
+    try {
+        const urlAtual = new URL(window.location.href);
+        if (urlAtual.searchParams.get('empresa') !== id) {
+            urlAtual.searchParams.set('empresa', id);
+            window.history.replaceState(window.history.state, '', urlAtual.href);
+        }
+    } catch (error) {
+        console.info('[Pronti Pet] Não foi possível fixar a empresa na URL da vitrine:', error?.message || error);
+    }
+}
+
 function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
     if (
         typeof window === 'undefined' ||
@@ -83,6 +111,8 @@ function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
     ) {
         return;
     }
+
+    persistirEmpresaDaVitrine(empresaId);
 
     const nomeEmpresa =
         String(dadosEmpresa.nomeFantasia || 'Pet Shop').trim() || 'Pet Shop';
@@ -144,9 +174,40 @@ function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
  * Pega o ID da empresa a partir da URL ou do localStorage.
  * @returns {string|null} O ID da empresa ou nulo.
  */
-export function getEmpresaIdFromURL( ) {
+export function getEmpresaIdFromURL() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('empresa') || localStorage.getItem('empresaAtivaId');
+    const empresaDaUrl = String(params.get('empresa') || '').trim();
+
+    if (empresaDaUrl) {
+        if (estaNaVitrine()) {
+            try {
+                localStorage.setItem(CHAVE_EMPRESA_VITRINE, empresaDaUrl);
+            } catch (error) {
+                console.info('[Pronti Pet] Não foi possível memorizar a empresa da URL:', error?.message || error);
+            }
+        }
+        return empresaDaUrl;
+    }
+
+    const empresaDaVitrine = String(
+        localStorage.getItem(CHAVE_EMPRESA_VITRINE) || ''
+    ).trim();
+
+    if (empresaDaVitrine) {
+        persistirEmpresaDaVitrine(empresaDaVitrine);
+        return empresaDaVitrine;
+    }
+
+    const empresaAtiva = String(
+        localStorage.getItem('empresaAtivaId') || ''
+    ).trim();
+
+    if (empresaAtiva) {
+        persistirEmpresaDaVitrine(empresaAtiva);
+        return empresaAtiva;
+    }
+
+    return null;
 }
 
 /**
