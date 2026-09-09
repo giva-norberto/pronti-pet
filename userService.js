@@ -68,8 +68,6 @@ export async function ensureUserAndTrialDoc(user = null) {
                 console.log("[DEBUG] Atualizado doc do usuário:", updateObj);
             }
         }
-        let userSnapAfter = await getDoc(userRef);
-        console.log("[DEBUG] Documento do usuário depois:", userSnapAfter.data());
     } catch (error) {
         console.error("❌ [ensureUserAndTrialDoc] Erro:", error);
     }
