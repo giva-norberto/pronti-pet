@@ -10,7 +10,6 @@ const CHAVE_EMPRESA_VITRINE = 'pronti_pet_vitrine_empresa';
 const COOKIE_EMPRESA_VITRINE = 'pronti_pet_vitrine_empresa';
 
 let manifestBlobUrl = null;
-let promptInstalacao = null;
 
 function garantirManifestBase() {
     if (typeof document === 'undefined') return;
@@ -26,98 +25,6 @@ function garantirManifestBase() {
 }
 
 garantirManifestBase();
-
-function estaStandalone() {
-    return Boolean(
-        window.matchMedia?.('(display-mode: standalone)').matches ||
-        window.navigator?.standalone === true
-    );
-}
-
-function isIOS() {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent || '');
-}
-
-function criarBotaoInstalacao() {
-    if (typeof document === 'undefined' || estaStandalone()) return null;
-
-    let botao = document.getElementById('btn-instalar-vitrine');
-    if (botao) return botao;
-
-    botao = document.createElement('button');
-    botao.id = 'btn-instalar-vitrine';
-    botao.type = 'button';
-    botao.textContent = isIOS() ? 'Adicionar à Tela' : 'Instalar app';
-    botao.setAttribute('aria-label', botao.textContent);
-
-    Object.assign(botao.style, {
-        position: 'fixed',
-        top: '14px',
-        right: '14px',
-        zIndex: '12000',
-        display: 'none',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '42px',
-        padding: '9px 14px',
-        border: '1px solid rgba(85,34,182,.18)',
-        borderRadius: '12px',
-        background: '#ffffff',
-        color: '#5522b6',
-        fontFamily: 'Poppins, Arial, sans-serif',
-        fontSize: '14px',
-        fontWeight: '800',
-        boxShadow: '0 8px 24px rgba(32,16,66,.14)',
-        cursor: 'pointer'
-    });
-
-    botao.addEventListener('click', async () => {
-        if (promptInstalacao) {
-            promptInstalacao.prompt();
-            try {
-                await promptInstalacao.userChoice;
-            } catch (_) {}
-            promptInstalacao = null;
-            botao.style.display = 'none';
-            return;
-        }
-
-        if (isIOS()) {
-            alert('No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.');
-        }
-    });
-
-    document.body.appendChild(botao);
-    return botao;
-}
-
-function prepararInstalacaoPwa() {
-    const mostrarIOS = () => {
-        if (!isIOS() || estaStandalone()) return;
-        const botao = criarBotaoInstalacao();
-        if (botao) botao.style.display = 'inline-flex';
-    };
-
-    window.addEventListener('beforeinstallprompt', (event) => {
-        event.preventDefault();
-        promptInstalacao = event;
-        const botao = criarBotaoInstalacao();
-        if (botao) botao.style.display = 'inline-flex';
-    });
-
-    window.addEventListener('appinstalled', () => {
-        promptInstalacao = null;
-        document.getElementById('btn-instalar-vitrine')?.remove();
-    });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', mostrarIOS, { once: true });
-    } else {
-        mostrarIOS();
-    }
-}
-
-prepararInstalacaoPwa();
 
 function registrarServiceWorkerVitrine() {
     if (
