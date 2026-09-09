@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pronti-pet-vitrine-v1';
+const CACHE_NAME = 'pronti-pet-vitrine-v2';
 
 const STATIC_ASSETS = [
   '/vitrine.html',
@@ -41,6 +41,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+
+    if (response && response.ok) {
+      const copy = response.clone();
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, copy);
+    }
+
+    return response;
+  } catch (error) {
+    return (
+      await caches.match(request) ||
+      await caches.match(request, { ignoreSearch: true })
+    );
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
@@ -60,20 +79,5 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then((cached) => {
-      const networkPromise = fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || networkPromise;
-    })
-  );
+  event.respondWith(networkFirst(request));
 });
