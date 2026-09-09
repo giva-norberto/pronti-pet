@@ -8,6 +8,28 @@ const PRONTI_PET_LOGO_FALLBACK =
 
 let manifestBlobUrl = null;
 
+function registrarServiceWorkerVitrine() {
+    if (
+        typeof window === 'undefined' ||
+        !('serviceWorker' in navigator)
+    ) {
+        return;
+    }
+
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('/sw-vitrine.js')
+            .catch((error) => {
+                console.info(
+                    '[Pronti Pet] Cache offline da vitrine não pôde ser ativado:',
+                    error?.message || error
+                );
+            });
+    }, { once: true });
+}
+
+registrarServiceWorkerVitrine();
+
 function garantirMeta(name, content) {
     let meta = document.head.querySelector(`meta[name="${name}"]`);
 
