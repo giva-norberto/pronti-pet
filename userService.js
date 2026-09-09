@@ -164,37 +164,54 @@ async function checkUserStatus(user, empresaData) {
 export async function getEmpresasDoUsuario(user) {
     if (!user) return [];
     const empresasUnicas = new Map();
-    try {
-        const qDono = query(
-            collection(db, "empresarios"),
-            where("donoId", "==", user.uid),
-            where("status", "==", "ativo")
-        );
-        const snapshotDono = await getDocs(qDono);
-        console.log("[DEBUG] Empresas dono ativas:", snapshotDono.docs.map(doc => doc.id));
-        snapshotDono.forEach(doc => {
-            empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() });
-        });
-    } catch (e) {
-        console.error("❌ [getEmpresasDoUsuario] Erro ao buscar empresas como dono:", e);
-    }
-    try {
-        const mapaRef = doc(db, "mapaUsuarios", user.uid);
-        const mapaSnap = await getDoc(mapaRef);
-        if (mapaSnap.exists() && Array.isArray(mapaSnap.data().empresas)) {
-            const idsDeEmpresas = mapaSnap.data().empresas.filter(id => !empresasUnicas.has(id));
-            console.log("[DEBUG] Empresas profissional ativas (IDs):", idsDeEmpresas);
-            for (let i = 0; i < idsDeEmpresas.length; i += 10) {
-                const chunk = idsDeEmpresas.slice(i, i + 10);
-                const q = query(
-                    collection(db, "empresarios"),
-                    where(documentId(), "in", chunk),
-                    where("status", "==", "ativo")
-                );
-                const snap = await getDocs(q);
-                console.log("[DEBUG] Chunk empresas profissionais ativas:", snap.docs.map(doc => doc.id));
-                snap.forEach(doc => empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() }));
+
+    const buscarComoDono = async () => {
+        try {
+            const qDono = query(
+                collection(db, "empresarios"),
+                where("donoId", "==", user.uid),
+                where("status", "==", "ativo")
+            );
+            const snapshotDono = await getDocs(qDono);
+            console.log("[DEBUG] Empresas dono ativas:", snapshotDono.docs.map(doc => doc.id));
+            snapshotDono.forEach(doc => {
+                empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() });
+            });
+        } catch (e) {
+            console.error("❌ [getEmpresasDoUsuario] Erro ao buscar empresas como dono:", e);
+        }
+    };
+
+    const buscarComoProfissional = async () => {
+        try {
+            const mapaRef = doc(db, "mapaUsuarios", user.uid);
+            const mapaSnap = await getDoc(mapaRef);
+            if (mapaSnap.exists() && Array.isArray(mapaSnap.data().empresas)) {
+                return mapaSnap.data().empresas;
             }
+        } catch(e) {
+            console.error("❌ [getEmpresasDoUsuario] Erro ao buscar empresas pelo mapa:", e);
+        }
+        return [];
+    };
+
+    // As duas buscas são independentes entre si (uma não usa o resultado da
+    // outra para decidir se roda, só para deduplicar depois) — paralelizadas.
+    const [, idsDoMapa] = await Promise.all([buscarComoDono(), buscarComoProfissional()]);
+
+    try {
+        const idsDeEmpresas = idsDoMapa.filter(id => !empresasUnicas.has(id));
+        console.log("[DEBUG] Empresas profissional ativas (IDs):", idsDeEmpresas);
+        for (let i = 0; i < idsDeEmpresas.length; i += 10) {
+            const chunk = idsDeEmpresas.slice(i, i + 10);
+            const q = query(
+                collection(db, "empresarios"),
+                where(documentId(), "in", chunk),
+                where("status", "==", "ativo")
+            );
+            const snap = await getDocs(q);
+            console.log("[DEBUG] Chunk empresas profissionais ativas:", snap.docs.map(doc => doc.id));
+            snap.forEach(doc => empresasUnicas.set(doc.id, { id: doc.id, ...doc.data() }));
         }
     } catch(e) {
         console.error("❌ [getEmpresasDoUsuario] Erro ao buscar empresas pelo mapa:", e);
@@ -208,6 +225,16 @@ export async function getEmpresasDoUsuario(user) {
 // FUNÇÃO GUARDA PRINCIPAL: Valida sessão, empresa ativa, plano, permissões
 // ======================================================================
 export async function verificarAcesso() {
+    // Medição temporária de performance (remover após validar o ganho).
+    console.time("verificarAcesso");
+    try {
+        return await verificarAcessoInterno();
+    } finally {
+        console.timeEnd("verificarAcesso");
+    }
+}
+
+async function verificarAcessoInterno() {
     if (cachedSessionProfile) {
         console.log("[DEBUG] cachedSessionProfile retornado:", cachedSessionProfile);
         return cachedSessionProfile;
@@ -232,13 +259,16 @@ export async function verificarAcesso() {
                     return reject(new Error("Utilizador não autenticado."));
                 }
                 
-                // passar user explicitamente
-                await ensureUserAndTrialDoc(user);
+                // ensureUserAndTrialDoc só depende do uid, não do resultado de
+                // getEmpresasDoUsuario (e vice-versa) — rodam em paralelo.
+                const [, empresas] = await Promise.all([
+                    ensureUserAndTrialDoc(user),
+                    getEmpresasDoUsuario(user)
+                ]);
                 const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
                 const isAdmin = user.uid === ADMIN_UID;
                 let empresaAtivaId = localStorage.getItem('empresaAtivaId');
                 let empresaDocSnap = null;
-                let empresas = await getEmpresasDoUsuario(user);
 
                 console.log("[DEBUG] Empresa ativaId localStorage:", empresaAtivaId);
                 console.log("[DEBUG] Empresas retornadas:", empresas.map(e => e.id));
