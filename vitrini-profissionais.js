@@ -1,4 +1,4 @@
-// vitrini-profissionais.js (versão 100% correta)
+// vitrini-profissionais.js
 
 import { db } from './firebase-config.js';
 import { doc, getDoc, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
@@ -7,8 +7,117 @@ const PRONTI_PET_LOGO_FALLBACK =
     "https://firebasestorage.googleapis.com/v0/b/pronti-pet.firebasestorage.app/o/logos%2Fpronti-pet%2Flogo-pronti-pet.png?alt=media&token=9e81c0bf-fe3e-4814-a8f5-a484312ff55b";
 
 const CHAVE_EMPRESA_VITRINE = 'pronti_pet_vitrine_empresa';
+const COOKIE_EMPRESA_VITRINE = 'pronti_pet_vitrine_empresa';
 
 let manifestBlobUrl = null;
+let promptInstalacao = null;
+
+function garantirManifestBase() {
+    if (typeof document === 'undefined') return;
+
+    let link = document.head.querySelector('link[rel="manifest"]');
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = '/manifest-vitrine.json';
+        link.dataset.pronti = 'manifest-vitrine-base';
+        document.head.appendChild(link);
+    }
+}
+
+garantirManifestBase();
+
+function estaStandalone() {
+    return Boolean(
+        window.matchMedia?.('(display-mode: standalone)').matches ||
+        window.navigator?.standalone === true
+    );
+}
+
+function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+}
+
+function criarBotaoInstalacao() {
+    if (typeof document === 'undefined' || estaStandalone()) return null;
+
+    let botao = document.getElementById('btn-instalar-vitrine');
+    if (botao) return botao;
+
+    botao = document.createElement('button');
+    botao.id = 'btn-instalar-vitrine';
+    botao.type = 'button';
+    botao.textContent = isIOS() ? 'Adicionar à Tela' : 'Instalar app';
+    botao.setAttribute('aria-label', botao.textContent);
+
+    Object.assign(botao.style, {
+        position: 'fixed',
+        top: '14px',
+        right: '14px',
+        zIndex: '12000',
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '42px',
+        padding: '9px 14px',
+        border: '1px solid rgba(85,34,182,.18)',
+        borderRadius: '12px',
+        background: '#ffffff',
+        color: '#5522b6',
+        fontFamily: 'Poppins, Arial, sans-serif',
+        fontSize: '14px',
+        fontWeight: '800',
+        boxShadow: '0 8px 24px rgba(32,16,66,.14)',
+        cursor: 'pointer'
+    });
+
+    botao.addEventListener('click', async () => {
+        if (promptInstalacao) {
+            promptInstalacao.prompt();
+            try {
+                await promptInstalacao.userChoice;
+            } catch (_) {}
+            promptInstalacao = null;
+            botao.style.display = 'none';
+            return;
+        }
+
+        if (isIOS()) {
+            alert('No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.');
+        }
+    });
+
+    document.body.appendChild(botao);
+    return botao;
+}
+
+function prepararInstalacaoPwa() {
+    const mostrarIOS = () => {
+        if (!isIOS() || estaStandalone()) return;
+        const botao = criarBotaoInstalacao();
+        if (botao) botao.style.display = 'inline-flex';
+    };
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        promptInstalacao = event;
+        const botao = criarBotaoInstalacao();
+        if (botao) botao.style.display = 'inline-flex';
+    });
+
+    window.addEventListener('appinstalled', () => {
+        promptInstalacao = null;
+        document.getElementById('btn-instalar-vitrine')?.remove();
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mostrarIOS, { once: true });
+    } else {
+        mostrarIOS();
+    }
+}
+
+prepararInstalacaoPwa();
 
 function registrarServiceWorkerVitrine() {
     if (
@@ -81,6 +190,29 @@ function estaNaVitrine() {
     return caminho === '/' || caminho.endsWith('/vitrine.html');
 }
 
+function gravarCookieEmpresa(id) {
+    if (!id || typeof document === 'undefined') return;
+    try {
+        document.cookie = `${COOKIE_EMPRESA_VITRINE}=${encodeURIComponent(id)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+    } catch (_) {}
+}
+
+function lerCookieEmpresa() {
+    if (typeof document === 'undefined') return '';
+    const prefixo = `${COOKIE_EMPRESA_VITRINE}=`;
+    const item = String(document.cookie || '')
+        .split(';')
+        .map((parte) => parte.trim())
+        .find((parte) => parte.startsWith(prefixo));
+
+    if (!item) return '';
+    try {
+        return decodeURIComponent(item.slice(prefixo.length)).trim();
+    } catch (_) {
+        return item.slice(prefixo.length).trim();
+    }
+}
+
 function persistirEmpresaDaVitrine(empresaId) {
     const id = String(empresaId || '').trim();
     if (!id || typeof window === 'undefined' || !estaNaVitrine()) return;
@@ -90,6 +222,8 @@ function persistirEmpresaDaVitrine(empresaId) {
     } catch (error) {
         console.info('[Pronti Pet] Não foi possível persistir a empresa da vitrine:', error?.message || error);
     }
+
+    gravarCookieEmpresa(id);
 
     try {
         const urlAtual = new URL(window.location.href);
@@ -157,7 +291,14 @@ function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
         )
     );
 
-    garantirLink('manifest', manifestBlobUrl, 'manifest-vitrine');
+    const manifestBase = document.head.querySelector('link[rel="manifest"]');
+    if (manifestBase) {
+        manifestBase.href = manifestBlobUrl;
+        manifestBase.dataset.pronti = 'manifest-vitrine';
+    } else {
+        garantirLink('manifest', manifestBlobUrl, 'manifest-vitrine');
+    }
+
     garantirLink('apple-touch-icon', logoEmpresa, 'icone-vitrine-ios');
     garantirLink('icon', logoEmpresa, 'icone-vitrine');
 
@@ -171,7 +312,7 @@ function aplicarIdentidadePwaEmpresa(dadosEmpresa, empresaId) {
 }
 
 /**
- * Pega o ID da empresa a partir da URL ou do localStorage.
+ * Pega o ID da empresa a partir da URL, armazenamento local ou cookie.
  * @returns {string|null} O ID da empresa ou nulo.
  */
 export function getEmpresaIdFromURL() {
@@ -179,28 +320,34 @@ export function getEmpresaIdFromURL() {
     const empresaDaUrl = String(params.get('empresa') || '').trim();
 
     if (empresaDaUrl) {
-        if (estaNaVitrine()) {
-            try {
-                localStorage.setItem(CHAVE_EMPRESA_VITRINE, empresaDaUrl);
-            } catch (error) {
-                console.info('[Pronti Pet] Não foi possível memorizar a empresa da URL:', error?.message || error);
-            }
-        }
+        persistirEmpresaDaVitrine(empresaDaUrl);
         return empresaDaUrl;
     }
 
-    const empresaDaVitrine = String(
-        localStorage.getItem(CHAVE_EMPRESA_VITRINE) || ''
-    ).trim();
+    let empresaDaVitrine = '';
+    try {
+        empresaDaVitrine = String(
+            localStorage.getItem(CHAVE_EMPRESA_VITRINE) || ''
+        ).trim();
+    } catch (_) {}
 
     if (empresaDaVitrine) {
         persistirEmpresaDaVitrine(empresaDaVitrine);
         return empresaDaVitrine;
     }
 
-    const empresaAtiva = String(
-        localStorage.getItem('empresaAtivaId') || ''
-    ).trim();
+    const empresaDoCookie = lerCookieEmpresa();
+    if (empresaDoCookie) {
+        persistirEmpresaDaVitrine(empresaDoCookie);
+        return empresaDoCookie;
+    }
+
+    let empresaAtiva = '';
+    try {
+        empresaAtiva = String(
+            localStorage.getItem('empresaAtivaId') || ''
+        ).trim();
+    } catch (_) {}
 
     if (empresaAtiva) {
         persistirEmpresaDaVitrine(empresaAtiva);
@@ -217,7 +364,6 @@ export function getEmpresaIdFromURL() {
  */
 export async function getDadosEmpresa(empresaId) {
     try {
-        // CORRIGIDO: Usando 'empresarios' para corresponder às suas regras de segurança.
         const empresaRef = doc(db, 'empresarios', empresaId);
         const empresaSnap = await getDoc(empresaRef);
         const dadosEmpresa = empresaSnap.exists() ? empresaSnap.data() : null;
@@ -233,14 +379,8 @@ export async function getDadosEmpresa(empresaId) {
     }
 }
 
-/**
- * Busca a lista de todos os profissionais de uma empresa.
- * @param {string} empresaId - O ID da empresa.
- * @returns {Promise<Array>} Uma lista com os profissionais.
- */
 export async function getProfissionaisDaEmpresa(empresaId) {
     try {
-        // CORRIGIDO: Usando 'empresarios'.
         const profissionaisRef = collection(db, 'empresarios', empresaId, 'profissionais');
         const snapshot = await getDocs(profissionaisRef);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -250,14 +390,8 @@ export async function getProfissionaisDaEmpresa(empresaId) {
     }
 }
 
-/**
- * Busca a lista de todos os serviços que uma empresa oferece.
- * @param {string} empresaId - O ID da empresa.
- * @returns {Promise<Array>} Uma lista com todos os serviços.
- */
 export async function getTodosServicosDaEmpresa(empresaId) {
     try {
-        // CORRIGIDO: Usando 'empresarios'.
         const servicosRef = collection(db, 'empresarios', empresaId, 'servicos');
         const snapshot = await getDocs(servicosRef);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -267,15 +401,8 @@ export async function getTodosServicosDaEmpresa(empresaId) {
     }
 }
 
-/**
- * Busca a configuração de horários de um profissional específico.
- * @param {string} empresaId - O ID do profissional.
- * @param {string} profissionalId - O ID do profissional.
- * @returns {Promise<Object|null>} O objeto de horários ou nulo.
- */
 export async function getHorariosDoProfissional(empresaId, profissionalId) {
     try {
-        // CORRIGIDO: Usando 'empresarios'.
         const horariosRef = doc(db, 'empresarios', empresaId, 'profissionais', profissionalId, 'configuracoes', 'horarios');
         const horariosSnap = await getDoc(horariosRef);
         return horariosSnap.exists() ? horariosSnap.data() : null;
