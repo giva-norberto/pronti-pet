@@ -1,14 +1,11 @@
 // ======================================================================
 // firebase-messaging-sw.js
-// PRONTI PET - Push Notifications + Cache Offline (PWA)
+// PRONTI PET - Push Notifications + Atualização/Cache PWA
 // ======================================================================
 
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
 
-// --------------------------------------------------
-// CONFIG FIREBASE - PRONTI PET
-// --------------------------------------------------
 firebase.initializeApp({
   apiKey: "AIzaSyDxbb2_onT2gbQahqogcddCOjNTWbwjb0k",
   authDomain: "pronti-pet.firebaseapp.com",
@@ -18,18 +15,10 @@ firebase.initializeApp({
   appId: "1:970443692765:web:21b8e61ff165f36e46d934"
 });
 
-// --------------------------------------------------
-// MESSAGING
-// --------------------------------------------------
 const messaging = firebase.messaging();
-
-// URLs padrão do Pronti Pet
 const DEFAULT_VIEW_URL = "/agenda.html";
 const DEFAULT_FALLBACK_URL = "/";
 
-// --------------------------------------------------
-// RECEBE PUSH COM APP FECHADO
-// --------------------------------------------------
 messaging.onBackgroundMessage(function (payload) {
   try {
     console.log("[Pronti Pet SW] Push recebido:", payload);
@@ -37,16 +26,9 @@ messaging.onBackgroundMessage(function (payload) {
     const data = payload?.data || {};
     const notification = payload?.notification || {};
 
-    const title =
-      notification.title ||
-      data.title ||
-      "Novo agendamento pet";
-
+    const title = notification.title || data.title || "Novo agendamento pet";
     const options = {
-      body:
-        notification.body ||
-        data.body ||
-        "Você tem um novo agendamento no Pronti Pet!",
+      body: notification.body || data.body || "Você tem um novo agendamento no Pronti Pet!",
       icon: notification.icon || data.icon || "/icon.png",
       image: notification.image || data.image,
       badge: "/badge.png",
@@ -63,41 +45,26 @@ messaging.onBackgroundMessage(function (payload) {
     };
 
     self.registration.showNotification(title, options);
-
   } catch (err) {
     console.warn("[Pronti Pet SW] Erro ao processar push em background:", err);
   }
 });
 
-// --------------------------------------------------
-// CLICK NA NOTIFICAÇÃO
-// --------------------------------------------------
 self.addEventListener("notificationclick", function (event) {
   try {
-    console.log("[Pronti Pet SW] Clique na notificação:", event.action);
-
     const data = event.notification?.data || {};
-    const linkFromPayload =
-      data && (data.link || data.url)
-        ? String(data.link || data.url)
-        : "";
+    const linkFromPayload = data && (data.link || data.url)
+      ? String(data.link || data.url)
+      : "";
 
     event.notification.close();
-
     if (event.action === "dismiss") return;
 
     let targetUrl = DEFAULT_FALLBACK_URL;
-
-    if (event.action === "view") {
-      targetUrl = DEFAULT_VIEW_URL;
-    }
-
-    if (linkFromPayload) {
-      targetUrl = linkFromPayload;
-    }
+    if (event.action === "view") targetUrl = DEFAULT_VIEW_URL;
+    if (linkFromPayload) targetUrl = linkFromPayload;
 
     event.waitUntil(clients.openWindow(targetUrl));
-
   } catch (err) {
     console.warn("[Pronti Pet SW] Erro no notificationclick:", err);
     event.waitUntil(clients.openWindow(DEFAULT_FALLBACK_URL));
@@ -105,9 +72,11 @@ self.addEventListener("notificationclick", function (event) {
 });
 
 // ======================================================
-// CACHE OFFLINE - PRONTI PET
+// CACHE / CONTROLE DE VERSÃO
 // ======================================================
-const CACHE_NAME = "pronti-pet-painel-v1";
+const parametros = new URL(self.location.href).searchParams;
+const VERSAO = parametros.get("v") || "1.0.0";
+const CACHE_NAME = `pronti-pet-${VERSAO}`;
 
 const FILES_TO_CACHE = [
   "/",
@@ -120,88 +89,102 @@ const FILES_TO_CACHE = [
   "/perfil.html",
   "/agenda.html",
   "/servicos.html",
-  "/clientes.html"
+  "/clientes.html",
+  "/pwa-update.js",
+  "/version.json"
 ];
 
-// --------------------------------------------------
-// INSTALL
-// --------------------------------------------------
 self.addEventListener("install", function (event) {
-  console.log("[Pronti Pet SW] Install");
+  console.log(`[Pronti Pet SW] Install ${VERSAO}`);
 
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      console.log("[Pronti Pet SW] Cacheando app shell");
-      return cache.addAll(FILES_TO_CACHE);
+    caches.open(CACHE_NAME).then(async function (cache) {
+      await Promise.allSettled(
+        FILES_TO_CACHE.map((arquivo) =>
+          cache.add(`${arquivo}?v=${encodeURIComponent(VERSAO)}`)
+        )
+      );
     })
   );
 
-  self.skipWaiting();
+  // Não usa skipWaiting automático. A troca ocorre quando o usuário
+  // toca em "Atualizar agora" no aviso de nova versão.
 });
 
-// --------------------------------------------------
-// FETCH
-// --------------------------------------------------
-self.addEventListener("fetch", function (event) {
-  const url = event.request.url;
-
-  if (
-    url.includes("firebase") ||
-    url.includes("googleapis") ||
-    url.includes("firestore") ||
-    url.includes("gstatic")
-  ) {
-    return;
+self.addEventListener("message", function (event) {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
   }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then(function (response) {
-        if (response) return response;
-
-        return fetch(event.request).then(function (fetchResponse) {
-          if (
-            event.request.method === "GET" &&
-            fetchResponse &&
-            fetchResponse.type === "basic"
-          ) {
-            const responseClone = fetchResponse.clone();
-
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(event.request, responseClone);
-            });
-          }
-
-          return fetchResponse;
-        });
-      })
-      .catch(function () {
-        if (event.request.destination === "document") {
-          return caches.match("/index.html");
-        }
-      })
-  );
 });
 
-// --------------------------------------------------
-// ACTIVATE
-// --------------------------------------------------
 self.addEventListener("activate", function (event) {
-  console.log("[Pronti Pet SW] Activate");
+  console.log(`[Pronti Pet SW] Activate ${VERSAO}`);
 
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
         keys
-          .filter(function (key) {
-            return key !== CACHE_NAME;
-          })
-          .map(function (key) {
-            return caches.delete(key);
-          })
+          .filter((key) => key.startsWith("pronti-pet-"))
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       );
     })
   );
 
   self.clients.claim();
+});
+
+function ignorarRequestExterno(url) {
+  return (
+    url.origin !== self.location.origin ||
+    url.href.includes("firebase") ||
+    url.href.includes("googleapis") ||
+    url.href.includes("firestore") ||
+    url.href.includes("gstatic")
+  );
+}
+
+async function buscarRedeAtualizarCache(request) {
+  const resposta = await fetch(request, { cache: "no-store" });
+
+  if (
+    resposta &&
+    resposta.ok &&
+    request.method === "GET" &&
+    new URL(request.url).origin === self.location.origin
+  ) {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, resposta.clone());
+  }
+
+  return resposta;
+}
+
+async function fallbackDocumento(request) {
+  return (
+    await caches.match(request) ||
+    await caches.match(`/index.html?v=${encodeURIComponent(VERSAO)}`) ||
+    await caches.match(`/index.html`)
+  );
+}
+
+self.addEventListener("fetch", function (event) {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (ignorarRequestExterno(url)) return;
+
+  // Rede primeiro, sem cache HTTP. O Cache Storage fica apenas como
+  // contingência offline. Isso evita servir JS/CSS antigos após deploy.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      buscarRedeAtualizarCache(request).catch(() => fallbackDocumento(request))
+    );
+    return;
+  }
+
+  event.respondWith(
+    buscarRedeAtualizarCache(request).catch(() => caches.match(request))
+  );
 });
