@@ -5,6 +5,10 @@
 // "Voltar" não o cubra no desktop; mantém lógica original intacta.
 // ======================================================================
 
+// Atualização PWA: verifica nova versão e força limpeza de cache quando
+// o usuário confirma a atualização.
+import "./pwa-update.js?v=1.0.1";
+
 // --- 1. Importações Essenciais ---
 import { auth, db } from "./firebase-config.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
