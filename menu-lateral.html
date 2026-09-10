@@ -300,10 +300,61 @@
 }
 
 @media (max-width: 680px) {
-  /* Somente os rótulos das quatro métricas do Resumo de hoje no Index. */
+  /* Tipografia do Index: aumenta legibilidade sem alterar dimensões, gaps ou grid. */
+  body:has(.index-shell) .welcome-copy h1 {
+    font-size: 1.10rem !important;
+    line-height: 1.10 !important;
+  }
+
+  body:has(.index-shell) .owner-chip {
+    font-size: .62rem !important;
+  }
+
+  body:has(.index-shell) .section-title-row h2 {
+    font-size: .96rem !important;
+  }
+
+  body:has(.index-shell) .section-title-row a {
+    font-size: .68rem !important;
+  }
+
   body:has(.index-shell) .today-metric-label {
-    font-size: .66rem !important;
-    line-height: 1.22 !important;
+    font-size: .70rem !important;
+    line-height: 1.18 !important;
+  }
+
+  body:has(.index-shell) .next-hour {
+    font-size: .78rem !important;
+  }
+
+  body:has(.index-shell) .next-main strong {
+    font-size: .82rem !important;
+  }
+
+  body:has(.index-shell) .next-main span {
+    font-size: .67rem !important;
+  }
+
+  body:has(.index-shell) .next-status {
+    font-size: .61rem !important;
+  }
+
+  body:has(.index-shell) .agenda-feature-card p {
+    font-size: .76rem !important;
+    line-height: 1.34 !important;
+  }
+
+  body:has(.index-shell) .agenda-feature-button {
+    font-size: .73rem !important;
+  }
+
+  body:has(.index-shell) .quick-section-header h2 {
+    font-size: .98rem !important;
+  }
+
+  body:has(.index-shell) .menu-card span {
+    font-size: .79rem !important;
+    line-height: 1.08 !important;
   }
 }
 </style>
