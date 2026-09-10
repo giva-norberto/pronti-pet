@@ -2,6 +2,7 @@
   'use strict';
 
   const CHAVE_VERSAO = 'pronti_pet_versao_instalada';
+  const CHAVE_AVISO_SESSAO = 'pronti_pet_update_aviso_sessao';
   const URL_VERSAO = '/version.json';
   const INTERVALO_VERIFICACAO = 60 * 60 * 1000;
 
@@ -9,6 +10,19 @@
   let versaoDisponivel = null;
   let atualizando = false;
   let modalCriado = false;
+
+  function estaNoIndex() {
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    return path === '/' || path === '/index.html';
+  }
+
+  function avisoJaMostradoNestaSessao(versao) {
+    return sessionStorage.getItem(CHAVE_AVISO_SESSAO) === String(versao || '');
+  }
+
+  function marcarAvisoNestaSessao(versao) {
+    if (versao) sessionStorage.setItem(CHAVE_AVISO_SESSAO, String(versao));
+  }
 
   function criarModal() {
     if (modalCriado) return;
@@ -111,11 +125,16 @@
     document.head.appendChild(estilo);
     document.body.appendChild(modal);
 
-    document.getElementById('prontiUpdateDepois')?.addEventListener('click', esconderModal);
+    document.getElementById('prontiUpdateDepois')?.addEventListener('click', () => {
+      marcarAvisoNestaSessao(versaoDisponivel);
+      esconderModal();
+    });
     document.getElementById('prontiUpdateAgora')?.addEventListener('click', atualizarAgora);
   }
 
   function mostrarModal() {
+    if (!estaNoIndex() || avisoJaMostradoNestaSessao(versaoDisponivel)) return;
+    marcarAvisoNestaSessao(versaoDisponivel);
     criarModal();
     document.getElementById('prontiUpdateModal')?.classList.add('active');
   }
@@ -183,6 +202,7 @@
   }
 
   async function verificarAtualizacao() {
+    if (!estaNoIndex()) return;
     if (atualizando || !('serviceWorker' in navigator) || !window.isSecureContext) return;
 
     try {
@@ -219,6 +239,8 @@
   async function atualizarAgora() {
     if (atualizando) return;
     atualizando = true;
+
+    marcarAvisoNestaSessao(versaoDisponivel);
 
     const botao = document.getElementById('prontiUpdateAgora');
     if (botao) {
@@ -278,10 +300,8 @@
     recarregarComVersao();
   });
 
-  window.addEventListener('load', verificarAtualizacao);
-  window.addEventListener('focus', verificarAtualizacao);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') verificarAtualizacao();
-  });
-  window.setInterval(verificarAtualizacao, INTERVALO_VERIFICACAO);
+  if (estaNoIndex()) {
+    window.addEventListener('load', verificarAtualizacao, { once: true });
+    window.setInterval(verificarAtualizacao, INTERVALO_VERIFICACAO);
+  }
 })();
