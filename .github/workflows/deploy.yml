@@ -24,11 +24,25 @@ jobs:
           rm -rf node_modules
           npm install
 
+      - name: Resolve Firebase service account
+        id: firebase-service-account
+        env:
+          FIREBASE_SERVICE_ACCOUNT_PRONTI_PET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          FIREBASE_SERVICE_ACCOUNT_VALUE="${FIREBASE_SERVICE_ACCOUNT_PRONTI_PET:-$FIREBASE_SERVICE_ACCOUNT}"
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_VALUE" ]; then
+            echo "Missing Firebase service account secret. Configure FIREBASE_SERVICE_ACCOUNT_PRONTI_PET or FIREBASE_SERVICE_ACCOUNT." >&2
+            exit 1
+          fi
+          echo "::add-mask::$FIREBASE_SERVICE_ACCOUNT_VALUE"
+          echo "service_account=$FIREBASE_SERVICE_ACCOUNT_VALUE" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET }}
+          firebaseServiceAccount: ${{ steps.firebase-service-account.outputs.service_account }}
           projectId: pronti-pet
           channelId: live
 
@@ -37,7 +51,7 @@ jobs:
 
       - name: Setup Firebase credentials
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRONTI_PET }}' > $HOME/firebase-credentials.json
+          echo '${{ steps.firebase-service-account.outputs.service_account }}' > $HOME/firebase-credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
       - name: Validate Functions code
