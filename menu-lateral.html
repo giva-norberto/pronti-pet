@@ -270,11 +270,12 @@
     font-size: .92rem;
   }
 
-  /* Correção mobile: evita viewport extra/scroll fantasma após o fim do conteúdo. */
+  /* Mobile: deixa a página controlar a rolagem e evita área branca extra. */
   html,
   body {
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
   }
 
   #sidebar-placeholder {
@@ -284,6 +285,11 @@
 
   .main-content {
     height: auto !important;
+    min-height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .index-shell {
     min-height: 0 !important;
   }
 
