@@ -1,0 +1,753 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // ADMIN MASTER (VOCÊ)
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.uid == 'HNIJxFjPvSO1oO9X1Gjq7negfR12';
+    }
+
+    function isOwner(empresaResource) {
+      return request.auth != null &&
+        empresaResource != null &&
+        request.auth.uid == empresaResource.data.donoId;
+    }
+
+    function isEmpresaOwner(empresaId) {
+      return request.auth != null &&
+        empresaId != '' &&
+        exists(
+          /databases/$(database)/documents/empresarios/$(empresaId)
+        ) &&
+        isOwner(
+          get(
+            /databases/$(database)/documents/empresarios/$(empresaId)
+          )
+        );
+    }
+
+    function isProfessional(empresaId) {
+      return request.auth != null &&
+        exists(
+          /databases/$(database)/documents/empresarios/$(empresaId)/profissionais/$(request.auth.uid)
+        );
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // IDENTIDADE DO CLIENTE
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    /*
+     * Compatibilidade de identificação:
+     * 1. Estrutura antiga: clienteId igual ao UID;
+     * 2. Estrutura nova: UID salvo em authUid;
+     * 3. Campos antigos alternativos continuam aceitos.
+     */
+    function clienteDataPertenceAoUsuario(clienteId, clienteData) {
+      return request.auth != null && (
+        request.auth.uid == clienteId ||
+        clienteData.get('uid', '') == request.auth.uid ||
+        clienteData.get('clienteUid', '') == request.auth.uid ||
+        clienteData.get('userUid', '') == request.auth.uid ||
+        clienteData.get('authUid', '') == request.auth.uid
+      );
+    }
+
+    function isLinkedClient(empresaId, clienteId) {
+      return request.auth != null &&
+        clienteId != '' && (
+          request.auth.uid == clienteId ||
+          (
+            exists(
+              /databases/$(database)/documents/empresarios/$(empresaId)/clientes/$(clienteId)
+            ) &&
+            clienteDataPertenceAoUsuario(
+              clienteId,
+              get(
+                /databases/$(database)/documents/empresarios/$(empresaId)/clientes/$(clienteId)
+              ).data
+            )
+          )
+        );
+    }
+
+    /*
+     * O vínculo automático por e-mail só é liberado quando o Firebase
+     * informa que o endereço da conta foi verificado.
+     */
+    function possuiEmailVerificado() {
+      return request.auth != null &&
+        request.auth.token.get('email', '') != '' &&
+        request.auth.token.get('email_verified', false) == true;
+    }
+
+    function clienteTemMesmoEmailVerificado(clienteData) {
+      return possuiEmailVerificado() && (
+        clienteData.get('emailNormalizado', '') ==
+          request.auth.token.get('email', '').lower() ||
+        clienteData.get('email', '') ==
+          request.auth.token.get('email', '')
+      );
+    }
+
+    /*
+     * Mantém o cadastro online antigo: documento criado com ID igual
+     * ao UID do Firebase Authentication.
+     */
+    function podeCriarClienteProprio(clienteId, clienteData) {
+      return request.auth != null &&
+        clienteId == request.auth.uid &&
+        clienteData.get('authUid', request.auth.uid) == request.auth.uid &&
+        clienteData.get('uid', request.auth.uid) == request.auth.uid &&
+        clienteData.get('clienteUid', request.auth.uid) == request.auth.uid &&
+        clienteData.get('userUid', request.auth.uid) == request.auth.uid;
+    }
+
+    /*
+     * Campos que a vitrine pode completar ao vincular pela primeira vez
+     * um cadastro manual a uma conta autenticada.
+     */
+    function podeVincularClienteManual(clienteDataAtual, clienteDataNova) {
+      return request.auth != null &&
+        clienteTemMesmoEmailVerificado(clienteDataAtual) &&
+        clienteDataAtual.get('authUid', '') == '' &&
+        clienteDataAtual.get('uid', '') == '' &&
+        clienteDataAtual.get('clienteUid', '') == '' &&
+        clienteDataAtual.get('userUid', '') == '' &&
+        clienteDataNova.get('authUid', '') == request.auth.uid &&
+        clienteDataNova.get('contaVinculada', false) == true &&
+        clienteDataNova.get('emailNormalizado', '') ==
+          request.auth.token.get('email', '').lower() &&
+        clienteDataNova.diff(clienteDataAtual).affectedKeys().hasOnly([
+          'nome',
+          'email',
+          'emailNormalizado',
+          'authUid',
+          'contaVinculada',
+          'atualizadoEm',
+          'ultimoLoginEm',
+          'dataCadastro',
+          'vinculadoEm',
+          'origemCadastro'
+        ]);
+    }
+
+    /*
+     * Depois de vinculado, o cliente pode manter apenas os próprios
+     * dados de contato e os campos técnicos de sessão/vínculo.
+     */
+    function podeAtualizarPerfilCliente(clienteId, clienteDataAtual, clienteDataNova) {
+      return clienteDataPertenceAoUsuario(clienteId, clienteDataAtual) &&
+        clienteDataPertenceAoUsuario(clienteId, clienteDataNova) &&
+        clienteDataNova.diff(clienteDataAtual).affectedKeys().hasOnly([
+          'nome',
+          'email',
+          'emailNormalizado',
+          'telefone',
+          'telefoneNormalizado',
+          'foto',
+          'fotoUrl',
+          'photoURL',
+          'authUid',
+          'uid',
+          'clienteUid',
+          'userUid',
+          'contaVinculada',
+          'atualizadoEm',
+          'ultimoLoginEm',
+          'dataCadastro',
+          'vinculadoEm',
+          'origemCadastro'
+        ]);
+    }
+
+    /*
+     * Identifica o dono de um registro que contém clienteId e,
+     * na estrutura nova, clienteAuthUid.
+     */
+    function registroPertenceAoCliente(empresaId, dadosRegistro) {
+      return request.auth != null && (
+        dadosRegistro.get('clienteId', '') == request.auth.uid ||
+        dadosRegistro.get('clienteAuthUid', '') == request.auth.uid ||
+        dadosRegistro.get('authUid', '') == request.auth.uid ||
+        (
+          dadosRegistro.get('clienteId', '') != '' &&
+          isLinkedClient(
+            empresaId,
+            dadosRegistro.get('clienteId', '')
+          )
+        )
+      );
+    }
+
+    function agendamentoPertenceAoCliente(empresaId, agendamentoId) {
+      return request.auth != null &&
+        exists(
+          /databases/$(database)/documents/empresarios/$(empresaId)/agendamentos/$(agendamentoId)
+        ) &&
+        registroPertenceAoCliente(
+          empresaId,
+          get(
+            /databases/$(database)/documents/empresarios/$(empresaId)/agendamentos/$(agendamentoId)
+          ).data
+        );
+    }
+
+    function registroGlobalPertenceAoCliente(dadosRegistro) {
+      return request.auth != null && (
+        dadosRegistro.get('clienteId', '') == request.auth.uid ||
+        dadosRegistro.get('clienteAuthUid', '') == request.auth.uid ||
+        dadosRegistro.get('authUid', '') == request.auth.uid ||
+        (
+          dadosRegistro.get('empresaId', '') != '' &&
+          dadosRegistro.get('clienteId', '') != '' &&
+          isLinkedClient(
+            dadosRegistro.get('empresaId', ''),
+            dadosRegistro.get('clienteId', '')
+          )
+        )
+      );
+    }
+
+    function registroGlobalPertenceAoDono(dadosRegistro) {
+      return dadosRegistro.get('empresaId', '') != '' &&
+        isEmpresaOwner(
+          dadosRegistro.get('empresaId', '')
+        );
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // COMPATIBILIDADE DOS AGENDAMENTOS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    function profissionalDoAgendamentoExiste(empresaId, dadosAgendamento) {
+      return (
+        dadosAgendamento.get('profissionalId', '') != '' &&
+        exists(
+          /databases/$(database)/documents/empresarios/$(empresaId)/profissionais/$(dadosAgendamento.get('profissionalId', ''))
+        )
+      ) || (
+        'profissional' in dadosAgendamento &&
+        dadosAgendamento.profissional.get('id', '') != '' &&
+        exists(
+          /databases/$(database)/documents/empresarios/$(empresaId)/profissionais/$(dadosAgendamento.profissional.get('id', ''))
+        )
+      );
+    }
+
+    function usuarioEhProfissionalDoAgendamento(dadosAgendamento) {
+      return request.auth != null && (
+        dadosAgendamento.get('profissionalId', '') == request.auth.uid ||
+        (
+          'profissional' in dadosAgendamento &&
+          dadosAgendamento.profissional.get('id', '') == request.auth.uid
+        )
+      );
+    }
+
+    function podeCriarAgendamentoComoCliente(empresaId, dadosAgendamento) {
+      return request.auth != null &&
+        dadosAgendamento.get('clienteId', '') != '' &&
+        dadosAgendamento.get('empresaId', empresaId) == empresaId &&
+        (
+          dadosAgendamento.get('clienteId', '') == request.auth.uid ||
+          isLinkedClient(
+            empresaId,
+            dadosAgendamento.get('clienteId', '')
+          )
+        );
+    }
+
+    function getEmpresasDoUsuario(userId) {
+      return [];
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // SUPER ADMIN GLOBAL (SEM MEXER)
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // CONFIGURAÇÕES
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /configuracoesGlobais/{docId} {
+
+      allow get, list: if request.auth != null;
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // EMPRESAS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /empresarios/{empresaId} {
+
+      // Vitrine pública:
+      // permite buscar UMA empresa pelo ID conhecido, sem permitir listar todas.
+      // Necessário para abrir vitrini.html?empresa=... sem login.
+      allow get: if true;
+
+      // A listagem completa de empresas continua protegida.
+      allow list: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.donoId == request.auth.uid;
+
+      allow update, delete: if isOwner(resource);
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // CLIENTES
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /clientes/{clienteId} {
+
+        /*
+         * Dono da empresa mantém acesso completo aos próprios clientes.
+         */
+        allow read, write: if isEmpresaOwner(empresaId);
+
+        /*
+         * Cliente pode localizar o próprio documento:
+         * - pelo ID antigo igual ao UID;
+         * - por authUid ou campos antigos de vínculo;
+         * - pelo próprio e-mail verificado durante a primeira vinculação.
+         */
+        allow get, list: if
+          clienteDataPertenceAoUsuario(clienteId, resource.data) ||
+          clienteTemMesmoEmailVerificado(resource.data);
+
+        /*
+         * Mantém o cadastro online tradicional pelo UID.
+         */
+        allow create: if
+          podeCriarClienteProprio(
+            clienteId,
+            request.resource.data
+          );
+
+        /*
+         * Permite completar o perfil já vinculado ou realizar a primeira
+         * vinculação segura do cadastro manual.
+         */
+        allow update: if
+          podeAtualizarPerfilCliente(
+            clienteId,
+            resource.data,
+            request.resource.data
+          ) ||
+          podeVincularClienteManual(
+            resource.data,
+            request.resource.data
+          );
+
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+        // PETS DO CLIENTE
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+        match /pets/{petId} {
+
+          /*
+           * Dono da empresa:
+           * pode listar, visualizar, cadastrar,
+           * alterar e excluir pets.
+           */
+          allow read, create, update, delete: if
+            isEmpresaOwner(empresaId);
+
+          /*
+           * Cliente vinculado:
+           * pode visualizar, listar, cadastrar
+           * e atualizar os próprios pets.
+           *
+           * A exclusão não foi liberada para o cliente.
+           */
+          allow get, list, create, update: if
+            isLinkedClient(empresaId, clienteId);
+        }
+
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+        // ASSINATURAS DO CLIENTE
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+        match /assinaturas/{assinaturaId} {
+
+          allow get, list: if
+            isLinkedClient(empresaId, clienteId) ||
+            isEmpresaOwner(empresaId);
+
+          /*
+           * Escritas continuam reservadas ao Admin SDK/Cloud Functions
+           * e ao administrador master, como na estrutura anterior.
+           */
+          allow write: if false;
+        }
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // SERVIÇOS
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /servicos/{servicoId} {
+
+        allow get, list: if true;
+
+        allow create, delete: if isEmpresaOwner(empresaId);
+
+        allow update: if
+          isEmpresaOwner(empresaId) ||
+          isProfessional(empresaId);
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // PROFISSIONAIS
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /profissionais/{profissionalId} {
+
+        allow read: if true;
+
+        allow write: if
+          isEmpresaOwner(empresaId) || (
+            request.auth != null &&
+            request.auth.uid == profissionalId
+          );
+
+        match /configuracoes/{configId} {
+
+          allow read: if true;
+
+          allow write: if
+            isEmpresaOwner(empresaId) || (
+              request.auth != null &&
+              request.auth.uid == profissionalId
+            );
+        }
+
+        match /ausencias/{ausenciaId} {
+
+          allow get, list: if request.auth != null;
+
+          allow create, update, delete: if
+            isEmpresaOwner(empresaId) || (
+              request.auth != null &&
+              request.auth.uid == profissionalId
+            );
+        }
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // AGENDAMENTOS
+      // COMPATÍVEL COM MODELO ANTIGO E NOVO
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /agendamentos/{agendamentoId} {
+
+        // Compatibilidade com o Pronti Agenda:
+        // a vitrine precisa consultar os agendamentos ativos do dia
+        // para calcular corretamente os horários disponíveis.
+        allow read: if true;
+
+        allow create: if
+          podeCriarAgendamentoComoCliente(
+            empresaId,
+            request.resource.data
+          ) &&
+          profissionalDoAgendamentoExiste(
+            empresaId,
+            request.resource.data
+          );
+
+        allow update: if request.auth != null && (
+          isEmpresaOwner(empresaId) ||
+          registroPertenceAoCliente(empresaId, resource.data) ||
+          usuarioEhProfissionalDoAgendamento(resource.data)
+        );
+
+        allow delete: if isEmpresaOwner(empresaId);
+
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+        // MENSAGENS DO ATENDIMENTO
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+        match /mensagens/{mensagemId} {
+
+          /*
+           * Leitura:
+           * - dono da empresa;
+           * - profissional vinculado à empresa;
+           * - cliente ao qual a mensagem pertence.
+           */
+          allow get, list: if request.auth != null && (
+            isEmpresaOwner(empresaId) ||
+            isProfessional(empresaId) ||
+            agendamentoPertenceAoCliente(empresaId, agendamentoId)
+          );
+
+          /*
+           * Criação:
+           * usada pelo painel de atendimento quando o status muda
+           * para "liberado", além das mensagens manuais futuras.
+           */
+          allow create: if request.auth != null && (
+            isEmpresaOwner(empresaId) ||
+            isProfessional(empresaId)
+          ) &&
+            request.resource.data.get('empresaId', empresaId) == empresaId &&
+            request.resource.data.get('agendamentoId', agendamentoId) == agendamentoId;
+
+          /*
+           * Atualização pelo pet shop:
+           * dono e profissionais podem administrar o estado da mensagem.
+           */
+          allow update: if request.auth != null && (
+            isEmpresaOwner(empresaId) ||
+            isProfessional(empresaId)
+          );
+
+          /*
+           * Confirmação pelo cliente:
+           * o cliente só pode alterar campos técnicos de visualização
+           * e confirmação. Título, texto, pet, serviço, empresa e
+           * agendamento permanecem protegidos.
+           */
+          allow update: if
+            agendamentoPertenceAoCliente(empresaId, agendamentoId) &&
+            registroPertenceAoCliente(empresaId, resource.data) &&
+            registroPertenceAoCliente(empresaId, request.resource.data) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status',
+              'visualizadaEm',
+              'visualizadaPor',
+              'visualizadaPorNome',
+              'confirmadaEm',
+              'confirmadaPor',
+              'confirmadaPorNome',
+              'ativa'
+            ]) &&
+            request.resource.data.get('status', '') in [
+              'visualizada',
+              'confirmada'
+            ] &&
+            request.resource.data.get('empresaId', '') ==
+              resource.data.get('empresaId', '') &&
+            request.resource.data.get('agendamentoId', '') ==
+              resource.data.get('agendamentoId', '') &&
+            request.resource.data.get('clienteId', '') ==
+              resource.data.get('clienteId', '') &&
+            request.resource.data.get('titulo', '') ==
+              resource.data.get('titulo', '') &&
+            request.resource.data.get('mensagem', '') ==
+              resource.data.get('mensagem', '');
+
+          /*
+           * Exclusão reservada ao dono da empresa.
+           * O cliente confirma; não exclui a mensagem.
+           */
+          allow delete: if isEmpresaOwner(empresaId);
+        }
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // PROMOÇÕES
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /precos_especiais/{promoId} {
+
+        allow get, list: if true;
+
+        allow create, update, delete: if
+          isEmpresaOwner(empresaId);
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // PLANOS
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /planosDeAssinatura/{planoId} {
+
+        allow get, list: if true;
+
+        allow create, update, delete: if
+          isAdmin() ||
+          isEmpresaOwner(empresaId);
+      }
+
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      // OFERTAS FILA
+      // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+      match /ofertas_fila/{ofertaId} {
+
+        allow read: if request.auth != null && (
+          registroPertenceAoCliente(empresaId, resource.data) ||
+          isEmpresaOwner(empresaId)
+        );
+
+        /*
+         * A criação e a mudança das ofertas continuam reservadas ao
+         * mecanismo confiável da fila/Admin SDK.
+         */
+        allow write: if false;
+      }
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // USUÁRIOS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /usuarios/{userId} {
+
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    match /usuarios/{userId}/tokens/{tokenId} {
+
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    match /mapaUsuarios/{userId} {
+
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // TOKENS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /mensagensTokens/{userId} {
+
+      allow create, read, update, delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // ALERTS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /alerts/{alertId} {
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      allow read: if request.auth != null;
+
+      allow update, delete: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+
+        resource.data.empresaId in
+          getEmpresasDoUsuario(request.auth.uid)
+      );
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // NOTIFICAÇÕES
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /filaDeNotificacoes/{docId} {
+
+      /*
+       * Preserva as notificações criadas pelo próprio dono e permite
+       * a notificação de novo agendamento criada pela vitrine.
+       */
+      allow create: if request.auth != null && (
+        request.resource.data.get('donoId', '') == request.auth.uid ||
+        (
+          request.resource.data.get('donoId', '') != '' &&
+          request.resource.data.get('titulo', '') is string &&
+          request.resource.data.get('mensagem', '') is string &&
+          request.resource.data.get('status', 'pendente') == 'pendente'
+        )
+      );
+
+      allow read, update, delete: if request.auth != null
+        && resource.data.donoId == request.auth.uid;
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // PAGAMENTOS
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /pagamentosPendentes/{pagamentoId} {
+
+      allow create: if
+        registroGlobalPertenceAoCliente(
+          request.resource.data
+        );
+
+      allow update: if
+        registroGlobalPertenceAoCliente(resource.data) ||
+        registroGlobalPertenceAoDono(resource.data);
+
+      allow read, delete: if
+        registroGlobalPertenceAoDono(resource.data);
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // EMAILS — DESATIVADO
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /mail/{mailId} {
+
+      allow read, write: if false;
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // LEMBRETES
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /lembretesPendentes/{id} {
+
+      allow create: if
+        registroGlobalPertenceAoCliente(
+          request.resource.data
+        );
+
+      allow read: if
+        registroGlobalPertenceAoCliente(resource.data) ||
+        registroGlobalPertenceAoDono(resource.data);
+
+      allow update: if
+        registroGlobalPertenceAoCliente(resource.data) ||
+        registroGlobalPertenceAoDono(resource.data);
+
+      allow delete: if
+        registroGlobalPertenceAoDono(resource.data);
+    }
+
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // FILA DE AGENDAMENTO
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    match /fila_agendamentos/{filaId} {
+
+      allow create: if
+        registroGlobalPertenceAoCliente(
+          request.resource.data
+        );
+
+      allow get, list: if
+        registroGlobalPertenceAoCliente(resource.data) ||
+        registroGlobalPertenceAoDono(resource.data);
+
+      allow update: if
+        registroGlobalPertenceAoCliente(resource.data) ||
+        registroGlobalPertenceAoDono(resource.data);
+
+      allow delete: if
+        registroGlobalPertenceAoDono(resource.data);
+    }
+  }
+}
