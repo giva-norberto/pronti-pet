@@ -1169,11 +1169,11 @@ async function encontrarProximoDiaComExpediente(empresaId, dataInicialISO) {
 function getFimSemana(dataBaseStr) {
   const [ano, mes, dia] = dataBaseStr.split("-").map(Number);
   const inicio = new Date(ano, mes - 1, dia);
-  const diaDaSemana = inicio.getDay();
-  const diasAteDomingo = 7 - diaDaSemana;
   const fim = new Date(inicio);
 
-  fim.setDate(inicio.getDate() + diasAteDomingo - 1);
+  // Agenda da Semana = período contínuo de 7 dias a partir
+  // da data selecionada. Ex.: 12/09 -> 18/09.
+  fim.setDate(inicio.getDate() + 6);
 
   return formatarDataISO(fim);
 }
