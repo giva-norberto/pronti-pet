@@ -1,0 +1,352 @@
+name: Corrigir agenda dia e atualização automática uma vez
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  aplicar-correcoes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Aplicar correções cirúrgicas
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          # -------------------------------------------------
+          # 1) Agenda do Dia: próximo dia com expediente OU agendamento
+          # -------------------------------------------------
+          path = Path('agenda.js')
+          text = path.read_text(encoding='utf-8')
+
+          old_func = '''async function encontrarProximoDiaComExpediente(empresaId, dataInicialISO) {
+            let data = new Date(`${dataInicialISO}T00:00:00`);
+
+            for (let i = 0; i < 14; i++) {
+              const nomeDia = diasDaSemanaArr[data.getDay()];
+              const profs = await getDocs(
+                collection(db, "empresarios", empresaId, "profissionais")
+              );
+
+              for (const docProf of profs.docs) {
+                const horariosRef = doc(
+                  db,
+                  "empresarios",
+                  empresaId,
+                  "profissionais",
+                  docProf.id,
+                  "configuracoes",
+                  "horarios"
+                );
+
+                const horariosSnap = await getDoc(horariosRef);
+                if (!horariosSnap.exists()) continue;
+
+                const conf = horariosSnap.data();
+
+                if (
+                  conf[nomeDia] &&
+                  conf[nomeDia].ativo &&
+                  conf[nomeDia].blocos &&
+                  conf[nomeDia].blocos.length > 0
+                ) {
+                  return data.toISOString().split("T")[0];
+                }
+              }
+
+              data.setDate(data.getDate() + 1);
+            }
+
+            return dataInicialISO;
+          }'''
+
+          new_func = '''async function encontrarProximoDiaRelevante(empresaId, dataInicialISO) {
+            const [ano, mes, dia] = dataInicialISO.split("-").map(Number);
+            const data = new Date(ano, mes - 1, dia);
+
+            // A navegação diária sempre procura A PARTIR DO DIA SEGUINTE.
+            data.setDate(data.getDate() + 1);
+
+            for (let i = 0; i < 60; i++) {
+              const dataISO = formatarDataISO(data);
+
+              const [temExpediente, agendamentosSnap] = await Promise.all([
+                diaTemExpediente(empresaId, dataISO),
+                getDocs(
+                  query(
+                    collection(db, "empresarios", empresaId, "agendamentos"),
+                    where("data", "==", dataISO)
+                  )
+                )
+              ]);
+
+              const temAgendamentoAtivo = agendamentosSnap.docs.some((docSnap) => {
+                const ag = docSnap.data() || {};
+                return ag.status === "ativo";
+              });
+
+              if (temExpediente || temAgendamentoAtivo) {
+                return dataISO;
+              }
+
+              data.setDate(data.getDate() + 1);
+            }
+
+            // Contingência: se não houver expediente/agendamento nos próximos
+            // 60 dias, avança apenas um dia para não travar a navegação.
+            const fallback = new Date(ano, mes - 1, dia);
+            fallback.setDate(fallback.getDate() + 1);
+            return formatarDataISO(fallback);
+          }'''
+
+          if text.count(old_func) != 1:
+              raise SystemExit(f'Função antiga encontrada {text.count(old_func)} vez(es); abortando.')
+          text = text.replace(old_func, new_func, 1)
+
+          old_call = 'dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);'
+          if text.count(old_call) != 2:
+              raise SystemExit(f'Chamadas antigas encontradas {text.count(old_call)} vez(es); abortando.')
+          text = text.replace(old_call, 'dataFiltrar = await encontrarProximoDiaRelevante(empresaId, hojeISO);')
+
+          old_next = '''  if (btnSemanaProxima) {
+            btnSemanaProxima.addEventListener("click", () => {
+              if (!inputDataSemana || !inputDataSemana.value) return;
+
+              const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
+              const dataAtual = new Date(ano, mes - 1, dia);
+
+              dataAtual.setDate(dataAtual.getDate() + 7);
+
+              inputDataSemana.value = formatarDataISO(dataAtual);
+              carregarAgendamentosConformeModo();
+            });
+          }'''
+
+          new_next = '''  if (btnSemanaProxima) {
+            btnSemanaProxima.addEventListener("click", async () => {
+              if (!inputDataSemana || !inputDataSemana.value) return;
+
+              // No modo Dia, a seta vai para o próximo dia operacional:
+              // dia com expediente configurado OU agendamento ativo.
+              if (modoAgenda === "dia") {
+                inputDataSemana.value = await encontrarProximoDiaRelevante(
+                  empresaId,
+                  inputDataSemana.value
+                );
+                carregarAgendamentosConformeModo();
+                return;
+              }
+
+              // No modo Semana, mantém a navegação natural de 7 em 7 dias.
+              if (modoAgenda === "semana") {
+                const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
+                const dataAtual = new Date(ano, mes - 1, dia);
+                dataAtual.setDate(dataAtual.getDate() + 7);
+                inputDataSemana.value = formatarDataISO(dataAtual);
+                carregarAgendamentosConformeModo();
+              }
+            });
+          }'''
+
+          if text.count(old_next) != 1:
+              raise SystemExit(f'Listener antigo encontrado {text.count(old_next)} vez(es); abortando.')
+          text = text.replace(old_next, new_next, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # -------------------------------------------------
+          # 2) Atualização PWA automática, sem modal/manual
+          # -------------------------------------------------
+          pwa = Path('pwa-update.js')
+          pwa.write_text("""(() => {
+            'use strict';
+
+            const CHAVE_VERSAO = 'pronti_pet_versao_instalada';
+            const URL_VERSAO = '/version.json';
+
+            let registroAtual = null;
+            let versaoDisponivel = null;
+            let atualizando = false;
+            let recarregou = false;
+
+            async function limparCachesPronti() {
+              if (!('caches' in window)) return;
+              const chaves = await caches.keys();
+              await Promise.all(
+                chaves
+                  .filter((chave) => chave.startsWith('pronti-pet-'))
+                  .map((chave) => caches.delete(chave))
+              );
+            }
+
+            function recarregarComVersao() {
+              const url = new URL(window.location.href);
+              url.searchParams.set('v', versaoDisponivel || String(Date.now()));
+              window.location.replace(url.href);
+            }
+
+            async function buscarVersao() {
+              const resposta = await fetch(`${URL_VERSAO}?t=${Date.now()}`, {
+                cache: 'no-store'
+              });
+              if (!resposta.ok) {
+                throw new Error(`Falha ao consultar versão: ${resposta.status}`);
+              }
+              const dados = await resposta.json();
+              return String(dados.version || '').trim();
+            }
+
+            async function ativarNovaVersao() {
+              if (atualizando || !registroAtual) return;
+
+              const worker = registroAtual.waiting || registroAtual.installing;
+              if (!worker) return;
+
+              atualizando = true;
+
+              if (worker.state === 'installed') {
+                worker.postMessage({ type: 'SKIP_WAITING' });
+                return;
+              }
+
+              worker.addEventListener('statechange', () => {
+                if (worker.state === 'installed') {
+                  worker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+
+            function observarInstalacao(registro) {
+              registro.addEventListener('updatefound', () => {
+                const novoWorker = registro.installing;
+                if (!novoWorker) return;
+
+                novoWorker.addEventListener('statechange', () => {
+                  if (
+                    novoWorker.state === 'installed' &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    ativarNovaVersao();
+                  }
+                });
+              });
+            }
+
+            async function registrarWorker(versao) {
+              const urlWorker = `/firebase-messaging-sw.js?v=${encodeURIComponent(versao)}`;
+              const registro = await navigator.serviceWorker.register(urlWorker, {
+                scope: '/',
+                updateViaCache: 'none'
+              });
+
+              registroAtual = registro;
+              observarInstalacao(registro);
+              await registro.update();
+
+              if (registro.waiting && navigator.serviceWorker.controller) {
+                await ativarNovaVersao();
+              }
+
+              return registro;
+            }
+
+            async function verificarAtualizacao() {
+              if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+
+              try {
+                const versaoRemota = await buscarVersao();
+                if (!versaoRemota) return;
+
+                const versaoLocal = localStorage.getItem(CHAVE_VERSAO);
+                versaoDisponivel = versaoRemota;
+
+                if (!versaoLocal) {
+                  const jaEraControlado = Boolean(navigator.serviceWorker.controller);
+                  await registrarWorker(versaoRemota);
+
+                  if (!jaEraControlado) {
+                    localStorage.setItem(CHAVE_VERSAO, versaoRemota);
+                  } else if (registroAtual?.waiting) {
+                    await ativarNovaVersao();
+                  }
+                  return;
+                }
+
+                if (versaoRemota === versaoLocal) {
+                  if (!registroAtual) await registrarWorker(versaoRemota);
+                  return;
+                }
+
+                await registrarWorker(versaoRemota);
+                if (registroAtual?.waiting) {
+                  await ativarNovaVersao();
+                }
+              } catch (erro) {
+                atualizando = false;
+                console.warn('[Pronti Pet] Verificação automática de atualização indisponível:', erro);
+              }
+            }
+
+            navigator.serviceWorker?.addEventListener('controllerchange', async () => {
+              if (recarregou) return;
+              recarregou = true;
+
+              if (versaoDisponivel) {
+                localStorage.setItem(CHAVE_VERSAO, versaoDisponivel);
+              }
+
+              try {
+                await limparCachesPronti();
+              } catch (erro) {
+                console.warn('[Pronti Pet] Não foi possível limpar cache antigo:', erro);
+              }
+
+              recarregarComVersao();
+            });
+
+            // Verifica automaticamente em qualquer tela que carregue o menu.
+            // Como o Pronti Pet é multipágina, isso evita interromper o usuário
+            // no meio do trabalho com verificações horárias.
+            window.addEventListener('load', verificarAtualizacao, { once: true });
+          })();
+          """, encoding='utf-8')
+
+          # Força o navegador a buscar o novo módulo de atualização.
+          menu = Path('menu-lateral.js')
+          menu_text = menu.read_text(encoding='utf-8')
+          old_import = 'import "./pwa-update.js?v=1.0.1";'
+          if old_import not in menu_text:
+              raise SystemExit('Import antigo do pwa-update.js não encontrado; abortando.')
+          menu.write_text(menu_text.replace(old_import, 'import "./pwa-update.js?v=1.0.3";', 1), encoding='utf-8')
+
+          # -------------------------------------------------
+          # 3) Sobe a versão para acionar a atualização automática
+          # -------------------------------------------------
+          version_path = Path('version.json')
+          version_data = json.loads(version_path.read_text(encoding='utf-8'))
+          version_data['version'] = '1.0.3'
+          version_data['updatedAt'] = '2026-09-12'
+          version_data['notes'] = 'Correção da agenda diária e semanal com atualização automática do app'
+          version_path.write_text(json.dumps(version_data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit das correções
+        run: |
+          if git diff --quiet -- agenda.js pwa-update.js menu-lateral.js version.json; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git config user.name "pronti-pet-bot"
+          git config user.email "pronti-pet-bot@users.noreply.github.com"
+          git add agenda.js pwa-update.js menu-lateral.js version.json
+          git commit -m "Corrige agenda diária e ativa atualização automática"
+          git push origin HEAD:main
