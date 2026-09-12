@@ -1125,45 +1125,41 @@ async function diaTemExpediente(empresaId, dataISO) {
   return false;
 }
 
-async function encontrarProximoDiaComExpediente(empresaId, dataInicialISO) {
-  let data = new Date(`${dataInicialISO}T00:00:00`);
+async function encontrarProximoDiaRelevante(empresaId, dataInicialISO) {
+  const [ano, mes, dia] = dataInicialISO.split("-").map(Number);
+  const data = new Date(ano, mes - 1, dia);
 
-  for (let i = 0; i < 14; i++) {
-    const nomeDia = diasDaSemanaArr[data.getDay()];
-    const profs = await getDocs(
-      collection(db, "empresarios", empresaId, "profissionais")
-    );
+  // Sempre procura a partir do dia seguinte.
+  data.setDate(data.getDate() + 1);
 
-    for (const docProf of profs.docs) {
-      const horariosRef = doc(
-        db,
-        "empresarios",
-        empresaId,
-        "profissionais",
-        docProf.id,
-        "configuracoes",
-        "horarios"
-      );
+  for (let i = 0; i < 60; i++) {
+    const dataISO = formatarDataISO(data);
 
-      const horariosSnap = await getDoc(horariosRef);
-      if (!horariosSnap.exists()) continue;
+    const [temExpediente, agendamentosSnap] = await Promise.all([
+      diaTemExpediente(empresaId, dataISO),
+      getDocs(
+        query(
+          collection(db, "empresarios", empresaId, "agendamentos"),
+          where("data", "==", dataISO)
+        )
+      )
+    ]);
 
-      const conf = horariosSnap.data();
+    const temAgendamentoAtivo = agendamentosSnap.docs.some((docSnap) => {
+      const ag = docSnap.data() || {};
+      return ag.status === "ativo";
+    });
 
-      if (
-        conf[nomeDia] &&
-        conf[nomeDia].ativo &&
-        conf[nomeDia].blocos &&
-        conf[nomeDia].blocos.length > 0
-      ) {
-        return data.toISOString().split("T")[0];
-      }
+    if (temExpediente || temAgendamentoAtivo) {
+      return dataISO;
     }
 
     data.setDate(data.getDate() + 1);
   }
 
-  return dataInicialISO;
+  const fallback = new Date(ano, mes - 1, dia);
+  fallback.setDate(fallback.getDate() + 1);
+  return formatarDataISO(fallback);
 }
 
 function getFimSemana(dataBaseStr) {
@@ -1279,7 +1275,7 @@ async function inicializarPaginaAgenda() {
   let dataFiltrar = hojeISO;
 
   if (acabou) {
-    dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
+    dataFiltrar = await encontrarProximoDiaRelevante(empresaId, hojeISO);
   }
 
   if (inputDataSemana) {
@@ -1304,7 +1300,7 @@ function configurarListeners() {
       let dataFiltrar = hojeISO;
 
       if (acabou) {
-        dataFiltrar = await encontrarProximoDiaComExpediente(empresaId, hojeISO);
+        dataFiltrar = await encontrarProximoDiaRelevante(empresaId, hojeISO);
       }
 
       if (inputDataSemana) {
@@ -1341,21 +1337,31 @@ function configurarListeners() {
     );
   }
 
-  if (btnSemanaProxima) {
-    btnSemanaProxima.addEventListener("click", () => {
-      if (!inputDataSemana || !inputDataSemana.value) return;
 
+if (btnSemanaProxima) {
+  btnSemanaProxima.addEventListener("click", async () => {
+    if (!inputDataSemana || !inputDataSemana.value) return;
+
+    if (modoAgenda === "dia") {
+      inputDataSemana.value = await encontrarProximoDiaRelevante(
+        empresaId,
+        inputDataSemana.value
+      );
+      carregarAgendamentosConformeModo();
+      return;
+    }
+
+    if (modoAgenda === "semana") {
       const [ano, mes, dia] = inputDataSemana.value.split("-").map(Number);
       const dataAtual = new Date(ano, mes - 1, dia);
-
       dataAtual.setDate(dataAtual.getDate() + 7);
-
       inputDataSemana.value = formatarDataISO(dataAtual);
       carregarAgendamentosConformeModo();
-    });
-  }
+    }
+  });
+}
 
-  if (btnAplicarHistorico) {
+if (btnAplicarHistorico) {
     btnAplicarHistorico.addEventListener("click", function (e) {
       e.preventDefault();
       carregarAgendamentosHistorico();

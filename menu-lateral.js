@@ -7,7 +7,7 @@
 
 // Atualização PWA: verifica nova versão e força limpeza de cache quando
 // o usuário confirma a atualização.
-import "./pwa-update.js?v=1.0.1";
+import "./pwa-update.js?v=1.0.3";
 
 // --- 1. Importações Essenciais ---
 import { auth, db } from "./firebase-config.js";

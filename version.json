@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "updatedAt": "2026-09-12",
-  "notes": "Atualização de segurança dos agendamentos e disponibilidade pública"
+  "notes": "Correção da agenda diária e semanal com atualização automática do app"
 }
