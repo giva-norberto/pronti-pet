@@ -50,6 +50,35 @@ window.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("login-form");
     const loginStatusDiv = document.getElementById("login-status");
 
+    // Informação comercial simples, sem alterar o fluxo de autenticação.
+    const whatsappBox = document.querySelector(".whatsapp-box");
+    if (whatsappBox && !document.getElementById("instalacao-gratis-info")) {
+        const instalacaoInfo = document.createElement("div");
+        instalacaoInfo.id = "instalacao-gratis-info";
+        instalacaoInfo.setAttribute("role", "note");
+        instalacaoInfo.style.cssText = [
+            "margin-top:12px",
+            "padding:11px 13px",
+            "display:flex",
+            "align-items:center",
+            "justify-content:center",
+            "gap:9px",
+            "border:1px solid rgba(86,39,200,.18)",
+            "border-radius:13px",
+            "background:#f7f3ff",
+            "color:#2c156f",
+            "font-size:.84rem",
+            "font-weight:800",
+            "line-height:1.35",
+            "text-align:center"
+        ].join(";");
+        instalacaoInfo.innerHTML = `
+            <i class="fa-solid fa-mobile-screen-button" aria-hidden="true" style="color:#5627c8;font-size:1rem"></i>
+            <span>Instalação simples e grátis no celular</span>
+        `;
+        whatsappBox.insertAdjacentElement("afterend", instalacaoInfo);
+    }
+
     function exibirMensagem(mensagem = "") {
         if (loginStatusDiv) {
             loginStatusDiv.textContent = mensagem;
