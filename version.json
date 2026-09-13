@@ -1,5 +1,5 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "updatedAt": "2026-09-13",
-  "notes": "Remove a seção de eventos recentes do rastreio de divulgação"
+  "notes": "Melhora conversão da apresentação com CTAs diretos para cadastro e botão fixo no celular"
 }
