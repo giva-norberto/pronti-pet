@@ -13,6 +13,7 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 const REGION = 'southamerica-east1';
+const ADMIN_UID = 'HNIJxFjPvSO1oO9X1Gjq7negfR12';
 
 const whitelist = [
   'https://pronti-pet.web.app',
@@ -28,36 +29,27 @@ const corsHandler = cors({
       callback(null, true);
       return;
     }
-
     callback(new Error('Origem não permitida por CORS'));
   },
   credentials: true,
-  methods: ['POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 });
 
 const buscarDisponibilidadePublica = onRequest(
   { region: REGION },
   (req, res) => {
     corsHandler(req, res, async () => {
-      if (req.method === 'OPTIONS') {
-        return res.status(204).send('');
-      }
-
+      if (req.method === 'OPTIONS') return res.status(204).send('');
       if (req.method !== 'POST') {
-        return res.status(405).json({
-          error: 'Método não permitido. Use POST.',
-        });
+        return res.status(405).json({ error: 'Método não permitido. Use POST.' });
       }
 
       try {
         const empresaId = String(req.body?.empresaId || '').trim();
         const data = String(req.body?.data || '').trim();
-
         if (!empresaId || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
-          return res.status(400).json({
-            error: 'Empresa ou data inválida.',
-          });
+          return res.status(400).json({ error: 'Empresa ou data inválida.' });
         }
 
         const snapshot = await db
@@ -71,57 +63,26 @@ const buscarDisponibilidadePublica = onRequest(
         const agendamentos = snapshot.docs
           .map((docSnap) => {
             const dados = docSnap.data() || {};
-
-            const profissionalId = String(
-              dados.profissionalId || dados.profissional?.id || ''
-            ).trim();
-
-            const horario = String(
-              dados.horario || dados.horarioTexto || ''
-            ).trim();
-
-            const servicoDuracao = Number(
-              dados.servicoDuracao || dados.servico?.duracao || 0
-            );
-
-            return {
-              profissionalId,
-              horario,
-              servicoDuracao,
-            };
+            const profissionalId = String(dados.profissionalId || dados.profissional?.id || '').trim();
+            const horario = String(dados.horario || dados.horarioTexto || '').trim();
+            const servicoDuracao = Number(dados.servicoDuracao || dados.servico?.duracao || 0);
+            return { profissionalId, horario, servicoDuracao };
           })
-          .filter(
-            (item) =>
-              item.profissionalId &&
-              /^\d{2}:\d{2}$/.test(item.horario) &&
-              Number.isFinite(item.servicoDuracao) &&
-              item.servicoDuracao > 0
-          );
+          .filter((item) => item.profissionalId && /^\d{2}:\d{2}$/.test(item.horario) && Number.isFinite(item.servicoDuracao) && item.servicoDuracao > 0);
 
         res.set('Cache-Control', 'no-store');
         return res.status(200).json({ agendamentos });
       } catch (error) {
         logger.error('Erro ao consultar disponibilidade pública:', error);
-
-        return res.status(500).json({
-          error: 'Não foi possível consultar a disponibilidade.',
-        });
+        return res.status(500).json({ error: 'Não foi possível consultar a disponibilidade.' });
       }
     });
   }
 );
 
 const EVENTOS_MARKETING_PERMITIDOS = new Set([
-  'page_view',
-  'scroll_25',
-  'scroll_50',
-  'scroll_75',
-  'scroll_100',
-  'cta_click',
-  'faq_aberta',
-  'share_open',
-  'share_whatsapp',
-  'share_copy',
+  'page_view', 'scroll_25', 'scroll_50', 'scroll_75', 'scroll_100',
+  'cta_click', 'faq_aberta', 'share_open', 'share_whatsapp', 'share_copy',
 ]);
 
 function textoSeguro(valor, limite = 120) {
@@ -132,22 +93,13 @@ const registrarEventoMarketing = onRequest(
   { region: REGION },
   (req, res) => {
     corsHandler(req, res, async () => {
-      if (req.method === 'OPTIONS') {
-        return res.status(204).send('');
-      }
-
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Método não permitido.' });
-      }
+      if (req.method === 'OPTIONS') return res.status(204).send('');
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
       try {
         const evento = textoSeguro(req.body?.evento, 40);
         const sessionId = textoSeguro(req.body?.sessionId, 64);
-
-        if (
-          !EVENTOS_MARKETING_PERMITIDOS.has(evento) ||
-          !/^[a-zA-Z0-9-]{8,64}$/.test(sessionId)
-        ) {
+        if (!EVENTOS_MARKETING_PERMITIDOS.has(evento) || !/^[a-zA-Z0-9-]{8,64}$/.test(sessionId)) {
           return res.status(400).json({ error: 'Evento inválido.' });
         }
 
@@ -174,7 +126,54 @@ const registrarEventoMarketing = onRequest(
   }
 );
 
+async function validarAdminPorToken(req) {
+  const authHeader = String(req.headers.authorization || '');
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+  const decoded = await admin.auth().verifyIdToken(match[1]);
+  return decoded.uid === ADMIN_UID ? decoded : null;
+}
+
+const obterMetricasMarketing = onRequest(
+  { region: REGION },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method === 'OPTIONS') return res.status(204).send('');
+      if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
+
+      try {
+        const adminUser = await validarAdminPorToken(req);
+        if (!adminUser) return res.status(403).json({ error: 'Acesso restrito.' });
+
+        const limite = Math.min(Math.max(Number(req.query?.limit || 500), 50), 1000);
+        const snap = await db.collection('marketingEventos').orderBy('criadoEm', 'desc').limit(limite).get();
+        const eventos = snap.docs.map((d) => {
+          const x = d.data() || {};
+          return {
+            id: d.id,
+            evento: x.evento || '',
+            sessionId: x.sessionId || '',
+            detalhe: x.detalhe || '',
+            source: x.source || '',
+            medium: x.medium || '',
+            campaign: x.campaign || '',
+            path: x.path || '',
+            criadoEm: x.criadoEm?.toDate ? x.criadoEm.toDate().toISOString() : null,
+          };
+        });
+
+        res.set('Cache-Control', 'no-store');
+        return res.status(200).json({ eventos });
+      } catch (error) {
+        logger.error('Erro ao consultar métricas de marketing:', error);
+        return res.status(500).json({ error: 'Não foi possível consultar as métricas.' });
+      }
+    });
+  }
+);
+
 module.exports = Object.assign({}, existingFunctions, {
   buscarDisponibilidadePublica,
   registrarEventoMarketing,
+  obterMetricasMarketing,
 });
