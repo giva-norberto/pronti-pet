@@ -11,6 +11,13 @@
       "*.log",
       ".env"
     ],
+    "redirects": [
+      {
+        "source": "/tiktok",
+        "destination": "/apresentacao.html?utm_source=tiktok&utm_medium=bio&utm_campaign=lancamento",
+        "type": 302
+      }
+    ],
     "rewrites": [
       {
         "source": "/:slug",
