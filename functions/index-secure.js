@@ -111,6 +111,70 @@ const buscarDisponibilidadePublica = onRequest(
   }
 );
 
+const EVENTOS_MARKETING_PERMITIDOS = new Set([
+  'page_view',
+  'scroll_25',
+  'scroll_50',
+  'scroll_75',
+  'scroll_100',
+  'cta_click',
+  'faq_aberta',
+  'share_open',
+  'share_whatsapp',
+  'share_copy',
+]);
+
+function textoSeguro(valor, limite = 120) {
+  return String(valor || '').trim().slice(0, limite);
+}
+
+const registrarEventoMarketing = onRequest(
+  { region: REGION },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method === 'OPTIONS') {
+        return res.status(204).send('');
+      }
+
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método não permitido.' });
+      }
+
+      try {
+        const evento = textoSeguro(req.body?.evento, 40);
+        const sessionId = textoSeguro(req.body?.sessionId, 64);
+
+        if (
+          !EVENTOS_MARKETING_PERMITIDOS.has(evento) ||
+          !/^[a-zA-Z0-9-]{8,64}$/.test(sessionId)
+        ) {
+          return res.status(400).json({ error: 'Evento inválido.' });
+        }
+
+        await db.collection('marketingEventos').add({
+          evento,
+          sessionId,
+          detalhe: textoSeguro(req.body?.detalhe, 80),
+          source: textoSeguro(req.body?.source, 80),
+          medium: textoSeguro(req.body?.medium, 80),
+          campaign: textoSeguro(req.body?.campaign, 100),
+          path: textoSeguro(req.body?.path, 120),
+          referrer: textoSeguro(req.body?.referrer, 300),
+          pagina: 'apresentacao',
+          criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        res.set('Cache-Control', 'no-store');
+        return res.status(204).send('');
+      } catch (error) {
+        logger.error('Erro ao registrar evento de marketing:', error);
+        return res.status(500).json({ error: 'Não foi possível registrar o evento.' });
+      }
+    });
+  }
+);
+
 module.exports = Object.assign({}, existingFunctions, {
   buscarDisponibilidadePublica,
+  registrarEventoMarketing,
 });
