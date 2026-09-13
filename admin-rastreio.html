@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastreio de Divulgação - Pronti Pet</title>
+  <style>
+    :root { --roxo:#5522b6; --roxo2:#7140dc; --cinza:#6b7280; --borda:#e5e7eb; --fundo:#f6f6fa; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Arial,sans-serif; background:var(--fundo); color:#111827; }
+    .wrap { max-width:1180px; margin:0 auto; padding:24px 18px 48px; }
+    .topo { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+    h1 { margin:0; font-size:1.7rem; }
+    .acoes { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 16px; border-radius:8px; text-decoration:none; font-weight:700; border:0; cursor:pointer; }
+    .btn-primary { background:var(--roxo); color:white; }
+    .btn-secondary { background:white; color:var(--roxo); border:1px solid #d8d0f0; }
+    .filtros { background:white; border:1px solid var(--borda); border-radius:12px; padding:14px; display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:16px; }
+    .campo { display:grid; gap:5px; min-width:180px; }
+    label { font-size:.82rem; font-weight:700; color:#374151; }
+    select { padding:9px 10px; border:1px solid #d1d5db; border-radius:8px; background:white; }
+    .metricas { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+    .card { background:white; border:1px solid var(--borda); border-radius:12px; padding:16px; }
+    .card span { display:block; color:var(--cinza); font-size:.83rem; margin-bottom:6px; }
+    .card strong { font-size:1.65rem; color:#211142; }
+    .painel { background:white; border:1px solid var(--borda); border-radius:12px; padding:16px; margin-bottom:16px; overflow:auto; }
+    .painel h2 { margin:0 0 12px; font-size:1.05rem; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th,td { padding:9px 8px; text-align:left; border-bottom:1px solid #f1f5f9; font-size:.86rem; }
+    th { background:#f8fafc; color:#374151; }
+    .pill { display:inline-flex; padding:3px 8px; border-radius:999px; background:#ede9fe; color:#5b21b6; font-size:.76rem; font-weight:700; }
+    .status { padding:20px; text-align:center; color:var(--cinza); }
+    .erro { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px; }
+    @media (max-width:800px){ .metricas{grid-template-columns:repeat(2,minmax(0,1fr));} .wrap{padding:16px 12px 36px;} }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topo">
+      <div>
+        <h1>Rastreio de Divulgação</h1>
+        <div style="color:#6b7280;margin-top:5px;">Acessos e interações da apresentação comercial do Pronti Pet.</div>
+      </div>
+      <div class="acoes">
+        <a class="btn btn-secondary" href="admin-clientes.html">← Administração</a>
+        <a class="btn btn-primary" href="index.html">Início</a>
+      </div>
+    </div>
+
+    <section class="filtros">
+      <div class="campo"><label for="source">Origem</label><select id="source"><option value="">Todas</option></select></div>
+      <div class="campo"><label for="campaign">Campanha</label><select id="campaign"><option value="">Todas</option></select></div>
+      <button id="atualizar" class="btn btn-primary" type="button">Atualizar dados</button>
+    </section>
+
+    <section class="metricas">
+      <div class="card"><span>Aberturas</span><strong id="m-page">0</strong></div>
+      <div class="card"><span>Sessões únicas</span><strong id="m-sessoes">0</strong></div>
+      <div class="card"><span>Cliques em CTA</span><strong id="m-cta">0</strong></div>
+      <div class="card"><span>Chegaram a 100%</span><strong id="m-100">0</strong></div>
+    </section>
+
+    <section class="painel">
+      <h2>Eventos por tipo</h2>
+      <div id="resumo-eventos" class="status">Carregando...</div>
+    </section>
+
+    <section class="painel">
+      <h2>Eventos recentes</h2>
+      <div id="lista-eventos" class="status">Carregando...</div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+    const ADMIN_UID = 'HNIJxFjPvSO1oO9X1Gjq7negfR12';
+    const ENDPOINT = 'https://southamerica-east1-pronti-pet.cloudfunctions.net/obterMetricasMarketing';
+    const sourceEl = document.getElementById('source');
+    const campaignEl = document.getElementById('campaign');
+    const listaEl = document.getElementById('lista-eventos');
+    const resumoEl = document.getElementById('resumo-eventos');
+    let eventos = [];
+
+    function esc(v='') { return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+    function dataHora(v) { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? '-' : d.toLocaleString('pt-BR'); }
+    function filtrados(){ return eventos.filter(e => (!sourceEl.value || e.source === sourceEl.value) && (!campaignEl.value || e.campaign === campaignEl.value)); }
+
+    function popularFiltros(){
+      const fontes = [...new Set(eventos.map(e=>e.source).filter(Boolean))].sort();
+      const campanhas = [...new Set(eventos.map(e=>e.campaign).filter(Boolean))].sort();
+      sourceEl.innerHTML = '<option value="">Todas</option>' + fontes.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      campaignEl.innerHTML = '<option value="">Todas</option>' + campanhas.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    }
+
+    function render(){
+      const dados = filtrados();
+      document.getElementById('m-page').textContent = dados.filter(e=>e.evento==='page_view').length;
+      document.getElementById('m-sessoes').textContent = new Set(dados.map(e=>e.sessionId).filter(Boolean)).size;
+      document.getElementById('m-cta').textContent = dados.filter(e=>e.evento==='cta_click').length;
+      document.getElementById('m-100').textContent = dados.filter(e=>e.evento==='scroll_100').length;
+
+      const contagem = {};
+      dados.forEach(e => contagem[e.evento] = (contagem[e.evento] || 0) + 1);
+      const linhasResumo = Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
+      resumoEl.innerHTML = linhasResumo.length ? `<table><thead><tr><th>Evento</th><th>Quantidade</th></tr></thead><tbody>${linhasResumo.map(([k,v])=>`<tr><td><span class="pill">${esc(k)}</span></td><td>${v}</td></tr>`).join('')}</tbody></table>` : '<div class="status">Nenhum evento para este filtro.</div>';
+
+      listaEl.innerHTML = dados.length ? `<table><thead><tr><th>Data</th><th>Evento</th><th>Origem</th><th>Campanha</th><th>Detalhe</th></tr></thead><tbody>${dados.slice(0,200).map(e=>`<tr><td>${dataHora(e.criadoEm)}</td><td><span class="pill">${esc(e.evento)}</span></td><td>${esc(e.source || '-')}</td><td>${esc(e.campaign || '-')}</td><td>${esc(e.detalhe || '-')}</td></tr>`).join('')}</tbody></table>` : '<div class="status">Nenhum evento encontrado.</div>';
+    }
+
+    async function carregar(){
+      listaEl.innerHTML = '<div class="status">Carregando...</div>';
+      resumoEl.innerHTML = '<div class="status">Carregando...</div>';
+      try {
+        const user = auth.currentUser;
+        if (!user || user.uid !== ADMIN_UID) throw new Error('Acesso restrito ao administrador.');
+        const token = await user.getIdToken();
+        const resp = await fetch(`${ENDPOINT}?limit=1000`, { headers:{ Authorization:`Bearer ${token}` }, cache:'no-store' });
+        if (!resp.ok) throw new Error(`Falha ao consultar métricas (${resp.status}).`);
+        const json = await resp.json();
+        eventos = Array.isArray(json.eventos) ? json.eventos : [];
+        popularFiltros();
+        render();
+      } catch (e) {
+        const html = `<div class="erro">${esc(e.message || 'Não foi possível carregar o rastreio.')}</div>`;
+        listaEl.innerHTML = html; resumoEl.innerHTML = html;
+      }
+    }
+
+    sourceEl.addEventListener('change', render);
+    campaignEl.addEventListener('change', render);
+    document.getElementById('atualizar').addEventListener('click', carregar);
+
+    onAuthStateChanged(auth, user => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      if (user.uid !== ADMIN_UID) { document.body.innerHTML = '<div class="status">Acesso restrito.</div>'; return; }
+      carregar();
+    });
+  </script>
+</body>
+</html>
