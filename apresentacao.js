@@ -42,6 +42,61 @@
     }).catch(() => {});
   }
 
+  function otimizarConversao() {
+    const configuracao = {
+      cta_topo: { texto: 'Criar conta grátis', href: './cadastro.html' },
+      cta_hero: { texto: 'Começar grátis agora →', href: './cadastro.html' },
+      cta_meio: { texto: 'Criar conta grátis →', href: './cadastro.html' },
+      cta_final: { texto: 'Criar conta grátis →', href: './cadastro.html' }
+    };
+
+    Object.entries(configuracao).forEach(([evento, cfg]) => {
+      const link = document.querySelector(`.track-cta[data-evento="${evento}"]`);
+      if (!link) return;
+      link.href = cfg.href;
+      link.textContent = cfg.texto;
+      link.setAttribute('aria-label', cfg.texto.replace('→', '').trim());
+    });
+
+    const heroActions = document.querySelector('.hero .actions');
+    if (heroActions && !document.getElementById('conversion-trust')) {
+      const trust = document.createElement('div');
+      trust.id = 'conversion-trust';
+      trust.className = 'conversion-trust';
+      trust.textContent = '✓ Teste grátis  •  ✓ Instalação grátis no celular  •  ✓ Sem loja de aplicativos';
+      heroActions.insertAdjacentElement('afterend', trust);
+    }
+
+    if (!document.getElementById('conversion-sticky')) {
+      const sticky = document.createElement('a');
+      sticky.id = 'conversion-sticky';
+      sticky.className = 'track-cta conversion-sticky';
+      sticky.dataset.evento = 'cta_sticky';
+      sticky.href = './cadastro.html';
+      sticky.textContent = 'Criar conta grátis';
+      sticky.setAttribute('aria-label', 'Criar conta grátis no Pronti Pet');
+      document.body.appendChild(sticky);
+    }
+
+    if (!document.getElementById('conversion-style')) {
+      const style = document.createElement('style');
+      style.id = 'conversion-style';
+      style.textContent = `
+        .conversion-trust{margin-top:14px;color:#eee8ff;font-size:.86rem;font-weight:750;line-height:1.45}
+        .conversion-sticky{display:none}
+        @media(max-width:700px){
+          body{padding-bottom:78px}
+          .conversion-sticky{position:fixed;left:12px;right:12px;bottom:12px;z-index:140;display:flex;align-items:center;justify-content:center;min-height:54px;padding:0 18px;border-radius:15px;background:linear-gradient(135deg,#5627c8,#8259ec);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 14px 34px rgba(44,21,111,.34);border:1px solid rgba(255,255,255,.24)}
+          .conversion-trust{font-size:.78rem;margin-top:12px}
+          .fab{bottom:82px;width:50px;height:50px}
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  otimizarConversao();
+
   const progress = document.getElementById('progress');
   function atualizarRolagem() {
     const max = document.documentElement.scrollHeight - innerHeight;
