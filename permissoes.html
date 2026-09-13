@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Configurações Globais - Pronti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
     <style>
@@ -12,6 +13,9 @@
         th { background: #f4f4f4; }
         button { margin-top: 20px; padding: 10px 20px; cursor: pointer; }
         input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
+        .page-actions { display:flex; justify-content:flex-end; margin-bottom:16px; }
+        .btn-voltar-index { background:#5522b6; color:#fff; text-decoration:none; font-weight:700; padding:10px 18px; border-radius:7px; display:inline-flex; align-items:center; gap:8px; }
+        .btn-voltar-index:hover { background:#3f168f; }
 
         .config-section {
             margin-top: 40px;
@@ -35,8 +39,7 @@
             border-radius: 4px;
             font-size: 1rem;
         }
-        
-        /* ================================================================= -->
+
         #qrcode-container {
             margin-top: 20px;
             padding: 20px;
@@ -57,9 +60,19 @@
             border: none;
             border-radius: 6px;
         }
+        @media (max-width: 700px) {
+            body { margin: 14px; }
+            .page-actions { justify-content:stretch; }
+            .btn-voltar-index { width:100%; justify-content:center; }
+            table { font-size:.88rem; }
+        }
     </style>
 </head>
 <body>
+    <div class="page-actions">
+        <a href="index.html" class="btn-voltar-index">← Voltar ao início</a>
+    </div>
+
     <h2>Permissões Globais de Menu</h2>
     <p>Defina quais menus cada papel (Funcionário / Dono / Admin) pode acessar em TODAS as empresas.</p>
     <table>
@@ -77,7 +90,7 @@
     <div class="config-section">
         <h2>Configurações de Pagamento via Pix</h2>
         <p>Esta chave Pix e observações serão exibidas para todos os donos de empresa na tela de pagamento.</p>
-        
+
         <div class="form-group">
             <label for="chave-pix-input">Sua Chave Pix Principal:</label>
             <input type="text" id="chave-pix-input" placeholder="Digite seu e-mail, telefone, CNPJ, etc.">
@@ -96,13 +109,13 @@
             <label for="cidade-beneficiario-input">Cidade do Beneficiário (Sem acentos):</label>
             <input type="text" id="cidade-beneficiario-input" placeholder="SAO PAULO" maxlength="15">
         </div>
-        
+
         <button id="btn-gerar-qrcode" type="button">Gerar QR Code</button>
 
         <div id="qrcode-container">
             <p>O QR Code aparecerá aqui.</p>
         </div>
-        </div>
+    </div>
     <button id="salvar">Salvar Todas as Configurações</button>
 
     <script type="module">
@@ -116,7 +129,7 @@
         const salvarBtn = document.getElementById("salvar");
         const chavePixInput = document.getElementById("chave-pix-input");
         const observacoesInput = document.getElementById("observacoes-input");
-        
+
         const nomeBeneficiarioInput = document.getElementById("nome-beneficiario-input");
         const cidadeBeneficiarioInput = document.getElementById("cidade-beneficiario-input");
         const btnGerarQrCode = document.getElementById("btn-gerar-qrcode");
@@ -127,7 +140,7 @@
             "manual", "manual-editor",
             "planos", "clientes", "perfil", "relatorios", "administracao", "permissoes"
         ];
-        
+
         let permissoesAtuais = {};
 
         async function carregarPermissoesGlobais() {
@@ -172,7 +185,7 @@
         salvarBtn.addEventListener("click", async () => {
             salvarBtn.disabled = true;
             salvarBtn.textContent = "Salvando...";
-            
+
             try {
                 const checkboxes = document.querySelectorAll("input[type=checkbox]");
                 const novasPermissoes = {};
@@ -217,16 +230,16 @@
                 const len = valor.length.toString().padStart(2, '0');
                 return `${id}${len}${valor}`;
             };
-            
+
             let payload = "000201";
             payload += "26" + formatarCampo("00", "BR.GOV.BCB.PIX").length + formatarCampo("00", "BR.GOV.BCB.PIX") + formatarCampo("01", chave);
-            payload += "52040000"; 
-            payload += "5303986"; 
+            payload += "52040000";
+            payload += "5303986";
             payload += formatarCampo("58", "BR");
             payload += formatarCampo("59", nome);
             payload += formatarCampo("60", cidade);
             payload += "62070503***";
-            payload += "6304"; 
+            payload += "6304";
 
             const crc16 = (data) => {
                 let crc = 0xFFFF;
@@ -241,7 +254,7 @@
 
             const checksum = crc16(payload);
             const payloadCompleto = payload + checksum;
-            
+
             qrcodeContainer.innerHTML = "";
             new QRCode(qrcodeContainer, {
                 text: payloadCompleto,
