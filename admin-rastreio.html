@@ -64,11 +64,6 @@
       <h2>Eventos por tipo</h2>
       <div id="resumo-eventos" class="status">Carregando...</div>
     </section>
-
-    <section class="painel">
-      <h2>Eventos recentes</h2>
-      <div id="lista-eventos" class="status">Carregando...</div>
-    </section>
   </main>
 
   <script type="module">
@@ -79,12 +74,10 @@
     const ENDPOINT = 'https://southamerica-east1-pronti-pet.cloudfunctions.net/obterMetricasMarketing';
     const sourceEl = document.getElementById('source');
     const campaignEl = document.getElementById('campaign');
-    const listaEl = document.getElementById('lista-eventos');
     const resumoEl = document.getElementById('resumo-eventos');
     let eventos = [];
 
     function esc(v='') { return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-    function dataHora(v) { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? '-' : d.toLocaleString('pt-BR'); }
     function filtrados(){ return eventos.filter(e => (!sourceEl.value || e.source === sourceEl.value) && (!campaignEl.value || e.campaign === campaignEl.value)); }
 
     function popularFiltros(){
@@ -105,12 +98,9 @@
       dados.forEach(e => contagem[e.evento] = (contagem[e.evento] || 0) + 1);
       const linhasResumo = Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
       resumoEl.innerHTML = linhasResumo.length ? `<table><thead><tr><th>Evento</th><th>Quantidade</th></tr></thead><tbody>${linhasResumo.map(([k,v])=>`<tr><td><span class="pill">${esc(k)}</span></td><td>${v}</td></tr>`).join('')}</tbody></table>` : '<div class="status">Nenhum evento para este filtro.</div>';
-
-      listaEl.innerHTML = dados.length ? `<table><thead><tr><th>Data</th><th>Evento</th><th>Origem</th><th>Campanha</th><th>Detalhe</th></tr></thead><tbody>${dados.slice(0,200).map(e=>`<tr><td>${dataHora(e.criadoEm)}</td><td><span class="pill">${esc(e.evento)}</span></td><td>${esc(e.source || '-')}</td><td>${esc(e.campaign || '-')}</td><td>${esc(e.detalhe || '-')}</td></tr>`).join('')}</tbody></table>` : '<div class="status">Nenhum evento encontrado.</div>';
     }
 
     async function carregar(){
-      listaEl.innerHTML = '<div class="status">Carregando...</div>';
       resumoEl.innerHTML = '<div class="status">Carregando...</div>';
       try {
         const user = auth.currentUser;
@@ -123,8 +113,7 @@
         popularFiltros();
         render();
       } catch (e) {
-        const html = `<div class="erro">${esc(e.message || 'Não foi possível carregar o rastreio.')}</div>`;
-        listaEl.innerHTML = html; resumoEl.innerHTML = html;
+        resumoEl.innerHTML = `<div class="erro">${esc(e.message || 'Não foi possível carregar o rastreio.')}</div>`;
       }
     }
 
