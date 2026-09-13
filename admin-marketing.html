@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastreio de Divulgação - Pronti Pet</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f6f6fa;color:#172033}.main{margin-left:260px;padding:28px}.wrap{max-width:1100px;margin:0 auto}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}.top h1{margin:0;font-size:1.7rem}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:0;border-radius:10px;text-decoration:none;font-weight:800;cursor:pointer}.primary{background:#5522b6;color:#fff}.light{background:#fff;color:#5522b6;border:1px solid #d9d4e8}.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 3px 14px rgba(15,23,42,.05)}.metric span{display:block;color:#6b7280;font-size:.82rem;font-weight:700}.metric strong{display:block;margin-top:5px;font-size:1.7rem;color:#2c156f}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;box-shadow:0 3px 14px rgba(15,23,42,.05);margin-bottom:18px}.panel h2{margin:0 0 14px;font-size:1.08rem}.sources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.source{padding:12px;border-radius:10px;background:#faf8ff;border:1px solid #e6ddfb}.source strong{display:block;font-size:1.05rem}.source span{font-size:.8rem;color:#6b7280}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:left;font-size:.84rem}th{color:#6b7280;background:#f8fafc;position:sticky;top:0}.status{padding:24px;text-align:center;color:#6b7280}.erro{color:#b91c1c}.badge{display:inline-flex;padding:4px 8px;border-radius:999px;background:#ede9fe;color:#5522b6;font-size:.75rem;font-weight:800}@media(max-width:900px){.main{margin-left:0;padding:16px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sources{grid-template-columns:1fr}.top{align-items:stretch}.actions .btn{flex:1}}@media(max-width:520px){.grid{grid-template-columns:1fr 1fr}.metric strong{font-size:1.35rem}}
+  </style>
+</head>
+<body>
+  <aside id="sidebar"></aside>
+  <main class="main">
+    <div class="wrap">
+      <div class="top">
+        <div><h1>Rastreio de Divulgação</h1><div style="color:#6b7280;margin-top:5px">Acompanhe visitas e ações na apresentação comercial.</div></div>
+        <div class="actions"><a class="btn light" href="admin-clientes.html">← Administração</a><button class="btn primary" id="atualizar">Atualizar</button></div>
+      </div>
+      <section class="grid" id="metricas"></section>
+      <section class="panel"><h2>Origem das visitas</h2><div class="sources" id="origens"></div></section>
+      <section class="panel"><h2>Eventos recentes</h2><div id="conteudo" class="status">Carregando métricas...</div></section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+    const ADMIN_UID='HNIJxFjPvSO1oO9X1Gjq7negfR12';
+    const ENDPOINT='https://southamerica-east1-pronti-pet.cloudfunctions.net/obterMetricasMarketing';
+    const $=id=>document.getElementById(id);
+
+    async function carregarMenu(){
+      try{const r=await fetch('menu-lateral.html');$('sidebar').outerHTML=await r.text();}catch(e){console.warn(e)}
+    }
+
+    function fmtData(v){if(!v)return '-';const d=new Date(v);return Number.isNaN(d.getTime())?'-':d.toLocaleString('pt-BR');}
+    function pct(a,b){return b?`${((a/b)*100).toFixed(1)}%`:'0%';}
+
+    function render(eventos){
+      const pageViews=eventos.filter(e=>e.evento==='page_view');
+      const sessoes=new Set(pageViews.map(e=>e.sessionId)).size;
+      const ctas=eventos.filter(e=>e.evento==='cta_click').length;
+      const completos=eventos.filter(e=>e.evento==='scroll_100').length;
+      const tiktok=pageViews.filter(e=>String(e.source).toLowerCase()==='tiktok').length;
+      $('metricas').innerHTML=`
+        <div class="card metric"><span>Visitas</span><strong>${pageViews.length}</strong></div>
+        <div class="card metric"><span>Sessões</span><strong>${sessoes}</strong></div>
+        <div class="card metric"><span>Cliques em começar</span><strong>${ctas}</strong></div>
+        <div class="card metric"><span>Chegaram ao fim</span><strong>${completos}</strong></div>
+        <div class="card metric"><span>CTR do CTA</span><strong>${pct(ctas,pageViews.length)}</strong></div>`;
+
+      const porOrigem={};
+      pageViews.forEach(e=>{const k=e.source||'direto';porOrigem[k]=(porOrigem[k]||0)+1;});
+      const entradas=Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]);
+      $('origens').innerHTML=(entradas.length?entradas:[['Sem dados',0]]).slice(0,9).map(([k,v])=>`<div class="source"><strong>${v}</strong><span>${k}${k==='tiktok'?' · bio':''}</span></div>`).join('');
+
+      $('conteudo').className='table-wrap';
+      $('conteudo').innerHTML=`<table><thead><tr><th>Data</th><th>Evento</th><th>Origem</th><th>Campanha</th><th>Detalhe</th></tr></thead><tbody>${eventos.slice(0,200).map(e=>`<tr><td>${fmtData(e.criadoEm)}</td><td><span class="badge">${e.evento||'-'}</span></td><td>${e.source||'direto'}</td><td>${e.campaign||'-'}</td><td>${e.detalhe||'-'}</td></tr>`).join('')}</tbody></table>`;
+    }
+
+    async function carregar(user){
+      $('conteudo').className='status';$('conteudo').textContent='Carregando métricas...';
+      try{
+        const token=await user.getIdToken();
+        const r=await fetch(`${ENDPOINT}?limit=1000`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
+        if(!r.ok)throw new Error(`HTTP ${r.status}`);
+        const data=await r.json();render(Array.isArray(data.eventos)?data.eventos:[]);
+      }catch(e){console.error(e);$('conteudo').className='status erro';$('conteudo').textContent='Não foi possível carregar as métricas.';}
+    }
+
+    await carregarMenu();
+    onAuthStateChanged(auth,user=>{
+      if(!user){location.href='login.html';return;}
+      if(user.uid!==ADMIN_UID){$('conteudo').className='status erro';$('conteudo').textContent='Acesso restrito ao administrador.';return;}
+      carregar(user);$('atualizar').onclick=()=>carregar(user);
+    });
+  </script>
+</body>
+</html>
