@@ -1,5 +1,5 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "updatedAt": "2026-09-13",
-  "notes": "Login com destaque para instalação simples e grátis no celular"
+  "notes": "Remove a seção de eventos recentes do rastreio de divulgação"
 }
