@@ -63,19 +63,19 @@
         .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 24px; }
         .page-header h2 { margin: 0; }
         .page-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .btn-voltar-index, .btn-pendentes, .btn-rastreio { color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .btn-voltar-index, .btn-pendentes, .btn-rastreio, .btn-prospeccao { color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-voltar-index { background-color: #5522b6; }
         .btn-voltar-index:hover { background-color: #3f168f; }
         .btn-pendentes { background-color: #f59e0b; }
         .btn-pendentes:hover { background-color: #d97706; }
         .btn-rastreio { background-color: #0f766e; }
-        .btn-rastreio:hover { background-color: #115e59; }
+        .btn-rastreio:hover { background-color: #115e59; }\n        .btn-prospeccao { background-color: #2563eb; }\n        .btn-prospeccao:hover { background-color: #1d4ed8; }
 
         @media (max-width: 700px) {
             .main { padding: 16px; }
             .page-header { align-items: stretch; }
             .page-header-actions { width: 100%; }
-            .btn-voltar-index, .btn-pendentes, .btn-rastreio { flex: 1 1 auto; padding: 10px 12px; }
+            .btn-voltar-index, .btn-pendentes, .btn-rastreio, .btn-prospeccao { flex: 1 1 auto; padding: 10px 12px; }
             .empresa-header { align-items: flex-start; gap: 12px; flex-direction: column; }
             .button-group { width: 100%; justify-content: flex-end; }
             .status-grid { grid-template-columns: 1fr; }
@@ -237,7 +237,7 @@
                     <h2>Gestão de Empresas e Funcionários</h2>
                     <div class="page-header-actions">
                         <a href="index.html" class="btn-voltar-index" aria-label="Voltar para o início">← Voltar ao início</a>
-                        <a href="admin-rastreio.html" class="btn-rastreio">Rastreio de Divulgação</a>
+                        <a href="admin-prospeccao.html" class="btn-prospeccao">Prospecção</a>\n                        <a href="admin-rastreio.html" class="btn-rastreio">Rastreio de Divulgação</a>
                         <a href="aprovacao-manual.html" class="btn-pendentes">Pagamentos Pendentes</a>
                     </div>
                 </div>
