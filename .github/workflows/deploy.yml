@@ -58,6 +58,11 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
         run: firebase deploy --only firestore:rules --project pronti-pet --non-interactive
 
+      - name: Deploy Firestore Indexes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: firebase deploy --only firestore:indexes --project pronti-pet --non-interactive
+
       - name: Cleanup credentials
         if: always()
         run: rm -f $HOME/firebase-credentials.json
