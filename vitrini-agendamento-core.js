@@ -154,7 +154,8 @@ async function clienteTemAssinaturaValida(
 async function criarLembreteAutomatico(
     empresaId,
     agendamento,
-    currentUser
+    currentUser,
+    agendamentoId = null
 ) {
     try {
         const clienteId =
@@ -219,6 +220,9 @@ async function criarLembreteAutomatico(
 
                 empresaId:
                     empresaId,
+
+                agendamentoId:
+                    agendamentoId || null,
 
                 servicoNome:
                     agendamento
@@ -767,15 +771,17 @@ export async function salvarAgendamento(
                 'assinatura';
         }
 
-        await addDoc(
-            agendamentosRef,
-            payload
-        );
+        const agendamentoDoc =
+            await addDoc(
+                agendamentosRef,
+                payload
+            );
 
         await criarLembreteAutomatico(
             empresaId,
             agendamento,
-            currentUser
+            currentUser,
+            agendamentoDoc.id
         );
 
         if (
