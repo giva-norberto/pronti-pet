@@ -69,14 +69,14 @@
   function metricas(){
     document.getElementById('mNovos').textContent=leads.filter(x=>x.status==='novo').length;
     document.getElementById('mDemos').textContent=leads.filter(x=>x.status==='demo_pronta').length;
-    document.getElementById('mAbertos').textContent=leads.filter(x=>x.status==='abriu').length;
+    document.getElementById('mAbertos').textContent=leads.filter(x=>(x.quantidadeAberturas||0)>0).length;
     document.getElementById('mInteressados').textContent=leads.filter(x=>x.status==='interessado').length;
   }
   function render(){
     metricas();
     const filtro=document.getElementById('statusFiltro').value;
     const q=document.getElementById('busca').value.trim().toLowerCase();
-    const lista=leads.filter(x=>(!filtro||x.status===filtro)&&(!q||x.nome.toLowerCase().includes(q)));
+    const lista=leads.filter(x=>(!filtro||x.status===filtro)&&(!q||String(x.nome||'').toLowerCase().includes(q)));
     const tb=document.getElementById('listaLeads');
     if(!lista.length){tb.innerHTML='<tr><td colspan="7" class="vazio">Nenhum lead para este filtro.</td></tr>';return;}
     tb.innerHTML=lista.map(x=>{
@@ -97,11 +97,12 @@
         '<td><strong>'+esc(x.nome)+'</strong></td>'+
         '<td>'+esc(x.nota??'-')+'</td><td>'+esc(x.quantidadeAvaliacoes??'-')+'</td>'+
         '<td><span class="'+(x.semSite?'sem-site':'com-site')+'">'+(x.semSite?'Sem site':'Tem site')+'</span></td>'+
-        '<td><span class="badge">'+esc(x.status)+'</span></td><td>'+x.quantidadeAberturas+'</td>'+
-        '<td><div class="acoes-lead"><a class="mini demo" href="'+demo+'?preview=1" target="_blank">Ver demo</a>'+
-        '<a class="mini demo" href="'+demo+'" target="_blank">Link da demo</a>'+
+        '<td><span class="badge">'+esc(x.status)+'</span></td><td>'+(x.quantidadeAberturas||0)+'</td>'+
+        '<td><div class="acoes-lead">'+
+        '<button class="mini demo" type="button" data-open-demo="'+esc(demo+'?preview=1')+'">Ver demo</button>'+
+        '<button class="mini demo" type="button" data-open-link="'+esc(demo)+'">Link da demo</button>'+
         '<button class="mini demo" type="button" data-copy-link="'+esc(demo)+'">Copiar link</button>'+
-        (x.telefone?'<a class="mini wa" href="'+wa+'" target="_blank" data-enviar="'+esc(x.id)+'">WhatsApp</a>':'')+
+        (x.telefone?'<button class="mini wa" type="button" data-whatsapp="'+esc(wa)+'" data-enviar="'+esc(x.id)+'">WhatsApp</button>':'')+
         '<button class="mini desc" data-descartar="'+esc(x.id)+'">Descartar</button></div></td></tr>';
     }).join('');
   }
@@ -109,24 +110,69 @@
   async function status(id,status){await api('atualizarLeadProspeccao',{method:'POST',body:JSON.stringify({id,status})});const x=leads.find(l=>l.id===id);if(x)x.status=status;render();}
 
   document.getElementById('gerarLeads').addEventListener('click',async e=>{
-    e.currentTarget.disabled=true;msg('Buscando pet shops em Contagem e Belo Horizonte...');
+    const btn=e.currentTarget;
+    btn.disabled=true;msg('Buscando pet shops em Contagem e Belo Horizonte...');
     try{const j=await api('buscarLeadsProspeccao',{method:'POST',body:'{}'});msg('Busca concluída: '+j.encontrados+' leads elegíveis; '+j.novos+' novos.','ok');await carregar();}
-    catch(err){msg(err.message,'erro');}finally{e.currentTarget.disabled=false;}
+    catch(err){msg(err.message,'erro');}finally{btn.disabled=false;}
   });
   document.getElementById('statusFiltro').addEventListener('change',render);
   document.getElementById('busca').addEventListener('input',render);
   document.getElementById('listaLeads').addEventListener('click',async e=>{
-    const enviar=e.target.closest('[data-enviar]');if(enviar){try{await status(enviar.dataset.enviar,'enviado');}catch(_){}}
-    const copy=e.target.closest('[data-copy-link]');if(copy){
+    const demoBtn=e.target.closest('[data-open-demo]');
+    if(demoBtn){
+      e.preventDefault();
+      window.open(demoBtn.dataset.openDemo,'_blank','noopener');
+      return;
+    }
+
+    const linkBtn=e.target.closest('[data-open-link]');
+    if(linkBtn){
+      e.preventDefault();
+      window.open(linkBtn.dataset.openLink,'_blank','noopener');
+      return;
+    }
+
+    const waBtn=e.target.closest('[data-whatsapp]');
+    if(waBtn){
+      e.preventDefault();
+
+      // Abre primeiro para não perder o gesto do usuário no app/PWA.
+      window.open(waBtn.dataset.whatsapp,'_blank','noopener');
+
+      const x=leads.find(l=>l.id===waBtn.dataset.enviar);
+      if(x && ['novo','demo_pronta'].includes(x.status)){
+        try{await status(x.id,'enviado');}catch(_){}
+      }
+      return;
+    }
+
+    const copy=e.target.closest('[data-copy-link]');
+    if(copy){
       e.preventDefault();
       try{
         await navigator.clipboard.writeText(copy.dataset.copyLink);
         msg('Link da demonstração copiado.','ok');
       }catch(err){
-        msg('Não foi possível copiar automaticamente.','erro');
+        // Fallback para ambientes onde Clipboard API está indisponível.
+        const ta=document.createElement('textarea');
+        ta.value=copy.dataset.copyLink;
+        ta.style.position='fixed';
+        ta.style.opacity='0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok=document.execCommand('copy');
+        ta.remove();
+        msg(ok?'Link da demonstração copiado.':'Não foi possível copiar automaticamente.',ok?'ok':'erro');
       }
+      return;
     }
-    const desc=e.target.closest('[data-descartar]');if(desc){e.preventDefault();try{await status(desc.dataset.descartar,'descartado');}catch(err){msg(err.message,'erro');}}
+
+    const desc=e.target.closest('[data-descartar]');
+    if(desc){
+      e.preventDefault();
+      try{await status(desc.dataset.descartar,'descartado');}
+      catch(err){msg(err.message,'erro');}
+    }
   });
 
   onAuthStateChanged(auth,user=>{
