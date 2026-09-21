@@ -81,7 +81,17 @@
     if(!lista.length){tb.innerHTML='<tr><td colspan="7" class="vazio">Nenhum lead para este filtro.</td></tr>';return;}
     tb.innerHTML=lista.map(x=>{
       const demo=location.origin+'/demo/'+encodeURIComponent(x.demoToken);
-      const texto='Olá, tudo bem?\n\nMontei uma prévia de como poderia ficar a vitrine online da '+x.nome+' no Pronti Pet.\n\nSe quiser ver a demonstração funcionando:\n'+demo+'\n\nÉ só uma demonstração, sem compromisso.';
+      const nomeLead=String(x.nome||'seu pet shop').trim();
+      const nota=x.nota!=null?String(x.nota):'';
+      const avaliacoes=x.quantidadeAvaliacoes!=null?String(x.quantidadeAvaliacoes):'';
+      const provaSocial=(nota&&avaliacoes)
+        ?'Vi que o '+nomeLead+' tem nota '+nota+' com '+avaliacoes+' avaliações no Google — dá pra ver que vocês têm um trabalho bem avaliado pelos clientes.'
+        :'Vi o trabalho do '+nomeLead+' e achei que faria sentido apresentar uma ferramenta que pode ajudar ainda mais no atendimento aos clientes.';
+      const texto='Oi! Tudo bem? Sou o Givanildo e desenvolvi o Pronti Pet, um sistema de agendamento online para pet shops aqui de BH e Contagem.\n\n'+
+        provaSocial+'\n\n'+
+        'Justamente por isso, estou trazendo uma ferramenta que pode ajudar vocês a melhorar ainda mais a experiência do cliente e organizar os agendamentos de forma mais simples.\n\n'+
+        'Montei uma demonstração de como poderia ficar a vitrine online do '+nomeLead+' no celular. Estou te mandando um print para você visualizar.\n\n'+
+        'Se quiser, te mando o link da demonstração funcionando para você dar uma olhada com calma. Sem compromisso.';
       const wa=x.telefone?'https://wa.me/'+tel(x.telefone)+'?text='+encodeURIComponent(texto):'#';
       return '<tr>'+
         '<td><strong>'+esc(x.nome)+'</strong></td>'+
