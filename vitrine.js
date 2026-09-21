@@ -1206,14 +1206,7 @@ async function inicializarDemoProspeccao(token) {
         clienteEscolheFuncionario: true
     };
 
-    const servicosDemo = [
-        { id:'demo-banho', nome:'Banho', descricao:'Higienização completa do pet.', categoria:'Banho e Tosa', preco:70, duracao:60 },
-        { id:'demo-tosa-higienica', nome:'Tosa higiênica', descricao:'Aparos e higiene em áreas específicas.', categoria:'Banho e Tosa', preco:55, duracao:45 },
-        { id:'demo-tosa', nome:'Tosa completa', descricao:'Tosa geral conforme o perfil do pet.', categoria:'Banho e Tosa', preco:95, duracao:90 },
-        { id:'demo-banho-tosa', nome:'Banho + Tosa', descricao:'Combo completo de banho e tosa.', categoria:'Banho e Tosa', preco:120, duracao:90 },
-        { id:'demo-hidratacao', nome:'Hidratação', descricao:'Tratamento complementar para a pelagem.', categoria:'Cuidados', preco:35, duracao:30 },
-        { id:'demo-unhas', nome:'Corte de unhas', descricao:'Cuidado rápido e seguro.', categoria:'Cuidados', preco:25, duracao:20 }
-    ];
+    const servicosDemo = [];
 
     setEmpresa('demo-' + token, dadosDemo);
     setProfissionais([]);
@@ -1382,56 +1375,6 @@ async function inicializarDemoProspeccao(token) {
                     'Entre para visualizar';
             }
         }
-    }
-
-    if (shell && !document.getElementById('pp-demo-servicos')) {
-        const secao = document.createElement('section');
-        secao.id = 'pp-demo-servicos';
-        secao.style.cssText =
-            'margin:18px 0 10px;padding:18px;border-radius:20px;' +
-            'background:#fff;border:1px solid #e7e0f2;' +
-            'box-shadow:0 8px 24px rgba(40,20,70,.06);';
-
-        const cards = servicosDemo.map(servico => {
-            const preco =
-                Number(servico.preco).toLocaleString(
-                    'pt-BR',
-                    {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }
-                );
-
-            return (
-                '<div style="padding:12px;border:1px solid #ece6f5;' +
-                'border-radius:14px;background:#fcfbff;">' +
-                '<strong style="display:block;color:#24133d;">' +
-                servico.nome +
-                '</strong>' +
-                '<span style="display:block;margin-top:4px;color:#6b7280;' +
-                'font-size:.8rem;line-height:1.35;">' +
-                servico.descricao +
-                '</span>' +
-                '<span style="display:block;margin-top:8px;color:#5522b6;' +
-                'font-weight:800;font-size:.82rem;">' +
-                preco + ' • ' + servico.duracao + ' min' +
-                '</span>' +
-                '</div>'
-            );
-        }).join('');
-
-        secao.innerHTML =
-            '<div style="margin-bottom:12px;">' +
-            '<strong style="font-size:1.05rem;color:#24133d;">Serviços em destaque</strong>' +
-            '<div style="margin-top:3px;color:#6b7280;font-size:.77rem;">' +
-            'Serviços, valores e durações ilustrativos para demonstração.' +
-            '</div>' +
-            '</div>' +
-            '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">' +
-            cards +
-            '</div>';
-
-        shell.appendChild(secao);
     }
 
     if (shell && !document.getElementById('pp-demo-cta')) {
