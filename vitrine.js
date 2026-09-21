@@ -1390,6 +1390,11 @@ async function inicializarDemoProspeccao(token) {
             '<span style="display:block;margin:6px 0 14px;opacity:.86;font-size:.82rem;">' +
             'Na ativação, personalizamos logo, serviços, preços, horários e contatos reais.' +
             '</span>' +
+            '<div id="pp-demo-link" style="margin:0 0 12px;padding:10px 12px;border-radius:12px;' +
+            'background:rgba(255,255,255,.12);font-size:.78rem;word-break:break-all;">' +
+            '<strong>Link desta demonstração:</strong><br>' +
+            window.location.origin + window.location.pathname +
+            '</div>' +
             '<div style="display:grid;grid-template-columns:1fr;gap:9px;">' +
             '<button type="button" id="pp-demo-ativar" style="' +
             'width:100%;border:0;border-radius:14px;padding:14px 16px;' +
@@ -1398,7 +1403,7 @@ async function inicializarDemoProspeccao(token) {
             '<button type="button" id="pp-demo-falar" style="' +
             'width:100%;border:1px solid rgba(255,255,255,.45);border-radius:14px;' +
             'padding:13px 16px;background:rgba(255,255,255,.12);color:#fff;' +
-            'font-weight:900;font-size:.96rem;cursor:pointer;">Falar comigo</button>' +
+            'font-weight:900;font-size:.96rem;cursor:pointer;">Suporte</button>' +
             '</div>';
 
         shell.appendChild(ctaBox);
@@ -1436,7 +1441,7 @@ async function inicializarDemoProspeccao(token) {
                 const texto =
                     'Olá! Vi a demonstração do Pronti Pet para ' +
                     dadosDemo.nomeFantasia +
-                    ' e gostaria de tirar algumas dúvidas.';
+                    ' e preciso de suporte / tirar uma dúvida.';
 
                 window.open(
                     'https://wa.me/5531982967250?text=' +
