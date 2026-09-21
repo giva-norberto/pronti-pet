@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Pronti Pet</title>
+    <script>
+        // Em /demo/<token>, mantém todos os assets da vitrine apontando para a raiz.
+        // A vitrine normal continua usando o comportamento existente.
+        if (window.location.pathname.startsWith('/demo/')) {
+            const base = document.createElement('base');
+            base.href = '/';
+            document.head.appendChild(base);
+        }
+    </script>
     
     <link rel="stylesheet" href="./vitrine.css?v=20260805-1528">
     <link rel="stylesheet" href="menu-principal.css">
