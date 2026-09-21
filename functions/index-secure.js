@@ -6,12 +6,14 @@ const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const cors = require('cors');
+const { createProspeccaoFunctions } = require('./prospeccao');
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const db = getFirestore();
+const prospeccaoFunctions = createProspeccaoFunctions(db);
 const REGION = 'southamerica-east1';
 const ADMIN_UID = 'HNIJxFjPvSO1oO9X1Gjq7negfR12';
 
@@ -176,4 +178,5 @@ module.exports = Object.assign({}, existingFunctions, {
   buscarDisponibilidadePublica,
   registrarEventoMarketing,
   obterMetricasMarketing,
+  ...prospeccaoFunctions,
 });
