@@ -104,6 +104,42 @@ exports.rotinaLembreteCliente = onSchedule(
             continue;
           }
 
+          const agendamentoId = String(
+            lembrete.agendamentoId || ""
+          ).trim();
+
+          if (agendamentoId) {
+            const agendamentoSnap = await db
+              .collection("empresarios")
+              .doc(empresaId)
+              .collection("agendamentos")
+              .doc(agendamentoId)
+              .get();
+
+            if (!agendamentoSnap.exists) {
+              await ref.update({
+                enviado: "agendamento_inexistente",
+                processando: false,
+                processadoEm: admin.firestore.FieldValue.serverTimestamp(),
+              });
+              continue;
+            }
+
+            const agendamentoData = agendamentoSnap.data() || {};
+            const statusAgendamento = String(
+              agendamentoData.status || ""
+            ).trim();
+
+            if (statusAgendamento !== "ativo") {
+              await ref.update({
+                enviado: "cancelado",
+                processando: false,
+                processadoEm: admin.firestore.FieldValue.serverTimestamp(),
+              });
+              continue;
+            }
+          }
+
           const link =
             `${APP_URL}/vitrine.html?empresa=${encodeURIComponent(empresaId)}`;
 
