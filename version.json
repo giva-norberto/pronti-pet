@@ -1,5 +1,5 @@
 {
-  "version": "1.0.24",
+  "version": "1.0.25",
   "updatedAt": "2026-09-21",
-  "notes": "Bloqueia navegação real nos cards e menu da demo"
+  "notes": "Personaliza abordagem inicial do WhatsApp com nota e avaliações"
 }
