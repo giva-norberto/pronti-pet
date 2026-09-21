@@ -482,39 +482,18 @@ exports.notificarDonoInstantaneo = onDocumentCreated(
 
       const message = {
         token: fcmToken,
-        notification: {
-          title: notificationTitle,
-          body: notificationBody,
-        },
         data: {
           tipo: "novo_agendamento",
           empresaId: String(empresaId),
           agendamentoId: String(agendamentoId || ""),
+          title: notificationTitle,
+          body: notificationBody,
+          icon: "/icon.png",
           link: linkAgenda,
         },
-        android: {
-          priority: "high",
-          notification: {
-            sound: "default",
-            priority: "high",
-            clickAction: "FLUTTER_NOTIFICATION_CLICK",
-          },
-        },
-        apns: {
-          headers: {
-            "apns-priority": "10",
-          },
-          payload: {
-            aps: {
-              sound: "default",
-              badge: 1,
-            },
-          },
-        },
         webpush: {
-          notification: {
-            title: notificationTitle,
-            body: notificationBody,
+          headers: {
+            Urgency: "high",
           },
           fcmOptions: {
             link: linkAgenda,
