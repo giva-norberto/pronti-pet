@@ -1,5 +1,5 @@
 {
-  "version": "1.0.34",
+  "version": "1.0.35",
   "updatedAt": "2026-09-21",
-  "notes": "Valida lembrete do cliente e corrige resumo horário do dono"
+  "notes": "Adiciona índice do Firestore necessário para lembretes do cliente"
 }
