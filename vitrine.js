@@ -3968,6 +3968,154 @@ function handleHorarioClickDinamico(e) {
     );
 }
 
+async function configurarNotificacoesClienteAposAgendamento(
+    userId,
+    empresaId
+) {
+    const container =
+        document.getElementById(
+            'pp-cliente-notificacoes'
+        );
+
+    const status =
+        document.getElementById(
+            'pp-cliente-notificacoes-status'
+        );
+
+    const botao =
+        document.getElementById(
+            'btn-notificacoes-cliente'
+        );
+
+    if (
+        !container ||
+        !status ||
+        !botao
+    ) {
+        return;
+    }
+
+    if (
+        !userId ||
+        !empresaId ||
+        !('Notification' in window)
+    ) {
+        container.hidden = true;
+        return;
+    }
+
+    container.hidden = false;
+
+    let ativoNoApp = false;
+
+    function renderizarEstado() {
+        const bloqueado =
+            Notification.permission ===
+            'denied';
+
+        botao.classList.toggle(
+            'is-active',
+            ativoNoApp
+        );
+
+        if (bloqueado) {
+            status.textContent =
+                'As notificações estão bloqueadas no aparelho.';
+            botao.textContent =
+                'Ative nos Ajustes';
+            botao.disabled = true;
+            return;
+        }
+
+        botao.disabled = false;
+
+        if (ativoNoApp) {
+            status.textContent =
+                'Notificações ativadas para este aparelho.';
+            botao.textContent =
+                'Desativar';
+        } else {
+            status.textContent =
+                'Ative para receber lembretes e avisos do seu agendamento.';
+            botao.textContent =
+                'Ativar';
+        }
+    }
+
+    try {
+        const tokenSnap =
+            await getDoc(
+                doc(
+                    db,
+                    'mensagensTokens',
+                    userId
+                )
+            );
+
+        ativoNoApp =
+            Notification.permission ===
+                'granted' &&
+            tokenSnap.exists() &&
+            tokenSnap.data()?.ativo ===
+                true;
+
+    } catch (error) {
+        console.warn(
+            'Não foi possível consultar o estado das notificações do cliente:',
+            error
+        );
+    }
+
+    renderizarEstado();
+
+    botao.onclick = async () => {
+        if (
+            Notification.permission ===
+            'denied'
+        ) {
+            renderizarEstado();
+            return;
+        }
+
+        botao.disabled = true;
+
+        try {
+            if (ativoNoApp) {
+                const desativado =
+                    await window
+                        .desativarNotificacoes?.(
+                            userId
+                        );
+
+                if (desativado) {
+                    ativoNoApp = false;
+                }
+
+            } else {
+                const ativado =
+                    await window
+                        .solicitarPermissaoParaNotificacoes?.(
+                            userId,
+                            empresaId
+                        );
+
+                if (ativado) {
+                    ativoNoApp = true;
+                }
+            }
+
+        } catch (error) {
+            console.error(
+                'Erro ao alterar notificações do cliente:',
+                error
+            );
+
+        } finally {
+            renderizarEstado();
+        }
+    };
+}
+
 // =====================================================================
 // CONFIRMAR AGENDAMENTO
 // =====================================================================
@@ -4195,17 +4343,14 @@ async function handleConfirmarAgendamentoDinamico() {
             nomeEmpresa
         );
 
+        await configurarNotificacoesClienteAposAgendamento(
+            state.currentUser?.uid,
+            state.empresaId
+        );
+
         resetarAgendamento();
         limparPetSelecionado();
         petsAgendamentoCache = [];
-
-        setTimeout(
-            () => {
-                UI.limparUIAgendamento();
-                mostrarInicioVitrine();
-            },
-            1800
-        );
 
     } catch (error) {
         console.error(
