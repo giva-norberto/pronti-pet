@@ -348,7 +348,20 @@ export function iniciarOuvinteDeNotificacoes(donoId) {
     where("donoId", "==", donoId),
     where("status", "==", "pendente")
   );
+  let primeiraCarga = true;
+
   unsubscribeDeFila = onSnapshot(q, (snapshot) => {
+    // O primeiro snapshot contém TODOS os documentos que já estavam pendentes
+    // antes de o listener iniciar. Eles não são notificações novas e não devem
+    // ser reapresentados ao usuário ao abrir/reabrir o aplicativo.
+    if (primeiraCarga) {
+      primeiraCarga = false;
+      console.log(
+        `[Ouvinte] Carga inicial concluída. ${snapshot.size} bilhete(s) pendente(s) antigo(s) ignorado(s).`
+      );
+      return;
+    }
+
     snapshot.docChanges().forEach((change) => {
       if (change.type === "added") {
         const bilhete = change.doc.data();
@@ -379,8 +392,7 @@ export function iniciarOuvinteDeNotificacoes(donoId) {
           }).then(() => console.log("📧 E-mail disparado via Web App."))
             .catch(err => console.error("❌ Erro ao disparar e-mail:", err));
         }
-        // Importante: Mantivemos o log de correção para a Cloud Function
-        console.log(`[Ouvinte] Bilhete ${bilheteId} será processado pela Cloud Function.`);
+        console.log(`[Ouvinte] Bilhete ${bilheteId} recebido após a carga inicial.`);
       }
     });
   }, (error) => {
