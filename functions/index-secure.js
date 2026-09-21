@@ -82,6 +82,46 @@ const buscarDisponibilidadePublica = onRequest(
   }
 );
 
+const resolverSlugPublico = onRequest(
+  { region: REGION },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method === 'OPTIONS') return res.status(204).send('');
+      if (req.method !== 'GET') {
+        return res.status(405).json({ error: 'Método não permitido. Use GET.' });
+      }
+
+      try {
+        const slug = String(req.query?.slug || '')
+          .trim()
+          .toLowerCase();
+
+        if (!/^[a-z0-9-]{2,80}$/.test(slug)) {
+          return res.status(400).json({ error: 'Código da página inválido.' });
+        }
+
+        const snapshot = await db
+          .collection('empresarios')
+          .where('slug', '==', slug)
+          .limit(1)
+          .get();
+
+        if (snapshot.empty) {
+          return res.status(404).json({ error: 'Página não encontrada.' });
+        }
+
+        res.set('Cache-Control', 'no-store');
+        return res.status(200).json({
+          empresaId: snapshot.docs[0].id,
+        });
+      } catch (error) {
+        logger.error('Erro ao resolver slug público:', error);
+        return res.status(500).json({ error: 'Não foi possível abrir esta página.' });
+      }
+    });
+  }
+);
+
 const EVENTOS_MARKETING_PERMITIDOS = new Set([
   'page_view', 'scroll_25', 'scroll_50', 'scroll_75', 'scroll_100',
   'cta_click', 'faq_aberta', 'share_open', 'share_whatsapp', 'share_copy',
@@ -176,6 +216,7 @@ const obterMetricasMarketing = onRequest(
 
 module.exports = Object.assign({}, existingFunctions, {
   buscarDisponibilidadePublica,
+  resolverSlugPublico,
   registrarEventoMarketing,
   obterMetricasMarketing,
   ...prospeccaoFunctions,
