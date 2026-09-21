@@ -1,11 +1,6 @@
 import { db } from "./vitrini-firebase.js";
 
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  limit,
   doc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
@@ -41,19 +36,20 @@ async function redirecionarUsuario() {
         throw new Error("Link inválido. O código da página não foi encontrado na URL.");
       }
 
-      const q = query(
-        collection(db, "empresarios"),
-        where("slug", "==", slug),
-        limit(1)
-      );
+      const endpoint =
+        "https://southamerica-east1-pronti-pet.cloudfunctions.net/resolverSlugPublico" +
+        "?slug=" + encodeURIComponent(slug);
 
-      const snapshot = await getDocs(q);
+      const response = await fetch(endpoint, { cache: "no-store" });
+      const payload = await response.json().catch(() => ({}));
 
-      if (snapshot.empty) {
-        throw new Error("Página não encontrada. Verifique se o link está correto.");
+      if (!response.ok || !payload.empresaId) {
+        throw new Error(
+          payload.error || "Página não encontrada. Verifique se o link está correto."
+        );
       }
 
-      empresaId = snapshot.docs[0].id;
+      empresaId = String(payload.empresaId).trim();
     }
 
     let urlFinal = `vitrine.html?empresa=${encodeURIComponent(empresaId)}`;
