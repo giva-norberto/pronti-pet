@@ -1,5 +1,5 @@
 {
-  "version": "1.0.29",
+  "version": "1.0.30",
   "updatedAt": "2026-09-21",
-  "notes": "Renova automaticamente o token de notificações do dono"
+  "notes": "Adiciona controle visível para ativar e desativar notificações"
 }
