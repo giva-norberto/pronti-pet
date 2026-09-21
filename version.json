@@ -1,5 +1,5 @@
 {
-  "version": "1.0.28",
+  "version": "1.0.29",
   "updatedAt": "2026-09-21",
-  "notes": "Corrige acesso público ao link curto da vitrine por slug"
+  "notes": "Renova automaticamente o token de notificações do dono"
 }
