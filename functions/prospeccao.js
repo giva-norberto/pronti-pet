@@ -204,7 +204,7 @@ function createProspeccaoFunctions(db) {
     }
     const g=x.googleSnapshot||{};
     res.set('Cache-Control','no-store');
-    return res.json({nome:g.nome||'Pet Shop',endereco:g.endereco||'',telefone:g.telefone||''});
+    return res.json({nome:g.nome||'Pet Shop',endereco:g.endereco||'',telefone:g.telefone||'',nota:g.nota??null,quantidadeAvaliacoes:g.quantidadeAvaliacoes??null,website:g.website||''});
   });
 
   const registrarEventoDemoProspeccao = onRequest({region:REGION}, async (req,res) => {
