@@ -20,7 +20,7 @@
     ],
     "rewrites": [
       {
-        "source": "/demo/:token",
+        "source": "/demo/**",
         "destination": "/demo-prospeccao.html"
       },
       {
