@@ -1,5 +1,5 @@
 {
-  "version": "1.0.33",
+  "version": "1.0.34",
   "updatedAt": "2026-09-21",
-  "notes": "Corrige duplicidade de push causada por exibição automática e manual no service worker"
+  "notes": "Corrige lembrete do cliente 1 hora antes usando o UID correto e push único"
 }
