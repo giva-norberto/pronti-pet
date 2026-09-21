@@ -1,5 +1,5 @@
 {
-  "version": "1.0.18",
+  "version": "1.0.19",
   "updatedAt": "2026-09-20",
-  "notes": "Corrige loop da demo e adiciona botão Falar comigo"
+  "notes": "Remove serviços fictícios da demo e adiciona copiar link"
 }
