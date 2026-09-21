@@ -209,6 +209,66 @@
             margin-right: 8px;
         }
 
+        .notification-control {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            background: #fff;
+            border: 1px solid #ddd1fb;
+            border-radius: 14px;
+            box-shadow: 0 8px 22px rgba(32, 16, 66, .06);
+            min-width: 176px;
+        }
+
+        .notification-bell {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            background: #f1eaff;
+            color: var(--pet-roxo);
+            flex-shrink: 0;
+        }
+
+        .notification-control-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .notification-control-copy small {
+            color: var(--pet-muted);
+            font-size: .62rem;
+            line-height: 1.2;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        #notification-toggle {
+            width: fit-content;
+            border: 0;
+            background: transparent;
+            color: var(--pet-roxo);
+            padding: 0;
+            font: inherit;
+            font-size: .72rem;
+            line-height: 1.2;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        #notification-toggle.is-active {
+            color: #b42318;
+        }
+
+        #notification-toggle:disabled {
+            color: #9ca3af;
+            cursor: default;
+        }
+
         .notification-message {
             margin: 12px 0 0;
             padding: 11px 14px;
@@ -1456,6 +1516,28 @@
                 max-width: 260px;
                 font-size: .68rem;
             }
+            .notification-control {
+                min-width: 0;
+                padding: 6px 8px;
+                gap: 7px;
+                border-radius: 12px;
+            }
+
+            .notification-bell {
+                width: 30px;
+                height: 30px;
+                border-radius: 10px;
+                font-size: .85rem;
+            }
+
+            .notification-control-copy small {
+                font-size: .56rem;
+            }
+
+            #notification-toggle {
+                font-size: .66rem;
+            }
+
         }
 
 
@@ -1740,9 +1822,15 @@
                 </div>
 
                 <div class="header-actions">
-                    <button class="notification-button" onclick="solicitarPermissaoParaNotificacoes()">
-                        <i class="fa-solid fa-bell"></i> Ativar Notificações
-                    </button>
+                    <div class="notification-control" id="notification-control" aria-live="polite">
+                        <span class="notification-bell" aria-hidden="true">
+                            <i class="fa-solid fa-bell"></i>
+                        </span>
+                        <div class="notification-control-copy">
+                            <small id="notification-status">Verificando...</small>
+                            <button type="button" id="notification-toggle">Ativar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1893,7 +1981,7 @@
 
     <script type="module" src="messaging.js"></script>
     <script type="module">
-        import { unlockAudio, iniciarOuvinteDeNotificacoes } from './messaging.js';
+        import { unlockAudio, iniciarOuvinteDeNotificacoes, pararOuvinteDeNotificacoes } from './messaging.js';
         import { verificarAcesso } from './userService.js'; 
         import { db } from './firebase-config.js';
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
@@ -2083,11 +2171,55 @@
                 await loadAndSetupMenu(papelUsuario);
                 await aplicarPermissoes(papelUsuario);
 
-                const notificationButton = document.querySelector('.notification-button');
-                if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
-                    if (Notification.permission === 'granted') {
-                        notificationButton.style.display = 'none';
+                const notificationControl = document.getElementById('notification-control');
+                const notificationStatus = document.getElementById('notification-status');
+                const notificationToggle = document.getElementById('notification-toggle');
 
+                function renderNotificationState(ativo, bloqueado = false) {
+                    if (!notificationControl || !notificationStatus || !notificationToggle) return;
+
+                    notificationControl.style.display = 'flex';
+                    notificationToggle.disabled = bloqueado;
+
+                    if (bloqueado) {
+                        notificationStatus.textContent = 'Bloqueadas no aparelho';
+                        notificationToggle.textContent = 'Ative nos Ajustes';
+                        notificationToggle.classList.remove('is-active');
+                        return;
+                    }
+
+                    if (ativo) {
+                        notificationStatus.textContent = 'Notificações ativadas';
+                        notificationToggle.textContent = 'Desativar';
+                        notificationToggle.classList.add('is-active');
+                    } else {
+                        notificationStatus.textContent = 'Notificações desativadas';
+                        notificationToggle.textContent = 'Ativar';
+                        notificationToggle.classList.remove('is-active');
+                    }
+                }
+
+                let notificacoesAtivasNoApp = false;
+
+                if ('Notification' in window && notificationControl) {
+                    let tokenAtivo = false;
+
+                    try {
+                        const tokenSnap = await getDoc(
+                            doc(db, 'mensagensTokens', sessao.user.uid)
+                        );
+                        tokenAtivo = tokenSnap.exists() && tokenSnap.data()?.ativo === true;
+                    } catch (err) {
+                        console.warn('Não foi possível consultar o estado das notificações:', err);
+                    }
+
+                    const bloqueado = Notification.permission === 'denied';
+                    notificacoesAtivasNoApp =
+                        Notification.permission === 'granted' && tokenAtivo;
+
+                    renderNotificationState(notificacoesAtivasNoApp, bloqueado);
+
+                    if (notificacoesAtivasNoApp) {
                         if (window.atualizarTokenNotificacoes) {
                             window.atualizarTokenNotificacoes(
                                 sessao.user.uid,
@@ -2108,13 +2240,51 @@
                         };
                         window.addEventListener('click', finalizarConfiguracaoPosInteracao);
                         window.addEventListener('touchstart', finalizarConfiguracaoPosInteracao);
-                    } else if (Notification.permission === 'default') {
-                        notificationButton.style.display = 'block';
-                    } else {
-                        notificationButton.style.display = 'none';
                     }
-                } else {
-                    notificationButton.style.display = 'none';
+
+                    notificationToggle?.addEventListener('click', async () => {
+                        if (Notification.permission === 'denied') {
+                            window.mostrarMensagemNotificacao?.(
+                                'As notificações estão bloqueadas no aparelho. Ative nas configurações do navegador/iPhone.',
+                                'error'
+                            );
+                            return;
+                        }
+
+                        notificationToggle.disabled = true;
+
+                        try {
+                            if (notificacoesAtivasNoApp) {
+                                const desativado = await window.desativarNotificacoes?.(
+                                    sessao.user.uid
+                                );
+
+                                if (desativado) {
+                                    notificacoesAtivasNoApp = false;
+                                    pararOuvinteDeNotificacoes();
+                                    renderNotificationState(false, false);
+                                    window.mostrarMensagemNotificacao?.(
+                                        'Notificações desativadas.',
+                                        'success'
+                                    );
+                                }
+                            } else {
+                                const ativado = await window.solicitarPermissaoParaNotificacoes?.(
+                                    sessao.user.uid,
+                                    sessao.empresaId
+                                );
+
+                                if (ativado) {
+                                    notificacoesAtivasNoApp = true;
+                                    renderNotificationState(true, false);
+                                }
+                            }
+                        } finally {
+                            notificationToggle.disabled = false;
+                        }
+                    });
+                } else if (notificationControl) {
+                    notificationControl.style.display = 'none';
                 }
             } catch (error) {
                 console.error("Erro crítico ao inicializar a página:", error);
