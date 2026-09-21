@@ -1,5 +1,5 @@
 {
   "version": "1.0.34",
   "updatedAt": "2026-09-21",
-  "notes": "Corrige lembrete do cliente 1 hora antes usando o UID correto e push único"
+  "notes": "Valida lembrete do cliente e corrige resumo horário do dono"
 }
