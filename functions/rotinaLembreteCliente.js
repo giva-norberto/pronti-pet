@@ -52,20 +52,23 @@ exports.rotinaLembreteCliente = onSchedule(
           });
 
           const clienteId = String(lembrete.clienteId || "").trim();
+          const clienteAuthUid = String(
+            lembrete.clienteAuthUid || clienteId || ""
+          ).trim();
 
-          if (!clienteId) {
+          if (!clienteAuthUid) {
             await ref.update({
               enviado: "dados_incompletos",
               processando: false,
               processadoEm: admin.firestore.FieldValue.serverTimestamp(),
-              ultimoErro: "clienteId_ausente",
+              ultimoErro: "clienteAuthUid_ausente",
             });
             continue;
           }
 
           const tokenDoc = await db
             .collection("mensagensTokens")
-            .doc(clienteId)
+            .doc(clienteAuthUid)
             .get();
 
           if (!tokenDoc.exists) {
@@ -117,38 +120,28 @@ exports.rotinaLembreteCliente = onSchedule(
             String(lembrete.dataAgendamento || lembrete.data || "").trim();
 
           try {
+            const notificationTitle = "⏰ Seu horário está chegando!";
+            const notificationBody =
+              `${servicoNome} com ${profissionalNome}` +
+              `${horarioTexto ? ` às ${horarioTexto}` : ""}. ` +
+              "Vai conseguir ir? Se não, toque aqui e cancele para liberar o horário.";
+
             const messageId = await fcm.send({
               token: fcmToken,
-              webpush: {
-                notification: {
-                  title: "⏰ Seu horário está chegando!",
-                  body:
-                    `${servicoNome} com ${profissionalNome}` +
-                    `${horarioTexto ? ` às ${horarioTexto}` : ""}.` +
-                    "\n\nVai conseguir ir?" +
-                    "\nSe não, toque aqui e cancele para liberar o horário.",
-                  icon: `${APP_URL}/icon.png`,
-                  badge: `${APP_URL}/icon.png`,
-                  vibrate: [200, 100, 200],
-                  requireInteraction: true,
-                  tag:
-                    `lembrete-${clienteId}-${dataAgendamento}-${horarioTexto}`,
-                  renotify: true,
-                },
-                fcmOptions: { link },
-              },
-              android: {
-                priority: "high",
-                notification: {
-                  sound: "default",
-                  priority: "high",
-                },
-              },
               data: {
                 tipo: "lembrete",
                 empresaId,
                 lembreteId: String(docLembrete.id),
+                title: notificationTitle,
+                body: notificationBody,
+                icon: "/icon.png",
                 link,
+              },
+              webpush: {
+                headers: {
+                  Urgency: "high",
+                },
+                fcmOptions: { link },
               },
             });
 
@@ -159,14 +152,14 @@ exports.rotinaLembreteCliente = onSchedule(
               messageId,
             });
 
-            logger.info(`✅ Lembrete enviado para ${clienteId}.`);
+            logger.info(`✅ Lembrete enviado para ${clienteAuthUid}.`);
           } catch (err) {
             logger.error("Erro ao enviar lembrete:", err);
 
             if (err.code === "messaging/registration-token-not-registered") {
               await db
                 .collection("mensagensTokens")
-                .doc(clienteId)
+                .doc(clienteAuthUid)
                 .set(
                   {
                     ativo: false,
