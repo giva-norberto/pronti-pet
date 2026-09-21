@@ -1,5 +1,5 @@
 {
-  "version": "1.0.15",
+  "version": "1.0.16",
   "updatedAt": "2026-09-20",
-  "notes": "Corrige carregamento de CSS e módulos na demo da vitrine real"
+  "notes": "Melhora branding da demo: logo real e saudação neutra"
 }
