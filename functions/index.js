@@ -452,6 +452,14 @@ exports.notificarDonoInstantaneo = onDocumentCreated(
       const tokenData = tokenDoc.data() || {};
       const fcmToken = tokenData.fcmToken;
 
+      if (tokenData.ativo === false) {
+        logger.info(`Notificações desativadas pelo dono ${donoId}. Push não enviado.`, {
+          empresaId,
+          agendamentoId,
+        });
+        return;
+      }
+
       if (!fcmToken) {
         logger.warn(`FCM Token vazio para dono ${donoId}`);
         return;
