@@ -832,6 +832,9 @@ export async function salvarAgendamento(
                                 .empresa
                                 .donoId,
 
+                        tipo:
+                            "novo_agendamento",
+
                         titulo:
                             "🎉 Novo Agendamento!",
 
