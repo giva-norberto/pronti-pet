@@ -89,6 +89,7 @@
         '<td><span class="'+(x.semSite?'sem-site':'com-site')+'">'+(x.semSite?'Sem site':'Tem site')+'</span></td>'+
         '<td><span class="badge">'+esc(x.status)+'</span></td><td>'+x.quantidadeAberturas+'</td>'+
         '<td><div class="acoes-lead"><a class="mini demo" href="'+demo+'?preview=1" target="_blank">Ver demo</a>'+
+        '<button class="mini demo" type="button" data-copy-link="'+esc(demo)+'">Copiar link</button>'+
         (x.telefone?'<a class="mini wa" href="'+wa+'" target="_blank" data-enviar="'+esc(x.id)+'">WhatsApp</a>':'')+
         '<button class="mini desc" data-descartar="'+esc(x.id)+'">Descartar</button></div></td></tr>';
     }).join('');
@@ -105,6 +106,15 @@
   document.getElementById('busca').addEventListener('input',render);
   document.getElementById('listaLeads').addEventListener('click',async e=>{
     const enviar=e.target.closest('[data-enviar]');if(enviar){try{await status(enviar.dataset.enviar,'enviado');}catch(_){}}
+    const copy=e.target.closest('[data-copy-link]');if(copy){
+      e.preventDefault();
+      try{
+        await navigator.clipboard.writeText(copy.dataset.copyLink);
+        msg('Link da demonstração copiado.','ok');
+      }catch(err){
+        msg('Não foi possível copiar automaticamente.','erro');
+      }
+    }
     const desc=e.target.closest('[data-descartar]');if(desc){e.preventDefault();try{await status(desc.dataset.descartar,'descartado');}catch(err){msg(err.message,'erro');}}
   });
 
