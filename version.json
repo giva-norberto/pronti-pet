@@ -1,5 +1,5 @@
 {
-  "version": "1.0.32",
+  "version": "1.0.33",
   "updatedAt": "2026-09-21",
-  "notes": "Cliente escolhe explicitamente ativar ou desativar notificações após agendar"
+  "notes": "Corrige duplicidade de push causada por exibição automática e manual no service worker"
 }
