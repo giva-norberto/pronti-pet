@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const REGION = 'southamerica-east1';
 const ADMIN_UID = 'HNIJxFjPvSO1oO9X1Gjq7negfR12';
 const COL = 'prospeccaoLeads';
+const USAGE_COL = 'prospeccaoGoogleUsage';
+const FREE_MONTHLY_LIMIT = 1000;
 
 function cors(req, res) {
   const origins = ['https://pronti-pet.web.app','https://pronti-pet.firebaseapp.com','http://localhost:5000'];
@@ -48,6 +50,45 @@ async function places(query) {
   return j.places || [];
 }
 
+
+function usageIdAtual() {
+  const agora = new Date();
+  const ano = agora.getUTCFullYear();
+  const mes = String(agora.getUTCMonth() + 1).padStart(2, '0');
+  return ano + '-' + mes;
+}
+
+async function consumirConsultaGoogle(db) {
+  const ref = db.collection(USAGE_COL).doc(usageIdAtual());
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const atual = snap.exists ? Number(snap.data().requestsUsed || 0) : 0;
+    if (atual + 1 > FREE_MONTHLY_LIMIT) {
+      const err = new Error('Limite gratuito mensal do Google Places atingido.');
+      err.code = 'QUOTA_BLOCKED';
+      throw err;
+    }
+    tx.set(ref, {
+      requestsUsed: atual + 1,
+      monthlyFreeLimit: FREE_MONTHLY_LIMIT,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    return atual + 1;
+  });
+}
+
+async function obterUsoGoogle(db) {
+  const snap = await db.collection(USAGE_COL).doc(usageIdAtual()).get();
+  const requestsUsed = snap.exists ? Number(snap.data().requestsUsed || 0) : 0;
+  return {
+    month: usageIdAtual(),
+    requestsUsed,
+    monthlyFreeLimit: FREE_MONTHLY_LIMIT,
+    remaining: Math.max(0, FREE_MONTHLY_LIMIT - requestsUsed),
+    warning: requestsUsed >= 900
+  };
+}
+
 function createProspeccaoFunctions(db) {
   const buscarLeadsProspeccao = onRequest({region:REGION, timeoutSeconds:60}, async (req,res) => {
     cors(req,res);
@@ -57,6 +98,7 @@ function createProspeccaoFunctions(db) {
       if (!(await isAdmin(req))) return res.status(403).json({error:'Acesso restrito'});
       const all = [];
       for (const q of ['pet shop banho e tosa em Contagem MG','pet shop banho e tosa em Belo Horizonte MG']) {
+        await consumirConsultaGoogle(db);
         all.push(...await places(q));
       }
       const map = new Map();
@@ -99,6 +141,13 @@ function createProspeccaoFunctions(db) {
     } catch (e) {
       logger.error('prospeccao buscar', e);
       const msg = String(e.message || e);
+      if (e && e.code === 'QUOTA_BLOCKED') {
+        const usage = await obterUsoGoogle(db).catch(() => null);
+        return res.status(429).json({
+          error:'Limite gratuito mensal do Google Places atingido. Novas buscas foram bloqueadas para evitar cobrança.',
+          usage
+        });
+      }
       const setup = /PERMISSION_DENIED|SERVICE_DISABLED|billing|API/i.test(msg);
       return res.status(setup?503:500).json({error:setup?'Ative a Places API (New) e o faturamento no projeto pronti-pet.':'Falha ao buscar leads', detalhes:msg});
     }
@@ -108,7 +157,10 @@ function createProspeccaoFunctions(db) {
     cors(req,res);
     if (req.method === 'OPTIONS') return res.status(204).send('');
     if (!(await isAdmin(req))) return res.status(403).json({error:'Acesso restrito'});
-    const s = await db.collection(COL).orderBy('atualizadoEm','desc').limit(200).get();
+    const [s, usage] = await Promise.all([
+      db.collection(COL).orderBy('atualizadoEm','desc').limit(200).get(),
+      obterUsoGoogle(db)
+    ]);
     const now = Date.now();
     const leads = s.docs.map(d => {
       const x=d.data(), valid=x.googleSnapshotExpiraEm && x.googleSnapshotExpiraEm.toMillis()>now;
@@ -118,7 +170,7 @@ function createProspeccaoFunctions(db) {
         demoToken:x.demoToken||'',demoSlug:x.demoSlug||'',quantidadeAberturas:Number(x.quantidadeAberturas||0)};
     });
     res.set('Cache-Control','no-store');
-    return res.json({leads});
+    return res.json({leads, usage});
   });
 
   const atualizarLeadProspeccao = onRequest({region:REGION}, async (req,res) => {
@@ -152,7 +204,7 @@ function createProspeccaoFunctions(db) {
     }
     const g=x.googleSnapshot||{};
     res.set('Cache-Control','no-store');
-    return res.json({nome:g.nome||'Pet Shop',endereco:g.endereco||'',telefone:g.telefone||''});
+    return res.json({nome:g.nome||'Pet Shop',endereco:g.endereco||'',telefone:g.telefone||'',nota:g.nota??null,quantidadeAvaliacoes:g.quantidadeAvaliacoes??null,website:g.website||''});
   });
 
   const registrarEventoDemoProspeccao = onRequest({region:REGION}, async (req,res) => {

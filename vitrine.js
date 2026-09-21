@@ -1152,12 +1152,226 @@ async function obterClienteIdResolvido() {
 }
 
 // =====================================================================
+// MODO DEMONSTRAÇÃO DA PROSPECÇÃO
+// Reutiliza a própria vitrine real; não cria uma interface comercial paralela.
+// =====================================================================
+
+function obterTokenDemoProspeccao() {
+    const partes = window.location.pathname.split('/').filter(Boolean);
+    if (partes[0] !== 'demo' || !partes[1]) return null;
+    return decodeURIComponent(partes[1]);
+}
+
+async function registrarInteresseDemo(token) {
+    try {
+        await fetch(
+            'https://southamerica-east1-pronti-pet.cloudfunctions.net/registrarEventoDemoProspeccao',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, evento: 'interessado' })
+            }
+        );
+    } catch (_) {}
+}
+
+async function inicializarDemoProspeccao(token) {
+    const preview =
+        new URLSearchParams(window.location.search).get('preview') === '1';
+
+    const endpoint =
+        'https://southamerica-east1-pronti-pet.cloudfunctions.net/obterDemoProspeccao' +
+        '?token=' + encodeURIComponent(token) +
+        (preview ? '&preview=1' : '');
+
+    const response = await fetch(endpoint, { cache: 'no-store' });
+    const demo = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(
+            demo.error ||
+            'Não foi possível carregar esta demonstração.'
+        );
+    }
+
+    const dadosDemo = {
+        nomeFantasia: demo.nome || 'Pet Shop',
+        descricao:
+            'Agendamento online, gestão dos pets e acompanhamento do atendimento em uma única vitrine.',
+        localizacao: demo.endereco || '',
+        whatsapp: demo.telefone || '',
+        logoUrl: '',
+        horarioFuncionamento: '',
+        clienteEscolheFuncionario: true
+    };
+
+    const servicosDemo = [
+        {
+            id: 'demo-banho',
+            nome: 'Banho',
+            categoria: 'Banho e Tosa',
+            preco: 70,
+            duracao: 60
+        },
+        {
+            id: 'demo-tosa',
+            nome: 'Tosa',
+            categoria: 'Banho e Tosa',
+            preco: 80,
+            duracao: 60
+        },
+        {
+            id: 'demo-banho-tosa',
+            nome: 'Banho + Tosa',
+            categoria: 'Banho e Tosa',
+            preco: 120,
+            duracao: 90
+        }
+    ];
+
+    setEmpresa('demo-' + token, dadosDemo);
+    setProfissionais([]);
+    setTodosOsServicos(servicosDemo);
+
+    const logoPublico = document.getElementById('logo-publico');
+    if (logoPublico) {
+        logoPublico.src =
+            'https://placehold.co/100x100/eef2ff/4f46e5?text=Pet';
+    }
+
+    const nomePublico =
+        document.getElementById('nome-negocio-publico');
+    if (nomePublico) {
+        nomePublico.textContent = dadosDemo.nomeFantasia;
+    }
+
+    UI.renderizarDadosIniciaisEmpresa(
+        dadosDemo,
+        servicosDemo
+    );
+
+    const shell =
+        document.getElementById('main-navigation-container');
+
+    if (shell && !document.getElementById('pp-demo-banner')) {
+        const banner = document.createElement('div');
+        banner.id = 'pp-demo-banner';
+        banner.innerHTML =
+            '<strong>Demonstração Pronti Pet</strong>' +
+            '<span>Esta é uma prévia da vitrine real do estabelecimento.</span>';
+        banner.style.cssText =
+            'margin:0 0 14px;padding:12px 14px;border-radius:14px;' +
+            'background:#ede9fe;color:#4c1d95;display:flex;' +
+            'flex-direction:column;gap:2px;font-size:.82rem;';
+        shell.prepend(banner);
+    }
+
+    document.querySelectorAll(
+        '[data-menu-card="pets"],' +
+        '[data-menu-card="visualizacao"],' +
+        '.pp-vitrine-home-card--tracking,' +
+        '[data-menu-card="minhas-assinaturas"],' +
+        '[data-menu-card="assinatura"],' +
+        '[data-menu-card="perfil"],' +
+        '.pp-vitrine-home-profile'
+    ).forEach(el => {
+        el.style.display = 'none';
+    });
+
+    const hero =
+        document.querySelector('.pp-vitrine-home-hero');
+
+    if (hero) {
+        hero.removeAttribute('data-menu-card');
+        hero.href = '#';
+
+        const label =
+            hero.querySelector('.pp-vitrine-home-hero-label');
+        const titulo =
+            hero.querySelector('h2');
+        const acao =
+            hero.querySelector('.pp-vitrine-home-hero-action');
+
+        if (label) label.textContent = 'Demonstração personalizada';
+        if (titulo) {
+            titulo.textContent =
+                'Veja como seus clientes podem agendar pelo Pronti Pet';
+        }
+        if (acao) {
+            acao.innerHTML =
+                '<i class="fa-solid fa-calendar-check" aria-hidden="true"></i>' +
+                ' Quero ativar esta vitrine';
+        }
+
+        hero.addEventListener('click', async event => {
+            event.preventDefault();
+            if (!preview) await registrarInteresseDemo(token);
+
+            const texto =
+                'Olá! Vi a demonstração do Pronti Pet para ' +
+                dadosDemo.nomeFantasia +
+                ' e quero saber como ativar.';
+
+            window.open(
+                'https://wa.me/5531982967250?text=' +
+                encodeURIComponent(texto),
+                '_blank',
+                'noopener'
+            );
+        });
+    }
+
+    const infoLink =
+        document.querySelector('[data-menu-card="informacoes"]');
+    if (infoLink) {
+        infoLink.querySelector('strong').textContent =
+            'Serviços e informações';
+    }
+
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.textContent = 'Quero ativar esta vitrine';
+    cta.style.cssText =
+        'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;' +
+        'max-width:620px;margin:0 auto;border:0;border-radius:14px;' +
+        'padding:14px 18px;background:#5522b6;color:white;' +
+        'font-weight:900;font-size:1rem;box-shadow:0 8px 24px rgba(0,0,0,.18);';
+
+    cta.addEventListener('click', async () => {
+        if (!preview) await registrarInteresseDemo(token);
+
+        const texto =
+            'Olá! Vi a demonstração do Pronti Pet para ' +
+            dadosDemo.nomeFantasia +
+            ' e quero saber como ativar.';
+
+        window.open(
+            'https://wa.me/5531982967250?text=' +
+            encodeURIComponent(texto),
+            '_blank',
+            'noopener'
+        );
+    });
+
+    document.body.appendChild(cta);
+
+    configurarEventosGerais();
+    UI.toggleLoader(false);
+}
+
+// =====================================================================
 // INICIALIZAÇÃO DA PÁGINA
 // =====================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         UI.toggleLoader(true);
+
+        const demoToken = obterTokenDemoProspeccao();
+        if (demoToken) {
+            await inicializarDemoProspeccao(demoToken);
+            return;
+        }
 
         const params = new URLSearchParams(window.location.search);
         let empresaId = params.get('empresa');
