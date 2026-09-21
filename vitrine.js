@@ -1341,11 +1341,27 @@ async function inicializarDemoProspeccao(token) {
         true
     );
 
+    const elementosSomenteVisuais = document.querySelectorAll(
+        '[data-menu-card], [data-home-nav], ' +
+        '#btn-meus-pets, #btn-proximo-agendamento-home, ' +
+        '#btn-acompanhar-home, .pp-vitrine-home-profile'
+    );
+
+    elementosSomenteVisuais.forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.setAttribute('aria-disabled', 'true');
+        el.setAttribute('tabindex', '-1');
+
+        if (el.tagName === 'A') {
+            el.removeAttribute('href');
+        }
+    });
+
     const hero =
         document.querySelector('.pp-vitrine-home-hero');
 
     if (hero) {
-        hero.href = '#';
+        hero.removeAttribute('href');
     }
 
     const cardsGrid =

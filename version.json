@@ -1,5 +1,5 @@
 {
-  "version": "1.0.23",
+  "version": "1.0.24",
   "updatedAt": "2026-09-21",
-  "notes": "Restaura página de apresentação ao estado anterior"
+  "notes": "Bloqueia navegação real nos cards e menu da demo"
 }
