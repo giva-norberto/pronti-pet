@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo | Pronti Pet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root{--roxo:#5522b6;--amarelo:#ffc928;--texto:#171827;--muted:#6b7280}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f7f4fc;color:var(--texto)}
+    .wrap{max-width:760px;margin:0 auto;padding:18px 14px 42px}.brand{text-align:center;font-weight:900;color:var(--roxo);font-size:1.05rem;margin:8px 0 18px}
+    .hero{background:linear-gradient(135deg,#35106f,#6f35d7);color:#fff;border-radius:24px;padding:26px 22px;box-shadow:0 18px 44px rgba(65,28,130,.18)}
+    .demo-tag{display:inline-block;background:rgba(255,255,255,.16);padding:6px 10px;border-radius:999px;font-size:.72rem;font-weight:800}.hero h1{font-size:2rem;margin:14px 0 7px}.hero p{margin:0;color:rgba(255,255,255,.82);line-height:1.45}
+    .section{margin-top:16px;background:#fff;border:1px solid #e8e2f2;border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(40,20,70,.05)}
+    .section h2{margin:0 0 14px;font-size:1.08rem}.services{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.service{border:1px solid #ece6f5;border-radius:15px;padding:16px 12px;text-align:center;background:#fcfbff}.service strong{display:block;margin-top:8px}
+    .cta{display:block;margin-top:18px;background:var(--amarelo);color:#2b1558;text-decoration:none;text-align:center;padding:15px;border-radius:14px;font-weight:900;font-size:1rem}
+    .note{margin-top:12px;color:var(--muted);font-size:.75rem;line-height:1.4;text-align:center}.error{padding:40px 20px;text-align:center;color:#991b1b}
+    @media(max-width:560px){.hero h1{font-size:1.55rem}.services{grid-template-columns:1fr}.service{text-align:left}.wrap{padding-top:10px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Pronti Pet</div>
+  <div id="app"><div class="section">Carregando demonstração...</div></div>
+</div>
+<script>
+  const FN='https://southamerica-east1-pronti-pet.cloudfunctions.net/';
+  const token=decodeURIComponent(location.pathname.split('/').filter(Boolean).pop()||'');
+  const preview=new URLSearchParams(location.search).get('preview')==='1';
+  const app=document.getElementById('app');
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+  async function carregar(){
+    try{
+      const r=await fetch(FN+'obterDemoProspeccao?token='+encodeURIComponent(token)+(preview?'&preview=1':''));
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||'Não foi possível abrir a demo');
+      const msg='Olá! Vi a demonstração do Pronti Pet para '+j.nome+' e quero saber como ativar.';
+      const wa='https://wa.me/5531982967250?text='+encodeURIComponent(msg);
+      app.innerHTML=
+        '<section class="hero"><span class="demo-tag">Demonstração personalizada</span><h1>'+esc(j.nome)+'</h1><p>'+esc(j.endereco||'Sua vitrine online pronta para receber agendamentos.')+'</p></section>'+
+        '<section class="section"><h2>Serviços em destaque</h2><div class="services">'+
+          '<div class="service">🛁<strong>Banho</strong></div><div class="service">✂️<strong>Tosa</strong></div><div class="service">🐾<strong>Banho + Tosa</strong></div>'+
+        '</div><a id="ativar" class="cta" href="'+wa+'" target="_blank" rel="noopener">Quero ativar esta vitrine</a>'+
+        '<div class="note">Esta é uma demonstração do Pronti Pet. Serviços e valores são ilustrativos e podem ser configurados pelo estabelecimento.</div></section>';
+      document.getElementById('ativar').addEventListener('click',()=>{fetch(FN+'registrarEventoDemoProspeccao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,evento:'interessado'})}).catch(()=>{});});
+    }catch(e){app.innerHTML='<div class="error"><strong>Demonstração indisponível.</strong><br><br>'+esc(e.message)+'</div>';}
+  }
+  carregar();
+</script>
+</body>
+</html>

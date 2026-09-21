@@ -1,5 +1,5 @@
 {
-  "version": "1.0.12",
+  "version": "1.0.13",
   "updatedAt": "2026-09-20",
-  "notes": "Corrige botão Prospecção na Administração"
+  "notes": "Ativa prospecção com leads, demos e WhatsApp"
 }

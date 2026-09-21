@@ -20,6 +20,10 @@
     ],
     "rewrites": [
       {
+        "source": "/demo/**",
+        "destination": "/demo-prospeccao.html"
+      },
+      {
         "source": "/:slug",
         "destination": "/vitrine.html"
       }

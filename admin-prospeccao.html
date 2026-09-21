@@ -5,91 +5,108 @@
   <title>Administração | Prospecção Pronti Pet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root { --roxo:#5522b6; --azul:#2563eb; --cinza:#6b7280; --borda:#e5e7eb; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Arial,sans-serif; background:#f6f6fa; color:#111827; }
-    .main { max-width:1200px; margin:0 auto; padding:28px 20px 48px; }
-    .topo { display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
-    h1 { margin:0; font-size:1.75rem; }
-    .sub { color:var(--cinza); margin-top:6px; }
-    .acoes { display:flex; gap:10px; flex-wrap:wrap; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:8px; padding:10px 16px; text-decoration:none; font-weight:700; cursor:pointer; }
-    .btn-voltar { background:var(--roxo); color:#fff; }
-    .btn-gerar { background:var(--azul); color:#fff; }
-    .btn-gerar[disabled] { opacity:.55; cursor:not-allowed; }
-    .metricas { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
-    .card { background:#fff; border:1px solid var(--borda); border-radius:12px; padding:16px; box-shadow:0 2px 10px rgba(15,23,42,.04); }
-    .numero { font-size:1.7rem; font-weight:800; margin-top:5px; }
-    .label { color:var(--cinza); font-size:.9rem; }
-    .painel { background:#fff; border:1px solid var(--borda); border-radius:12px; padding:18px; }
-    .filtros { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
-    .filtros input,.filtros select { padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; background:#fff; }
-    table { width:100%; border-collapse:collapse; }
-    th,td { text-align:left; padding:12px 10px; border-bottom:1px solid #eef0f3; font-size:.92rem; }
-    th { color:#4b5563; background:#f9fafb; }
-    .vazio { text-align:center; color:var(--cinza); padding:38px 10px; }
-    .badge { display:inline-flex; padding:4px 9px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:700; font-size:.8rem; }
-    @media(max-width:800px){ .metricas{grid-template-columns:repeat(2,1fr)} .painel{overflow:auto} }
+    :root{--roxo:#5522b6;--azul:#2563eb;--cinza:#6b7280;--borda:#e5e7eb;--verde:#0f766e}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f6f6fa;color:#111827}
+    .main{max-width:1200px;margin:0 auto;padding:28px 20px 48px}.topo{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+    h1{margin:0;font-size:1.75rem}.sub,.fonte{color:var(--cinza);margin-top:6px}.acoes{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;padding:10px 16px;text-decoration:none;font-weight:700;cursor:pointer}
+    .btn-voltar{background:var(--roxo);color:#fff}.btn-gerar{background:var(--azul);color:#fff}.btn:disabled{opacity:.55;cursor:not-allowed}
+    .metricas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.card,.painel{background:#fff;border:1px solid var(--borda);border-radius:12px;box-shadow:0 2px 10px rgba(15,23,42,.04)}
+    .card{padding:16px}.numero{font-size:1.7rem;font-weight:800;margin-top:5px}.label{color:var(--cinza);font-size:.9rem}.painel{padding:18px}
+    .filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.filtros input,.filtros select{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff}
+    .status-msg{min-height:20px;margin:8px 0 14px;font-size:.88rem}.erro{color:#b91c1c}.ok{color:#166534}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid #eef0f3;font-size:.9rem;vertical-align:middle}th{color:#4b5563;background:#f9fafb}
+    .vazio{text-align:center;color:var(--cinza);padding:38px 10px}.badge{display:inline-flex;padding:4px 9px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:700;font-size:.78rem}
+    .acoes-lead{display:flex;gap:6px;flex-wrap:wrap}.mini{padding:7px 9px;border-radius:7px;border:0;font-weight:700;cursor:pointer;text-decoration:none;font-size:.78rem}.demo{background:#ede9fe;color:#4c1d95}.wa{background:#dcfce7;color:#166534}.desc{background:#f3f4f6;color:#374151}
+    .sem-site{font-size:.72rem;color:#166534;font-weight:700}.com-site{font-size:.72rem;color:#6b7280}.fonte{font-size:.76rem}
+    @media(max-width:800px){.metricas{grid-template-columns:repeat(2,1fr)}.painel{overflow:auto}.main{padding:20px 12px 40px}th,td{white-space:nowrap}}
   </style>
 </head>
 <body>
-  <main class="main">
-    <header class="topo">
-      <div>
-        <h1>Prospecção Pronti Pet</h1>
-        <div class="sub">Leads, demos personalizadas e acompanhamento comercial.</div>
-      </div>
-      <div class="acoes">
-        <a class="btn btn-voltar" href="admin-clientes.html">← Administração</a>
-        <button class="btn btn-gerar" id="gerarLeads" disabled title="Será habilitado quando a integração com Google Places estiver configurada">Gerar leads</button>
-      </div>
-    </header>
+<main class="main">
+  <header class="topo">
+    <div><h1>Prospecção Pronti Pet</h1><div class="sub">Leads, demos personalizadas e acompanhamento comercial.</div></div>
+    <div class="acoes"><a class="btn btn-voltar" href="admin-clientes.html">← Administração</a><button class="btn btn-gerar" id="gerarLeads">Gerar leads</button></div>
+  </header>
+  <section class="metricas">
+    <div class="card"><div class="label">Novos</div><div class="numero" id="mNovos">0</div></div>
+    <div class="card"><div class="label">Demos prontas</div><div class="numero" id="mDemos">0</div></div>
+    <div class="card"><div class="label">Abriram</div><div class="numero" id="mAbertos">0</div></div>
+    <div class="card"><div class="label">Interessados</div><div class="numero" id="mInteressados">0</div></div>
+  </section>
+  <section class="painel">
+    <div class="filtros">
+      <select id="statusFiltro"><option value="">Todos os status</option><option value="novo">Novo</option><option value="demo_pronta">Demo pronta</option><option value="enviado">Enviado</option><option value="abriu">Abriu demo</option><option value="interessado">Interessado</option><option value="cliente">Cliente</option><option value="descartado">Descartado</option></select>
+      <input id="busca" type="search" placeholder="Buscar pet shop...">
+    </div>
+    <div id="statusMsg" class="status-msg"></div>
+    <table>
+      <thead><tr><th>Pet shop</th><th>Nota</th><th>Avaliações</th><th>Site</th><th>Status</th><th>Aberturas</th><th>Ação</th></tr></thead>
+      <tbody id="listaLeads"><tr><td colspan="7" class="vazio">Carregando...</td></tr></tbody>
+    </table>
+    <div class="fonte">Dados de descoberta obtidos via Google Places e mantidos temporariamente para a prospecção. O Place ID é usado para evitar duplicidade.</div>
+  </section>
+</main>
+<script type="module">
+  import { auth } from "./firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+  const ADMIN_UID="HNIJxFjPvSO1oO9X1Gjq7negfR12";
+  const FN="https://southamerica-east1-pronti-pet.cloudfunctions.net/";
+  let leads=[];
 
-    <section class="metricas">
-      <div class="card"><div class="label">Novos</div><div class="numero" id="mNovos">0</div></div>
-      <div class="card"><div class="label">Demos prontas</div><div class="numero" id="mDemos">0</div></div>
-      <div class="card"><div class="label">Abriram</div><div class="numero" id="mAbertos">0</div></div>
-      <div class="card"><div class="label">Interessados</div><div class="numero" id="mInteressados">0</div></div>
-    </section>
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+  function tel(v){let n=String(v||'').replace(/\D/g,'');if(n.length===10||n.length===11)n='55'+n;return n;}
+  async function headers(){const u=auth.currentUser;if(!u)throw new Error("Sessão expirada");return {Authorization:"Bearer "+await u.getIdToken(),"Content-Type":"application/json"};}
+  async function api(name,opts={}){const r=await fetch(FN+name,{...opts,headers:{...(await headers()),...(opts.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detalhes||("HTTP "+r.status));return j;}
+  function msg(t,tipo=''){const e=document.getElementById('statusMsg');e.textContent=t;e.className='status-msg '+tipo;}
 
-    <section class="painel">
-      <div class="filtros">
-        <select id="statusFiltro">
-          <option value="">Todos os status</option>
-          <option value="novo">Novo</option>
-          <option value="demo_pronta">Demo pronta</option>
-          <option value="enviado">Enviado</option>
-          <option value="abriu">Abriu demo</option>
-          <option value="interessado">Interessado</option>
-          <option value="cliente">Cliente</option>
-          <option value="descartado">Descartado</option>
-        </select>
-        <input id="busca" type="search" placeholder="Buscar pet shop...">
-      </div>
-      <table>
-        <thead><tr><th>Pet shop</th><th>Nota</th><th>Avaliações</th><th>Status</th><th>Demo</th><th>Ação</th></tr></thead>
-        <tbody id="listaLeads">
-          <tr><td colspan="6" class="vazio">Nenhum lead gerado ainda. A estrutura da prospecção já está dentro de Administração.</td></tr>
-        </tbody>
-      </table>
-    </section>
-  </main>
+  function metricas(){
+    document.getElementById('mNovos').textContent=leads.filter(x=>x.status==='novo').length;
+    document.getElementById('mDemos').textContent=leads.filter(x=>x.status==='demo_pronta').length;
+    document.getElementById('mAbertos').textContent=leads.filter(x=>x.status==='abriu').length;
+    document.getElementById('mInteressados').textContent=leads.filter(x=>x.status==='interessado').length;
+  }
+  function render(){
+    metricas();
+    const filtro=document.getElementById('statusFiltro').value;
+    const q=document.getElementById('busca').value.trim().toLowerCase();
+    const lista=leads.filter(x=>(!filtro||x.status===filtro)&&(!q||x.nome.toLowerCase().includes(q)));
+    const tb=document.getElementById('listaLeads');
+    if(!lista.length){tb.innerHTML='<tr><td colspan="7" class="vazio">Nenhum lead para este filtro.</td></tr>';return;}
+    tb.innerHTML=lista.map(x=>{
+      const demo=location.origin+'/demo/'+encodeURIComponent(x.demoToken);
+      const texto='Olá, tudo bem?\n\nMontei uma prévia de como poderia ficar a vitrine online da '+x.nome+' no Pronti Pet.\n\nSe quiser ver a demonstração funcionando:\n'+demo+'\n\nÉ só uma demonstração, sem compromisso.';
+      const wa=x.telefone?'https://wa.me/'+tel(x.telefone)+'?text='+encodeURIComponent(texto):'#';
+      return '<tr>'+
+        '<td><strong>'+esc(x.nome)+'</strong></td>'+
+        '<td>'+esc(x.nota??'-')+'</td><td>'+esc(x.quantidadeAvaliacoes??'-')+'</td>'+
+        '<td><span class="'+(x.semSite?'sem-site':'com-site')+'">'+(x.semSite?'Sem site':'Tem site')+'</span></td>'+
+        '<td><span class="badge">'+esc(x.status)+'</span></td><td>'+x.quantidadeAberturas+'</td>'+
+        '<td><div class="acoes-lead"><a class="mini demo" href="'+demo+'?preview=1" target="_blank">Ver demo</a>'+
+        (x.telefone?'<a class="mini wa" href="'+wa+'" target="_blank" data-enviar="'+esc(x.id)+'">WhatsApp</a>':'')+
+        '<button class="mini desc" data-descartar="'+esc(x.id)+'">Descartar</button></div></td></tr>';
+    }).join('');
+  }
+  async function carregar(){try{const j=await api('listarLeadsProspeccao');leads=j.leads||[];render();}catch(e){msg(e.message,'erro');document.getElementById('listaLeads').innerHTML='<tr><td colspan="7" class="vazio">Falha ao carregar.</td></tr>';}}
+  async function status(id,status){await api('atualizarLeadProspeccao',{method:'POST',body:JSON.stringify({id,status})});const x=leads.find(l=>l.id===id);if(x)x.status=status;render();}
 
-  <script type="module">
-    import { auth } from "./firebase-config.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+  document.getElementById('gerarLeads').addEventListener('click',async e=>{
+    e.currentTarget.disabled=true;msg('Buscando pet shops em Contagem e Belo Horizonte...');
+    try{const j=await api('buscarLeadsProspeccao',{method:'POST',body:'{}'});msg('Busca concluída: '+j.encontrados+' leads elegíveis; '+j.novos+' novos.','ok');await carregar();}
+    catch(err){msg(err.message,'erro');}finally{e.currentTarget.disabled=false;}
+  });
+  document.getElementById('statusFiltro').addEventListener('change',render);
+  document.getElementById('busca').addEventListener('input',render);
+  document.getElementById('listaLeads').addEventListener('click',async e=>{
+    const enviar=e.target.closest('[data-enviar]');if(enviar){try{await status(enviar.dataset.enviar,'enviado');}catch(_){}}
+    const desc=e.target.closest('[data-descartar]');if(desc){e.preventDefault();try{await status(desc.dataset.descartar,'descartado');}catch(err){msg(err.message,'erro');}}
+  });
 
-    const ADMIN_UID = "HNIJxFjPvSO1oO9X1Gjq7negfR12";
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-      if (user.uid !== ADMIN_UID) {
-        document.body.innerHTML = '<div style="padding:40px;font-family:Arial">Acesso restrito. Apenas administradores.</div>';
-      }
-    });
-  </script>
+  onAuthStateChanged(auth,user=>{
+    if(!user){location.href='login.html';return;}
+    if(user.uid!==ADMIN_UID){document.body.innerHTML='<div style="padding:40px;font-family:Arial">Acesso restrito.</div>';return;}
+    carregar();
+  });
+</script>
 </body>
 </html>
