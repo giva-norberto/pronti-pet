@@ -39,7 +39,7 @@
       <select id="statusFiltro"><option value="">Todos os status</option><option value="novo">Novo</option><option value="demo_pronta">Demo pronta</option><option value="enviado">Enviado</option><option value="abriu">Abriu demo</option><option value="interessado">Interessado</option><option value="cliente">Cliente</option><option value="descartado">Descartado</option></select>
       <input id="busca" type="search" placeholder="Buscar pet shop...">
     </div>
-    <div id="statusMsg" class="status-msg"></div>
+    <div id="statusMsg" class="status-msg"></div><div id="usageMsg" class="status-msg"></div>
     <table>
       <thead><tr><th>Pet shop</th><th>Nota</th><th>Avaliações</th><th>Site</th><th>Status</th><th>Aberturas</th><th>Ação</th></tr></thead>
       <tbody id="listaLeads"><tr><td colspan="7" class="vazio">Carregando...</td></tr></tbody>
@@ -52,13 +52,19 @@
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   const ADMIN_UID="HNIJxFjPvSO1oO9X1Gjq7negfR12";
   const FN="https://southamerica-east1-pronti-pet.cloudfunctions.net/";
-  let leads=[];
+  let leads=[]; let usage=null;
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
   function tel(v){let n=String(v||'').replace(/\D/g,'');if(n.length===10||n.length===11)n='55'+n;return n;}
   async function headers(){const u=auth.currentUser;if(!u)throw new Error("Sessão expirada");return {Authorization:"Bearer "+await u.getIdToken(),"Content-Type":"application/json"};}
   async function api(name,opts={}){const r=await fetch(FN+name,{...opts,headers:{...(await headers()),...(opts.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detalhes||("HTTP "+r.status));return j;}
   function msg(t,tipo=''){const e=document.getElementById('statusMsg');e.textContent=t;e.className='status-msg '+tipo;}
+  function renderUsage(){
+    const e=document.getElementById('usageMsg');
+    if(!usage){e.textContent='';return;}
+    e.className='status-msg '+(usage.warning?'erro':'');
+    e.textContent='Google Places neste mês: '+usage.requestsUsed+' / '+usage.monthlyFreeLimit+' consultas. Restam '+usage.remaining+' dentro do limite configurado.';
+  }
 
   function metricas(){
     document.getElementById('mNovos').textContent=leads.filter(x=>x.status==='novo').length;
@@ -87,7 +93,7 @@
         '<button class="mini desc" data-descartar="'+esc(x.id)+'">Descartar</button></div></td></tr>';
     }).join('');
   }
-  async function carregar(){try{const j=await api('listarLeadsProspeccao');leads=j.leads||[];render();}catch(e){msg(e.message,'erro');document.getElementById('listaLeads').innerHTML='<tr><td colspan="7" class="vazio">Falha ao carregar.</td></tr>';}}
+  async function carregar(){try{const j=await api('listarLeadsProspeccao');leads=j.leads||[];usage=j.usage||null;renderUsage();render();}catch(e){msg(e.message,'erro');document.getElementById('listaLeads').innerHTML='<tr><td colspan="7" class="vazio">Falha ao carregar.</td></tr>';}}
   async function status(id,status){await api('atualizarLeadProspeccao',{method:'POST',body:JSON.stringify({id,status})});const x=leads.find(l=>l.id===id);if(x)x.status=status;render();}
 
   document.getElementById('gerarLeads').addEventListener('click',async e=>{
