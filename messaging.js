@@ -247,6 +247,30 @@ window.messagingService = new MessagingService();
 window.atualizarTokenNotificacoes = async function(userId, empresaId) {
   return window.messagingService.refreshTokenRegistration(userId, empresaId);
 };
+
+window.desativarNotificacoes = async function(userId) {
+  if (!userId) {
+    console.warn('[messaging.js] Não foi possível desativar: userId ausente.');
+    return false;
+  }
+
+  try {
+    await updateDoc(
+      doc(db, "mensagensTokens", userId),
+      {
+        ativo: false,
+        updatedAt: new Date()
+      }
+    );
+
+    pararOuvinteDeNotificacoes();
+    console.log('[messaging.js] Notificações desativadas no Pronti Pet.');
+    return true;
+  } catch (error) {
+    console.error('[messaging.js] Erro ao desativar notificações:', error);
+    return false;
+  }
+};
 // ✅ CORREÇÃO CIRÚRGICA: aceita params opcionais (vitrine passa) e mantém fallback (painel)
 window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, empresaIdParam = null) {
   unlockAudio();
