@@ -1197,48 +1197,41 @@ async function inicializarDemoProspeccao(token) {
     const dadosDemo = {
         nomeFantasia: demo.nome || 'Pet Shop',
         descricao:
-            'Agendamento online, gestão dos pets e acompanhamento do atendimento em uma única vitrine.',
+            'Cuidado, praticidade e agendamento online para seus clientes.',
         localizacao: demo.endereco || '',
         whatsapp: demo.telefone || '',
         logoUrl: '',
-        horarioFuncionamento: '',
+        horarioFuncionamento:
+            'Segunda a sexta: 08:00 às 18:00\nSábado: 08:00 às 13:00',
         clienteEscolheFuncionario: true
     };
 
     const servicosDemo = [
-        {
-            id: 'demo-banho',
-            nome: 'Banho',
-            categoria: 'Banho e Tosa',
-            preco: 70,
-            duracao: 60
-        },
-        {
-            id: 'demo-tosa',
-            nome: 'Tosa',
-            categoria: 'Banho e Tosa',
-            preco: 80,
-            duracao: 60
-        },
-        {
-            id: 'demo-banho-tosa',
-            nome: 'Banho + Tosa',
-            categoria: 'Banho e Tosa',
-            preco: 120,
-            duracao: 90
-        }
+        { id:'demo-banho', nome:'Banho', descricao:'Higienização completa do pet.', categoria:'Banho e Tosa', preco:70, duracao:60 },
+        { id:'demo-tosa-higienica', nome:'Tosa higiênica', descricao:'Aparos e higiene em áreas específicas.', categoria:'Banho e Tosa', preco:55, duracao:45 },
+        { id:'demo-tosa', nome:'Tosa completa', descricao:'Tosa geral conforme o perfil do pet.', categoria:'Banho e Tosa', preco:95, duracao:90 },
+        { id:'demo-banho-tosa', nome:'Banho + Tosa', descricao:'Combo completo de banho e tosa.', categoria:'Banho e Tosa', preco:120, duracao:90 },
+        { id:'demo-hidratacao', nome:'Hidratação', descricao:'Tratamento complementar para a pelagem.', categoria:'Cuidados', preco:35, duracao:30 },
+        { id:'demo-unhas', nome:'Corte de unhas', descricao:'Cuidado rápido e seguro.', categoria:'Cuidados', preco:25, duracao:20 }
     ];
 
     setEmpresa('demo-' + token, dadosDemo);
     setProfissionais([]);
     setTodosOsServicos(servicosDemo);
 
+    UI.renderizarDadosIniciaisEmpresa(
+        dadosDemo,
+        servicosDemo
+    );
+
     const logoPublico = document.getElementById('logo-publico');
     if (logoPublico) {
         logoPublico.src =
             'https://placehold.co/100x100/eef2ff/4f46e5?text=Sua+logo';
-        logoPublico.alt = 'Espaço reservado para a logo real do estabelecimento';
-        logoPublico.title = 'Na ativação, este espaço recebe a logo real do estabelecimento';
+        logoPublico.alt =
+            'Espaço reservado para a logo real do estabelecimento';
+        logoPublico.title =
+            'Na ativação, este espaço recebe a logo real do estabelecimento';
     }
 
     const nomePublico =
@@ -1247,22 +1240,39 @@ async function inicializarDemoProspeccao(token) {
         nomePublico.textContent = dadosDemo.nomeFantasia;
     }
 
-    const boasVindas =
+    const manterSaudacaoNeutra = () => {
+        const boasVindas =
+            document.getElementById('boas-vindas-usuario');
+        const nomeUsuario =
+            document.getElementById('usuario-logado-nome');
+
+        if (boasVindas) {
+            boasVindas.textContent =
+                'Olá, seja bem-vindo(a)!';
+        }
+
+        if (nomeUsuario) {
+            nomeUsuario.textContent = '';
+        }
+    };
+
+    manterSaudacaoNeutra();
+
+    const saudacaoAlvo =
         document.getElementById('boas-vindas-usuario');
-    if (boasVindas) {
-        boasVindas.textContent = 'Olá, seja bem-vindo(a)!';
-    }
 
-    const nomeUsuario =
-        document.getElementById('usuario-logado-nome');
-    if (nomeUsuario) {
-        nomeUsuario.textContent = '';
+    if (saudacaoAlvo) {
+        new MutationObserver(
+            manterSaudacaoNeutra
+        ).observe(
+            saudacaoAlvo,
+            {
+                childList: true,
+                characterData: true,
+                subtree: true
+            }
+        );
     }
-
-    UI.renderizarDadosIniciaisEmpresa(
-        dadosDemo,
-        servicosDemo
-    );
 
     const shell =
         document.getElementById('main-navigation-container');
@@ -1272,105 +1282,168 @@ async function inicializarDemoProspeccao(token) {
         banner.id = 'pp-demo-banner';
         banner.innerHTML =
             '<strong>Demonstração Pronti Pet</strong>' +
-            '<span>Esta é uma prévia da vitrine real do estabelecimento.</span>' +
-            '<span style="margin-top:4px;font-size:.78rem;">Na ativação, a vitrine recebe a logo real do pet shop.</span>';
+            '<span>Prévia visual de como ficará a vitrine do estabelecimento.</span>' +
+            '<span style="margin-top:3px;font-size:.76rem;">A logo real, serviços, preços e horários serão configurados na ativação.</span>';
         banner.style.cssText =
-            'margin:0 0 14px;padding:12px 14px;border-radius:14px;' +
+            'margin:0 0 14px;padding:11px 14px;border-radius:14px;' +
             'background:#ede9fe;color:#4c1d95;display:flex;' +
-            'flex-direction:column;gap:2px;font-size:.82rem;';
+            'flex-direction:column;gap:2px;font-size:.8rem;';
         shell.prepend(banner);
     }
 
-    document.querySelectorAll(
-        '[data-menu-card="pets"],' +
-        '[data-menu-card="visualizacao"],' +
-        '.pp-vitrine-home-card--tracking,' +
-        '[data-menu-card="minhas-assinaturas"],' +
-        '[data-menu-card="assinatura"],' +
-        '[data-menu-card="perfil"],' +
-        '.pp-vitrine-home-profile'
-    ).forEach(el => {
-        el.style.display = 'none';
-    });
+    /*
+     * A home da demo deve ser visualmente fiel à vitrine real.
+     * Os cards e o menu inferior permanecem visíveis, mas não navegam.
+     */
+    document.addEventListener(
+        'click',
+        event => {
+            const alvoDemo = event.target.closest(
+                '[data-menu-card], [data-home-nav], ' +
+                '.bottom-nav-vitrine button, .pp-vitrine-home-profile'
+            );
+
+            if (!alvoDemo) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
 
     const hero =
         document.querySelector('.pp-vitrine-home-hero');
 
     if (hero) {
-        hero.removeAttribute('data-menu-card');
         hero.href = '#';
+    }
 
-        const label =
-            hero.querySelector('.pp-vitrine-home-hero-label');
-        const titulo =
-            hero.querySelector('h2');
-        const acao =
-            hero.querySelector('.pp-vitrine-home-hero-action');
+    const cardsGrid =
+        document.getElementById('vitrine-cards-grid');
 
-        if (label) label.textContent = 'Demonstração personalizada';
-        if (titulo) {
-            titulo.textContent =
-                'Veja como seus clientes podem agendar pelo Pronti Pet';
+    if (cardsGrid) {
+        const proximo =
+            cardsGrid.querySelector('.pp-vitrine-home-card--tracking');
+
+        if (proximo) {
+            const titulo =
+                proximo.querySelector(
+                    '.pp-vitrine-home-card-copy strong'
+                );
+            const descricao =
+                proximo.querySelector(
+                    '.pp-vitrine-home-card-copy small'
+                );
+
+            if (titulo) {
+                titulo.textContent =
+                    'Próximo agendamento';
+            }
+
+            if (descricao) {
+                descricao.textContent =
+                    'Entre para visualizar';
+            }
         }
-        if (acao) {
-            acao.innerHTML =
-                '<i class="fa-solid fa-calendar-check" aria-hidden="true"></i>' +
-                ' Quero ativar esta vitrine';
-        }
+    }
 
-        hero.addEventListener('click', async event => {
-            event.preventDefault();
-            if (!preview) await registrarInteresseDemo(token);
+    if (shell && !document.getElementById('pp-demo-servicos')) {
+        const secao = document.createElement('section');
+        secao.id = 'pp-demo-servicos';
+        secao.style.cssText =
+            'margin:18px 0 10px;padding:18px;border-radius:20px;' +
+            'background:#fff;border:1px solid #e7e0f2;' +
+            'box-shadow:0 8px 24px rgba(40,20,70,.06);';
 
-            const texto =
-                'Olá! Vi a demonstração do Pronti Pet para ' +
-                dadosDemo.nomeFantasia +
-                ' e quero saber como ativar.';
+        const cards = servicosDemo.map(servico => {
+            const preco =
+                Number(servico.preco).toLocaleString(
+                    'pt-BR',
+                    {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }
+                );
 
-            window.open(
-                'https://wa.me/5531982967250?text=' +
-                encodeURIComponent(texto),
-                '_blank',
-                'noopener'
+            return (
+                '<div style="padding:12px;border:1px solid #ece6f5;' +
+                'border-radius:14px;background:#fcfbff;">' +
+                '<strong style="display:block;color:#24133d;">' +
+                servico.nome +
+                '</strong>' +
+                '<span style="display:block;margin-top:4px;color:#6b7280;' +
+                'font-size:.8rem;line-height:1.35;">' +
+                servico.descricao +
+                '</span>' +
+                '<span style="display:block;margin-top:8px;color:#5522b6;' +
+                'font-weight:800;font-size:.82rem;">' +
+                preco + ' • ' + servico.duracao + ' min' +
+                '</span>' +
+                '</div>'
             );
-        });
+        }).join('');
+
+        secao.innerHTML =
+            '<div style="margin-bottom:12px;">' +
+            '<strong style="font-size:1.05rem;color:#24133d;">Serviços em destaque</strong>' +
+            '<div style="margin-top:3px;color:#6b7280;font-size:.77rem;">' +
+            'Serviços, valores e durações ilustrativos para demonstração.' +
+            '</div>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">' +
+            cards +
+            '</div>';
+
+        shell.appendChild(secao);
     }
 
-    const infoLink =
-        document.querySelector('[data-menu-card="informacoes"]');
-    if (infoLink) {
-        infoLink.querySelector('strong').textContent =
-            'Serviços e informações';
-    }
+    if (shell && !document.getElementById('pp-demo-cta')) {
+        const ctaBox = document.createElement('section');
+        ctaBox.id = 'pp-demo-cta';
+        ctaBox.style.cssText =
+            'margin:16px 0 90px;padding:18px;border-radius:20px;' +
+            'background:linear-gradient(135deg,#4b168f,#6f35d7);' +
+            'color:white;text-align:center;';
 
-    const cta = document.createElement('button');
-    cta.type = 'button';
-    cta.textContent = 'Quero ativar esta vitrine';
-    cta.style.cssText =
-        'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;' +
-        'max-width:620px;margin:0 auto;border:0;border-radius:14px;' +
-        'padding:14px 18px;background:#5522b6;color:white;' +
-        'font-weight:900;font-size:1rem;box-shadow:0 8px 24px rgba(0,0,0,.18);';
+        ctaBox.innerHTML =
+            '<strong style="display:block;font-size:1.08rem;">Gostou de como pode ficar sua vitrine?</strong>' +
+            '<span style="display:block;margin:6px 0 14px;opacity:.86;font-size:.82rem;">' +
+            'Na ativação, personalizamos logo, serviços, preços, horários e contatos reais.' +
+            '</span>' +
+            '<button type="button" id="pp-demo-ativar" style="' +
+            'width:100%;border:0;border-radius:14px;padding:14px 16px;' +
+            'background:#ffc928;color:#2b1558;font-weight:900;font-size:1rem;' +
+            'cursor:pointer;">Quero ativar esta vitrine</button>';
 
-    cta.addEventListener('click', async () => {
-        if (!preview) await registrarInteresseDemo(token);
+        shell.appendChild(ctaBox);
 
-        const texto =
-            'Olá! Vi a demonstração do Pronti Pet para ' +
-            dadosDemo.nomeFantasia +
-            ' e quero saber como ativar.';
+        const botaoAtivar =
+            ctaBox.querySelector('#pp-demo-ativar');
 
-        window.open(
-            'https://wa.me/5531982967250?text=' +
-            encodeURIComponent(texto),
-            '_blank',
-            'noopener'
+        botaoAtivar.addEventListener(
+            'click',
+            async () => {
+                if (!preview) {
+                    await registrarInteresseDemo(token);
+                }
+
+                const texto =
+                    'Olá! Vi a demonstração do Pronti Pet para ' +
+                    dadosDemo.nomeFantasia +
+                    ' e quero saber como ativar.';
+
+                window.open(
+                    'https://wa.me/5531982967250?text=' +
+                    encodeURIComponent(texto),
+                    '_blank',
+                    'noopener'
+                );
+            }
         );
-    });
+    }
 
-    document.body.appendChild(cta);
-
-    configurarEventosGerais();
     UI.toggleLoader(false);
 }
 
