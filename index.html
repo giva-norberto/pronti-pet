@@ -2087,6 +2087,16 @@
                 if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
                     if (Notification.permission === 'granted') {
                         notificationButton.style.display = 'none';
+
+                        if (window.atualizarTokenNotificacoes) {
+                            window.atualizarTokenNotificacoes(
+                                sessao.user.uid,
+                                sessao.empresaId
+                            ).catch((err) => {
+                                console.warn('Falha ao renovar token FCM:', err);
+                            });
+                        }
+
                         const finalizarConfiguracaoPosInteracao = (e) => {
                             if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout'))) {
                                 return;
