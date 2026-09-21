@@ -1529,6 +1529,12 @@
             pointer-events: none !important;
         }
 
+        /* Evita exibir atalhos antes da aplicação das permissões. */
+        body:not(.permissions-ready) [data-card-id] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
         #pronti-index-loading {
             position: fixed;
             inset: 0;
@@ -2066,9 +2072,6 @@
                     return;
                 }
 
-                // valida a empresa ativa antes de montar o menu / permissões
-                await validarEmpresaAtiva(sessao);
-
                 let papelUsuario = sessao.papel;
                 if (sessao.papeis && Array.isArray(sessao.papeis) && sessao.papeis.length > 0) {
                     papelUsuario = sessao.papeis;
@@ -2078,10 +2081,36 @@
                     if (sessao.isAdmin) papelUsuario.push('admin');
                     if (sessao.isOwner) papelUsuario.push('dono');
                 }
-                if (!papelUsuario || (Array.isArray(papelUsuario) && papelUsuario.length === 0)) throw new Error("O papel do usuário não foi definido na sessão.");
+                if (!papelUsuario || (Array.isArray(papelUsuario) && papelUsuario.length === 0)) {
+                    throw new Error("O papel do usuário não foi definido na sessão.");
+                }
+
+                /*
+                 * PERFORMANCE:
+                 * Menu e permissões não precisam bloquear a abertura visual do index.
+                 * Iniciamos os dois trabalhos em paralelo, mantendo os cards protegidos
+                 * por CSS até a aplicação das permissões terminar.
+                 */
+                const preparacaoInterface = Promise.allSettled([
+                    loadAndSetupMenu(papelUsuario),
+                    aplicarPermissoes(papelUsuario)
+                ]).finally(() => {
+                    document.body.classList.add('permissions-ready');
+                });
+
+                // A validação da empresa continua bloqueante por segurança.
+                await validarEmpresaAtiva(sessao);
+
                 popularCabecalho(sessao);
-                await loadAndSetupMenu(papelUsuario);
-                await aplicarPermissoes(papelUsuario);
+
+                // Libera a tela principal assim que sessão + empresa foram validadas.
+                document.body.classList.add('loaded');
+
+                // Conclui menu/permissões em segundo plano sem segurar a tela de loading.
+                preparacaoInterface.catch((error) => {
+                    console.error("Erro ao concluir preparação da interface:", error);
+                    document.body.classList.add('permissions-ready');
+                });
 
                 const notificationButton = document.querySelector('.notification-button');
                 if ('Notification' in window && iniciarOuvinteDeNotificacoes && unlockAudio) {
