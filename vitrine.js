@@ -1390,16 +1390,12 @@ async function inicializarDemoProspeccao(token) {
             '<span style="display:block;margin:6px 0 14px;opacity:.86;font-size:.82rem;">' +
             'Na ativação, personalizamos logo, serviços, preços, horários e contatos reais.' +
             '</span>' +
-            '<div id="pp-demo-link" style="margin:0 0 12px;padding:10px 12px;border-radius:12px;' +
-            'background:rgba(255,255,255,.12);font-size:.78rem;word-break:break-all;">' +
-            '<strong>Link desta demonstração:</strong><br>' +
-            window.location.origin + window.location.pathname +
-            '</div>' +
+
             '<div style="display:grid;grid-template-columns:1fr;gap:9px;">' +
-            '<button type="button" id="pp-demo-ativar" style="' +
+            '<button type="button" id="pp-demo-site" style="' +
             'width:100%;border:0;border-radius:14px;padding:14px 16px;' +
             'background:#ffc928;color:#2b1558;font-weight:900;font-size:1rem;' +
-            'cursor:pointer;">Quero ativar esta vitrine</button>' +
+            'cursor:pointer;">Site de demonstração</button>' +
             '<button type="button" id="pp-demo-falar" style="' +
             'width:100%;border:1px solid rgba(255,255,255,.45);border-radius:14px;' +
             'padding:13px 16px;background:rgba(255,255,255,.12);color:#fff;' +
@@ -1408,24 +1404,14 @@ async function inicializarDemoProspeccao(token) {
 
         shell.appendChild(ctaBox);
 
-        const botaoAtivar =
-            ctaBox.querySelector('#pp-demo-ativar');
+        const botaoSite =
+            ctaBox.querySelector('#pp-demo-site');
 
-        botaoAtivar.addEventListener(
+        botaoSite.addEventListener(
             'click',
-            async () => {
-                if (!preview) {
-                    await registrarInteresseDemo(token);
-                }
-
-                const texto =
-                    'Olá! Vi a demonstração do Pronti Pet para ' +
-                    dadosDemo.nomeFantasia +
-                    ' e quero saber como ativar.';
-
+            () => {
                 window.open(
-                    'https://wa.me/5531982967250?text=' +
-                    encodeURIComponent(texto),
+                    'https://pronti-pet.web.app/apresentacao.html',
                     '_blank',
                     'noopener'
                 );
