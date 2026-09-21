@@ -1260,18 +1260,53 @@ async function inicializarDemoProspeccao(token) {
 
     const saudacaoAlvo =
         document.getElementById('boas-vindas-usuario');
+    const nomeUsuarioAlvo =
+        document.getElementById('usuario-logado-nome');
 
-    if (saudacaoAlvo) {
-        new MutationObserver(
-            manterSaudacaoNeutra
-        ).observe(
-            saudacaoAlvo,
-            {
-                childList: true,
-                characterData: true,
-                subtree: true
-            }
-        );
+    if (saudacaoAlvo || nomeUsuarioAlvo) {
+        let corrigindoSaudacao = false;
+
+        const observer = new MutationObserver(() => {
+            if (corrigindoSaudacao) return;
+
+            const precisaCorrigir =
+                (saudacaoAlvo &&
+                    saudacaoAlvo.textContent !==
+                    'Olá, seja bem-vindo(a)!') ||
+                (nomeUsuarioAlvo &&
+                    nomeUsuarioAlvo.textContent !== '');
+
+            if (!precisaCorrigir) return;
+
+            corrigindoSaudacao = true;
+            manterSaudacaoNeutra();
+
+            queueMicrotask(() => {
+                corrigindoSaudacao = false;
+            });
+        });
+
+        if (saudacaoAlvo) {
+            observer.observe(
+                saudacaoAlvo,
+                {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                }
+            );
+        }
+
+        if (nomeUsuarioAlvo) {
+            observer.observe(
+                nomeUsuarioAlvo,
+                {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                }
+            );
+        }
     }
 
     const shell =
@@ -1412,10 +1447,16 @@ async function inicializarDemoProspeccao(token) {
             '<span style="display:block;margin:6px 0 14px;opacity:.86;font-size:.82rem;">' +
             'Na ativação, personalizamos logo, serviços, preços, horários e contatos reais.' +
             '</span>' +
+            '<div style="display:grid;grid-template-columns:1fr;gap:9px;">' +
             '<button type="button" id="pp-demo-ativar" style="' +
             'width:100%;border:0;border-radius:14px;padding:14px 16px;' +
             'background:#ffc928;color:#2b1558;font-weight:900;font-size:1rem;' +
-            'cursor:pointer;">Quero ativar esta vitrine</button>';
+            'cursor:pointer;">Quero ativar esta vitrine</button>' +
+            '<button type="button" id="pp-demo-falar" style="' +
+            'width:100%;border:1px solid rgba(255,255,255,.45);border-radius:14px;' +
+            'padding:13px 16px;background:rgba(255,255,255,.12);color:#fff;' +
+            'font-weight:900;font-size:.96rem;cursor:pointer;">Falar comigo</button>' +
+            '</div>';
 
         shell.appendChild(ctaBox);
 
@@ -1433,6 +1474,26 @@ async function inicializarDemoProspeccao(token) {
                     'Olá! Vi a demonstração do Pronti Pet para ' +
                     dadosDemo.nomeFantasia +
                     ' e quero saber como ativar.';
+
+                window.open(
+                    'https://wa.me/5531982967250?text=' +
+                    encodeURIComponent(texto),
+                    '_blank',
+                    'noopener'
+                );
+            }
+        );
+
+        const botaoFalar =
+            ctaBox.querySelector('#pp-demo-falar');
+
+        botaoFalar.addEventListener(
+            'click',
+            () => {
+                const texto =
+                    'Olá! Vi a demonstração do Pronti Pet para ' +
+                    dadosDemo.nomeFantasia +
+                    ' e gostaria de tirar algumas dúvidas.';
 
                 window.open(
                     'https://wa.me/5531982967250?text=' +
