@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "lembretesPendentes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enviado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dataEnvio",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
