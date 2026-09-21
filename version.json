@@ -1,5 +1,5 @@
 {
-  "version": "1.0.10",
+  "version": "1.0.11",
   "updatedAt": "2026-09-20",
-  "notes": "Adiciona Prospecção dentro de Administração e força atualização do PWA"
+  "notes": "Corrige renderização da Prospecção em Administração"
 }
