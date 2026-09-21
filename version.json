@@ -1,5 +1,5 @@
 {
-  "version": "1.0.14",
+  "version": "1.0.15",
   "updatedAt": "2026-09-20",
-  "notes": "Trava mensal do Google Places e demo na vitrine real"
+  "notes": "Corrige carregamento de CSS e módulos na demo da vitrine real"
 }
