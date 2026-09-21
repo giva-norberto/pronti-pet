@@ -435,6 +435,14 @@ export function iniciarOuvinteDeNotificacoes(donoId) {
         const bilhete = change.doc.data();
         const bilheteId = change.doc.id;
         console.log("✅ [Ouvinte] Novo bilhete recebido:", bilhete);
+
+        if (bilhete.tipo === "novo_agendamento") {
+          console.log(
+            `[Ouvinte] Bilhete ${bilheteId} de novo agendamento ignorado no listener local; o push FCM direto já é o canal oficial.`
+          );
+          return;
+        }
+
         if (window.messagingService) {
           const payload = {
             data: {
