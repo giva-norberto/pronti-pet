@@ -1,5 +1,5 @@
 {
-  "version": "1.0.17",
+  "version": "1.0.18",
   "updatedAt": "2026-09-20",
-  "notes": "Demo comercial fiel à home real com serviços ilustrativos"
+  "notes": "Corrige loop da demo e adiciona botão Falar comigo"
 }
