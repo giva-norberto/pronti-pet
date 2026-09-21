@@ -116,38 +116,21 @@ exports.rotinaResumoAgendamentosDono = onSchedule(
           const messageId = await fcm.send({
             token: fcmToken,
 
-            notification: {
-              title: titulo,
-              body: mensagem,
-            },
-
-            webpush: {
-              notification: {
-                title: titulo,
-                body: mensagem,
-                icon: `${APP_URL}/icon.png`,
-                badge: `${APP_URL}/icon.png`,
-                vibrate: [200, 100, 200],
-                requireInteraction: true,
-                tag: `resumo-agendamentos-${empresaId}`,
-                renotify: true,
-              },
-              fcmOptions: { link },
-            },
-
-            android: {
-              priority: "high",
-              notification: {
-                sound: "default",
-                priority: "high",
-              },
-            },
-
             data: {
               tipo: "resumo_agendamentos",
               empresaId: String(empresaId),
               quantidade: String(quantidade),
+              title: titulo,
+              body: mensagem,
+              icon: "/icon.png",
               link,
+            },
+
+            webpush: {
+              headers: {
+                Urgency: "high",
+              },
+              fcmOptions: { link },
             },
           });
 
