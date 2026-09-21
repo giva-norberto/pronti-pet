@@ -152,6 +152,46 @@ class MessagingService {
       }
     }
   }
+  async refreshTokenRegistration(userId, empresaId) {
+    if (!this.isSupported || Notification.permission !== 'granted') {
+      console.warn('[messaging.js] Refresh de token ignorado: notificações indisponíveis ou sem permissão.');
+      return false;
+    }
+    if (!userId || !empresaId) {
+      console.warn('[messaging.js] Refresh de token ignorado: usuário/empresa ausente.');
+      return false;
+    }
+
+    try {
+      let registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+
+      if (!registration) {
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      }
+
+      if (!registration.active) {
+        await this.waitForServiceWorker(registration);
+      }
+
+      const token = await this.getMessagingToken(registration);
+
+      if (!token) {
+        return false;
+      }
+
+      const salvo = await this.sendTokenToServer(userId, empresaId);
+
+      if (salvo) {
+        console.log('[messaging.js] Token FCM do usuário renovado e salvo.');
+      }
+
+      return salvo;
+    } catch (error) {
+      console.error('[messaging.js] Erro ao renovar token FCM:', error);
+      return false;
+    }
+  }
+
   async sendTokenToServer(userId, empresaId) {
     if (!this.token) {
       console.warn('[messaging.js] Token não disponível.');
@@ -203,6 +243,10 @@ class MessagingService {
 }
 // --- INSTÂNCIA GLOBAL ---
 window.messagingService = new MessagingService();
+
+window.atualizarTokenNotificacoes = async function(userId, empresaId) {
+  return window.messagingService.refreshTokenRegistration(userId, empresaId);
+};
 // ✅ CORREÇÃO CIRÚRGICA: aceita params opcionais (vitrine passa) e mantém fallback (painel)
 window.solicitarPermissaoParaNotificacoes = async function(userIdParam = null, empresaIdParam = null) {
   unlockAudio();
