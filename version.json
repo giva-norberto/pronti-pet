@@ -1,5 +1,5 @@
 {
-  "version": "1.0.19",
+  "version": "1.0.20",
   "updatedAt": "2026-09-20",
-  "notes": "Remove serviços fictícios da demo e adiciona copiar link"
+  "notes": "Renomeia contato para Suporte e exibe link da demonstração"
 }
