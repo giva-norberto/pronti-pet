@@ -1236,13 +1236,27 @@ async function inicializarDemoProspeccao(token) {
     const logoPublico = document.getElementById('logo-publico');
     if (logoPublico) {
         logoPublico.src =
-            'https://placehold.co/100x100/eef2ff/4f46e5?text=Pet';
+            'https://placehold.co/100x100/eef2ff/4f46e5?text=Sua+logo';
+        logoPublico.alt = 'Espaço reservado para a logo real do estabelecimento';
+        logoPublico.title = 'Na ativação, este espaço recebe a logo real do estabelecimento';
     }
 
     const nomePublico =
         document.getElementById('nome-negocio-publico');
     if (nomePublico) {
         nomePublico.textContent = dadosDemo.nomeFantasia;
+    }
+
+    const boasVindas =
+        document.getElementById('boas-vindas-usuario');
+    if (boasVindas) {
+        boasVindas.textContent = 'Olá, seja bem-vindo(a)!';
+    }
+
+    const nomeUsuario =
+        document.getElementById('usuario-logado-nome');
+    if (nomeUsuario) {
+        nomeUsuario.textContent = '';
     }
 
     UI.renderizarDadosIniciaisEmpresa(
@@ -1258,7 +1272,8 @@ async function inicializarDemoProspeccao(token) {
         banner.id = 'pp-demo-banner';
         banner.innerHTML =
             '<strong>Demonstração Pronti Pet</strong>' +
-            '<span>Esta é uma prévia da vitrine real do estabelecimento.</span>';
+            '<span>Esta é uma prévia da vitrine real do estabelecimento.</span>' +
+            '<span style="margin-top:4px;font-size:.78rem;">Na ativação, a vitrine recebe a logo real do pet shop.</span>';
         banner.style.cssText =
             'margin:0 0 14px;padding:12px 14px;border-radius:14px;' +
             'background:#ede9fe;color:#4c1d95;display:flex;' +
