@@ -1,5 +1,5 @@
 {
-  "version": "1.0.31",
+  "version": "1.0.32",
   "updatedAt": "2026-09-21",
-  "notes": "Evita notificações duplicadas em novos agendamentos"
+  "notes": "Cliente escolhe explicitamente ativar ou desativar notificações após agendar"
 }
