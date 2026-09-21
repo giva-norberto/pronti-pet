@@ -600,31 +600,6 @@ export async function salvarAgendamento(
                 observacaoAgendamento;
         }
 
-        if (
-            window.solicitarPermissaoParaNotificacoes &&
-            clienteAuthUid
-        ) {
-            console.log(
-                "🔔 Solicitando/Atualizando token de notificação antes de salvar..."
-            );
-
-            (async () => {
-                try {
-                    await window
-                        .solicitarPermissaoParaNotificacoes(
-                            clienteAuthUid,
-                            empresaId
-                        );
-
-                } catch (e) {
-                    console.warn(
-                        "⚠️ Falha ao solicitar token:",
-                        e
-                    );
-                }
-            })();
-        }
-
         const agendamentosRef =
             collection(
                 db,
