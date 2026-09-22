@@ -1305,6 +1305,33 @@ async function inicializarDemoProspeccao(token) {
     const shell =
         document.getElementById('main-navigation-container');
 
+    if (shell && !document.getElementById('pp-demo-voltar')) {
+        const botaoVoltar = document.createElement('button');
+        botaoVoltar.id = 'pp-demo-voltar';
+        botaoVoltar.type = 'button';
+        botaoVoltar.setAttribute('aria-label', 'Voltar');
+        botaoVoltar.innerHTML =
+            '<span aria-hidden="true" style="font-size:1.1rem;line-height:1;">←</span>' +
+            '<span>Voltar</span>';
+        botaoVoltar.style.cssText =
+            'display:inline-flex;align-items:center;gap:7px;margin:0 0 10px;' +
+            'padding:10px 13px;border:1px solid #e4ddf0;border-radius:12px;' +
+            'background:#fff;color:#4c1d95;font-weight:800;font-size:.88rem;' +
+            'box-shadow:0 4px 12px rgba(40,20,70,.06);cursor:pointer;' +
+            '-webkit-tap-highlight-color:transparent;';
+
+        botaoVoltar.addEventListener('click', () => {
+            if (window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+
+            window.location.href = '/apresentacao.html';
+        });
+
+        shell.prepend(botaoVoltar);
+    }
+
     if (shell && !document.getElementById('pp-demo-banner')) {
         const banner = document.createElement('div');
         banner.id = 'pp-demo-banner';
