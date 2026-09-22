@@ -1,5 +1,5 @@
 {
-  "version": "1.0.35",
-  "updatedAt": "2026-09-21",
-  "notes": "Adiciona índice do Firestore necessário para lembretes do cliente"
+  "version": "1.0.36",
+  "updatedAt": "2026-09-22",
+  "notes": "Adiciona botão Voltar no topo da demonstração para uso no celular"
 }
